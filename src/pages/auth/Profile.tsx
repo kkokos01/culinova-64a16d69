@@ -118,7 +118,16 @@ const Profile = () => {
           user_id: user.id,
           is_active: true,
           created_at: new Date().toISOString(),
-          space: item.space as Space
+          // Properly type the space object
+          space: item.space ? {
+            id: (item.space as any).id,
+            name: (item.space as any).name,
+            created_by: (item.space as any).created_by,
+            max_recipes: (item.space as any).max_recipes || 0,
+            max_users: (item.space as any).max_users || 0,
+            is_active: (item.space as any).is_active || true,
+            created_at: (item.space as any).created_at || new Date().toISOString()
+          } as Space : undefined
         }));
         
         setMemberships(processedMemberships);

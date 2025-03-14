@@ -155,7 +155,10 @@ export interface Database {
           user_id: string
           display_name?: string
           avatar_url?: string
-          preferred_units?: string
+          default_unit_system?: 'metric' | 'imperial'
+          theme_preference?: 'light' | 'dark' | 'system'
+          default_servings?: number
+          show_nutritional_info?: boolean
           created_at: string
           updated_at: string
         }
@@ -164,7 +167,10 @@ export interface Database {
           user_id: string
           display_name?: string
           avatar_url?: string
-          preferred_units?: string
+          default_unit_system?: 'metric' | 'imperial'
+          theme_preference?: 'light' | 'dark' | 'system'
+          default_servings?: number
+          show_nutritional_info?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -173,9 +179,67 @@ export interface Database {
           user_id?: string
           display_name?: string
           avatar_url?: string
-          preferred_units?: string
+          default_unit_system?: 'metric' | 'imperial'
+          theme_preference?: 'light' | 'dark' | 'system'
+          default_servings?: number
+          show_nutritional_info?: boolean
           created_at?: string
           updated_at?: string
+        }
+      }
+      user_spaces: {
+        Row: {
+          id: string
+          user_id: string
+          space_id: string
+          role: 'admin' | 'editor' | 'viewer'
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          space_id: string
+          role?: 'admin' | 'editor' | 'viewer'
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          space_id?: string
+          role?: 'admin' | 'editor' | 'viewer'
+          is_active?: boolean
+          created_at?: string
+        }
+      }
+      spaces: {
+        Row: {
+          id: string
+          name: string
+          created_by: string
+          max_recipes: number
+          max_users: number
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_by: string
+          max_recipes?: number
+          max_users?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_by?: string
+          max_recipes?: number
+          max_users?: number
+          is_active?: boolean
+          created_at?: string
         }
       }
     }
