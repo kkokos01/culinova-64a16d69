@@ -59,7 +59,6 @@ interface SearchFiltersProps {
   sortOption: string;
   setSortOption: (value: string) => void;
   selectedTags: string[];
-  setSelectedTags: (tags: string[]) => void;
   handleTagToggle: (tag: string) => void;
 }
 
@@ -154,7 +153,7 @@ const SearchFilters = ({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => setSelectedTags([])}
+                  onClick={() => handleTagToggle('')}  // This will clear all tags in the parent component
                   className="text-xs"
                 >
                   Clear All
