@@ -19,15 +19,20 @@ const AuthCallback = () => {
         // Get the code from the URL (this is standard for Supabase auth)
         const code = searchParams.get("code");
         const type = searchParams.get("type");
+        const provider = searchParams.get("provider");
         
-        console.log("Auth callback params:", { code, type });
+        console.log("Auth callback params:", { code, type, provider });
         
         if (!code) {
           console.log("No authentication code in URL, checking for active session");
           
+          // Introduce a small delay to ensure auth state is properly initialized
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
           // If there's no code, check if we still have a valid session
           // This can happen with some OAuth providers where the flow is different
           const { data: { session } } = await supabase.auth.getSession();
+          console.log("Session check without code:", !!session);
           
           if (session) {
             console.log("Active session found despite no code parameter");
@@ -46,16 +51,17 @@ const AuthCallback = () => {
           console.error("No authentication code provided and no active session");
           toast({
             title: "Authentication failed",
-            description: "No authentication code provided. Please try again.",
+            description: "Please try signing in again",
             variant: "destructive",
           });
           
           // Redirect to sign-in page after a short delay
-          setTimeout(() => navigate("/sign-in"), 1500);
+          setTimeout(() => navigate("/sign-in", { replace: true }), 1500);
           return;
         }
 
         // Exchange the code for a session
+        console.log("Exchanging code for session...");
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         
         if (error) {
@@ -63,15 +69,18 @@ const AuthCallback = () => {
           throw error;
         }
 
-        // After successful code exchange, give a small delay to ensure
+        console.log("Code exchange successful, waiting for session setup...");
+        
+        // After successful code exchange, give a longer delay to ensure
         // the auth state is properly updated across the application
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Get the current session to verify it worked
         const { data: { session } } = await supabase.auth.getSession();
         console.log("Session established:", !!session);
 
         if (!session) {
+          console.error("Failed to establish session after successful code exchange");
           throw new Error("Failed to establish session");
         }
 
@@ -92,7 +101,7 @@ const AuthCallback = () => {
         });
         
         // Redirect to sign-in page after a short delay
-        setTimeout(() => navigate("/sign-in"), 1500);
+        setTimeout(() => navigate("/sign-in", { replace: true }), 1500);
       } finally {
         // We'll keep isLoading true until we navigate away
         // This prevents UI flickering during the redirection
