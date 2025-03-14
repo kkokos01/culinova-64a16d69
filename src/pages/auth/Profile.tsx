@@ -7,23 +7,35 @@ import ProfileSidebar from "@/components/auth/ProfileSidebar";
 import ProfileSettings from "@/components/auth/ProfileSettings";
 import SpacesList from "@/components/auth/SpacesList";
 import { useUserData } from "@/hooks/useUserData";
+import { useSpace } from "@/context/SpaceContext";
 
 const Profile = () => {
   const { user } = useAuth();
+  const { currentSpace } = useSpace();
   const [activeTab, setActiveTab] = useState("profile");
+  
   const { 
     profileData, 
     setProfileData, 
     spaces,
     memberships,
-    fetchSpaces
+    fetchSpaces,
+    isLoading
   } = useUserData(user?.id);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <div className="container mx-auto px-4 py-24">
-        <h1 className="text-3xl font-display font-semibold text-slate-800 mb-8">Your Profile</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-display font-semibold text-slate-800">Your Profile</h1>
+          {currentSpace && (
+            <div className="bg-white px-4 py-2 rounded-md shadow-sm border">
+              <span className="text-sm text-slate-500">Current Space:</span>
+              <span className="ml-2 font-medium">{currentSpace.name}</span>
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-1">
@@ -42,20 +54,32 @@ const Profile = () => {
               </TabsList>
               
               <TabsContent value="profile">
-                <ProfileSettings 
-                  userId={user?.id}
-                  profileData={profileData}
-                  setProfileData={setProfileData}
-                />
+                {isLoading ? (
+                  <div className="flex justify-center p-8">
+                    <div className="animate-pulse text-slate-500">Loading profile data...</div>
+                  </div>
+                ) : (
+                  <ProfileSettings 
+                    userId={user?.id}
+                    profileData={profileData}
+                    setProfileData={setProfileData}
+                  />
+                )}
               </TabsContent>
               
               <TabsContent value="spaces">
-                <SpacesList
-                  userId={user?.id || ''}
-                  spaces={spaces}
-                  memberships={memberships}
-                  refreshSpaces={fetchSpaces}
-                />
+                {isLoading ? (
+                  <div className="flex justify-center p-8">
+                    <div className="animate-pulse text-slate-500">Loading spaces...</div>
+                  </div>
+                ) : (
+                  <SpacesList
+                    userId={user?.id || ''}
+                    spaces={spaces}
+                    memberships={memberships}
+                    refreshSpaces={fetchSpaces}
+                  />
+                )}
               </TabsContent>
             </Tabs>
           </div>

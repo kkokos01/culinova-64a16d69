@@ -14,15 +14,30 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
-export interface ProfileData {
-  display_name: string;
-  avatar_url: string;
-  default_unit_system: 'metric' | 'imperial';
-  theme_preference: 'light' | 'dark' | 'system';
-  default_servings: number;
-  show_nutritional_info: boolean;
-}
+// Define schema for profile data validation
+const profileSchema = z.object({
+  display_name: z.string().min(1, "Display name is required"),
+  avatar_url: z.string().url("Please enter a valid URL").or(z.string().length(0)),
+  default_unit_system: z.enum(["metric", "imperial"]),
+  theme_preference: z.enum(["light", "dark", "system"]),
+  default_servings: z.number().int().min(1).max(20),
+  show_nutritional_info: z.boolean(),
+});
+
+export type ProfileData = z.infer<typeof profileSchema>;
 
 type ProfileSettingsProps = {
   userId: string | undefined;
@@ -34,7 +49,14 @@ const ProfileSettings = ({ userId, profileData, setProfileData }: ProfileSetting
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const updateProfile = async () => {
+  // Initialize react-hook-form with zod validation
+  const form = useForm<ProfileData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: profileData,
+    values: profileData,
+  });
+
+  const updateProfile = async (values: ProfileData) => {
     if (!userId) return;
     
     try {
@@ -44,16 +66,19 @@ const ProfileSettings = ({ userId, profileData, setProfileData }: ProfileSetting
         .from("user_profiles")
         .upsert({
           user_id: userId,
-          display_name: profileData.display_name,
-          avatar_url: profileData.avatar_url,
-          default_unit_system: profileData.default_unit_system,
-          theme_preference: profileData.theme_preference,
-          default_servings: profileData.default_servings,
-          show_nutritional_info: profileData.show_nutritional_info,
+          display_name: values.display_name,
+          avatar_url: values.avatar_url,
+          default_unit_system: values.default_unit_system,
+          theme_preference: values.theme_preference,
+          default_servings: values.default_servings,
+          show_nutritional_info: values.show_nutritional_info,
           updated_at: new Date().toISOString(),
         });
 
       if (error) throw error;
+
+      // Update the state with the new values
+      setProfileData(values);
 
       toast({
         title: "Profile updated",
@@ -79,97 +104,152 @@ const ProfileSettings = ({ userId, profileData, setProfileData }: ProfileSetting
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            updateProfile();
-          }}
-          className="space-y-6"
-        >
-          <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name</Label>
-            <Input
-              id="displayName"
-              value={profileData.display_name}
-              onChange={(e) => setProfileData({...profileData, display_name: e.target.value})}
-              placeholder="Your display name"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="avatarUrl">Avatar URL</Label>
-            <Input
-              id="avatarUrl"
-              value={profileData.avatar_url}
-              onChange={(e) => setProfileData({...profileData, avatar_url: e.target.value})}
-              placeholder="https://example.com/your-avatar.jpg"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="defaultUnitSystem">Default Unit System</Label>
-            <Select 
-              value={profileData.default_unit_system} 
-              onValueChange={(value: 'metric' | 'imperial') => setProfileData({...profileData, default_unit_system: value})}
-            >
-              <SelectTrigger id="defaultUnitSystem">
-                <SelectValue placeholder="Select unit system" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="metric">Metric (g, ml, cm)</SelectItem>
-                <SelectItem value="imperial">Imperial (oz, cups, inch)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="themePreference">Theme Preference</Label>
-            <Select 
-              value={profileData.theme_preference} 
-              onValueChange={(value: 'light' | 'dark' | 'system') => setProfileData({...profileData, theme_preference: value})}
-            >
-              <SelectTrigger id="themePreference">
-                <SelectValue placeholder="Select theme" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-                <SelectItem value="system">System Default</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="defaultServings">Default Servings</Label>
-            <Input
-              id="defaultServings"
-              type="number"
-              min="1"
-              max="20"
-              value={profileData.default_servings}
-              onChange={(e) => setProfileData({...profileData, default_servings: parseInt(e.target.value)})}
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="showNutritionalInfo"
-              checked={profileData.show_nutritional_info}
-              onCheckedChange={(checked) => 
-                setProfileData({...profileData, show_nutritional_info: checked})
-              }
-            />
-            <Label htmlFor="showNutritionalInfo">Show Nutritional Information</Label>
-          </div>
-
-          <Button
-            type="submit"
-            className="bg-sage-500 hover:bg-sage-600"
-            disabled={isLoading}
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(updateProfile)}
+            className="space-y-6"
           >
-            {isLoading ? "Saving..." : "Save Changes"}
-          </Button>
-        </form>
+            <FormField
+              control={form.control}
+              name="display_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Display Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your display name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="avatar_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Avatar URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://example.com/your-avatar.jpg" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Link to an image that will be used as your profile picture
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="default_unit_system"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Default Unit System</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select unit system" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="metric">Metric (g, ml, cm)</SelectItem>
+                      <SelectItem value="imperial">Imperial (oz, cups, inch)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Choose which measurement system you prefer for recipes
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="theme_preference"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Theme Preference</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select theme" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="light">Light</SelectItem>
+                      <SelectItem value="dark">Dark</SelectItem>
+                      <SelectItem value="system">System Default</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Choose how the application should appear
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="default_servings"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Default Servings</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="20"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Default number of servings for new recipes
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="show_nutritional_info"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Nutritional Information</FormLabel>
+                    <FormDescription>
+                      Display nutritional information on recipes
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? "Saving..." : "Save Changes"}
+            </Button>
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );

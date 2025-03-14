@@ -8,6 +8,7 @@ import { ProfileData } from "@/components/auth/ProfileSettings";
 export function useUserData(userId: string | undefined) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [memberships, setMemberships] = useState<UserSpace[]>([]);
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -24,6 +25,8 @@ export function useUserData(userId: string | undefined) {
     
     try {
       setIsLoading(true);
+      setIsError(false);
+      
       const { data, error } = await supabase
         .from("user_profiles")
         .select("*")
@@ -44,6 +47,12 @@ export function useUserData(userId: string | undefined) {
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
+      setIsError(true);
+      toast({
+        title: "Error loading profile",
+        description: "Could not load your profile information. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +62,10 @@ export function useUserData(userId: string | undefined) {
     if (!userId) return;
     
     try {
-      // First, query the user_spaces table to find memberships
+      setIsLoading(true);
+      setIsError(false);
+      
+      // Query the user_spaces table to find memberships
       const { data: membershipData, error: membershipError } = await supabase
         .from("user_spaces")
         .select(`
@@ -74,47 +86,49 @@ export function useUserData(userId: string | undefined) {
         .eq("is_active", true);
 
       if (membershipError) {
-        console.error("Error fetching memberships:", membershipError);
-        return;
+        throw membershipError;
       }
 
       if (membershipData) {
-        // Type assertion to ensure TypeScript understands the structure
+        // Process memberships with proper type assertions
         const processedMemberships: UserSpace[] = membershipData.map(item => ({
-          id: item.id as string,
-          space_id: item.space_id as string,
+          id: item.id,
+          space_id: item.space_id,
           role: item.role as 'admin' | 'editor' | 'viewer',
           user_id: userId,
           is_active: true,
           created_at: new Date().toISOString(),
-          // Properly type the space object
+          // Process the space object
           space: item.space ? {
-            id: (item.space as any).id,
-            name: (item.space as any).name,
-            created_by: (item.space as any).created_by,
-            max_recipes: (item.space as any).max_recipes || 0,
-            max_users: (item.space as any).max_users || 0,
-            is_active: (item.space as any).is_active || true,
-            created_at: (item.space as any).created_at || new Date().toISOString()
+            id: item.space.id,
+            name: item.space.name,
+            created_by: item.space.created_by,
+            max_recipes: item.space.max_recipes || 0,
+            max_users: item.space.max_users || 0,
+            is_active: item.space.is_active || true,
+            created_at: item.space.created_at
           } as Space : undefined
         }));
         
         setMemberships(processedMemberships);
         
-        // Extract just the spaces
+        // Extract spaces from memberships
         const spacesList: Space[] = processedMemberships
           .map(membership => membership.space)
-          .filter((space): space is Space => space !== null && space !== undefined);
+          .filter((space): space is Space => space !== undefined);
         
         setSpaces(spacesList);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching spaces:", error);
+      setIsError(true);
       toast({
         title: "Error fetching spaces",
         description: "Could not load your spaces. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -127,10 +141,12 @@ export function useUserData(userId: string | undefined) {
 
   return {
     isLoading,
+    isError,
     profileData,
     setProfileData,
     spaces,
     memberships,
     fetchSpaces,
+    fetchProfile,
   };
 }
