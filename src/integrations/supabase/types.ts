@@ -151,13 +151,6 @@ export type Database = {
         }
         Returns: string
       }
-      get_user_memberships: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          space_id: string
-          role: string
-        }[]
-      }
     }
     Enums: {
       [_ in never]: never

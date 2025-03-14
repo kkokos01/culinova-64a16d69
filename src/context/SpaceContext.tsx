@@ -41,12 +41,10 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Fetch user memberships first to avoid infinite recursion
-      // We need to explicitly filter by user_id even though RLS is in place
+      // First fetch the memberships
       const { data: membershipData, error: membershipError } = await supabase
         .from("user_spaces")
         .select("*")
-        .eq("user_id", user.id)
         .eq("is_active", true);
 
       if (membershipError) {
@@ -54,9 +52,10 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
         throw membershipError;
       }
       
+      // With our improved RLS, this will only return the user's memberships
       setMemberships(membershipData as UserSpace[] || []);
       
-      // Now fetch spaces - the RLS will apply correctly
+      // Fetch spaces - the RLS will apply correctly
       const { data: spacesData, error: spacesError } = await supabase
         .from("spaces")
         .select("*")
@@ -67,6 +66,7 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
         throw spacesError;
       }
       
+      // With our improved RLS, this will only return the user's spaces
       setSpaces(spacesData as Space[] || []);
       
       // Set default space if none is already selected and we have spaces
