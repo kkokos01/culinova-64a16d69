@@ -2,6 +2,8 @@
 import Hero from "@/components/Hero";
 import FeaturedRecipes from "@/components/FeaturedRecipes";
 import Navbar from "@/components/Navbar";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
@@ -9,6 +11,31 @@ const Index = () => {
       <Navbar />
       <main className="pt-16"> {/* Add padding top to account for fixed navbar */}
         <Hero />
+        
+        {/* Auth Testing Section */}
+        <div className="container mx-auto my-8 p-6 bg-sage-50 rounded-lg">
+          <h2 className="text-2xl font-display font-semibold text-sage-700 mb-4">
+            Testing Authentication
+          </h2>
+          <p className="mb-4 text-slate-600">
+            You can test the authentication flow by using these links:
+          </p>
+          <div className="flex flex-wrap gap-4">
+            <Button asChild variant="default" className="bg-sage-500 hover:bg-sage-600">
+              <Link to="/sign-in">Sign In</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/sign-up">Sign Up</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/profile">Profile (Protected)</Link>
+            </Button>
+          </div>
+          <p className="mt-4 text-sm text-slate-500">
+            Note: Without a real Supabase connection, authentication will appear to work in the UI but won't actually authenticate.
+          </p>
+        </div>
+        
         <FeaturedRecipes />
         
         {/* Features Section */}
