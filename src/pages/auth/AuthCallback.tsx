@@ -1,11 +1,10 @@
 
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 // This component handles authentication callbacks from Supabase
-// After connecting the native Supabase integration, this component will work automatically
 const AuthCallback = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);

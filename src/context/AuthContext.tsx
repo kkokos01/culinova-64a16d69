@@ -1,6 +1,7 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 type AuthContextType = {
@@ -44,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string) => {
     setIsLoading(true);
     
-    // NOTE: When using the native Supabase integration, the redirectUrl is configured automatically
+    // Using proper redirect URL with the connected Supabase
     const redirectUrl = new URL('/auth/callback', window.location.origin).toString();
     
     const { error } = await supabase.auth.signUp({
