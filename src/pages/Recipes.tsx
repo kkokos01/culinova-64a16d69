@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Search, Filter, ArrowUpDown, ChevronDown } from "lucide-react";
+import { Search, Filter, ArrowUpDown, ChevronDown, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +20,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
-// Mock data - would be replaced with actual API calls to Supabase
 const MOCK_RECIPES: Recipe[] = [
   {
     id: "1",
@@ -145,7 +143,6 @@ const MOCK_RECIPES: Recipe[] = [
   }
 ];
 
-// Define all available tags across recipes
 const ALL_TAGS = [
   "vegetarian", "vegan", "gluten-free", "dairy-free", "healthy", 
   "quick", "dinner", "breakfast", "lunch", "dessert", "snack", 
@@ -154,7 +151,6 @@ const ALL_TAGS = [
   "baking", "spicy", "low-carb", "high-protein"
 ];
 
-// Define difficulty options
 const DIFFICULTY_OPTIONS = [
   { value: "all", label: "All Difficulties" },
   { value: "easy", label: "Easy" },
@@ -162,7 +158,6 @@ const DIFFICULTY_OPTIONS = [
   { value: "hard", label: "Hard" }
 ];
 
-// Define time options
 const TIME_OPTIONS = [
   { value: "all", label: "All Times" },
   { value: "under15", label: "Under 15 Minutes" },
@@ -171,7 +166,6 @@ const TIME_OPTIONS = [
   { value: "over60", label: "Over 1 Hour" }
 ];
 
-// Define sorting options
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest First" },
   { value: "oldest", label: "Oldest First" },
@@ -191,7 +185,6 @@ const Recipes = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   
   useEffect(() => {
-    // Simulate API call with setTimeout
     const timer = setTimeout(() => {
       setRecipes(MOCK_RECIPES);
       setIsLoading(false);
@@ -200,7 +193,6 @@ const Recipes = () => {
     return () => clearTimeout(timer);
   }, []);
   
-  // Filter and sort recipes based on selected filters
   const filteredRecipes = recipes
     .filter(recipe => 
       recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -380,7 +372,6 @@ const Recipes = () => {
           </div>
         </div>
         
-        {/* Selected filters display */}
         {selectedTags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
             {selectedTags.map(tag => (
