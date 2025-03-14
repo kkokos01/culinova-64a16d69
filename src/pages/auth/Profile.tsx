@@ -18,6 +18,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
+import { Space, UserProfile, UserSpace } from "@/types";
 
 interface ProfileData {
   display_name: string;
@@ -28,28 +29,12 @@ interface ProfileData {
   show_nutritional_info: boolean;
 }
 
-interface Space {
-  id: string;
-  name: string;
-  max_recipes: number;
-  max_users: number;
-  is_active: boolean;
-  created_at: string;
-}
-
-interface SpaceMembership {
-  id: string;
-  space_id: string;
-  role: 'admin' | 'editor' | 'viewer';
-  space?: Space;
-}
-
 const Profile = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [spaces, setSpaces] = useState<Space[]>([]);
-  const [memberships, setMemberships] = useState<SpaceMembership[]>([]);
+  const [memberships, setMemberships] = useState<UserSpace[]>([]);
   const [activeTab, setActiveTab] = useState("profile");
   const [profileData, setProfileData] = useState<ProfileData>({
     display_name: "",
@@ -82,7 +67,6 @@ const Profile = () => {
         setProfileData({
           display_name: data.display_name || "",
           avatar_url: data.avatar_url || "",
-          // Handle the case where these fields might not exist yet in some records
           default_unit_system: data.default_unit_system || "metric",
           theme_preference: data.theme_preference || "light",
           default_servings: data.default_servings || 2,
@@ -130,6 +114,9 @@ const Profile = () => {
           id: item.id as string,
           space_id: item.space_id as string,
           role: item.role as 'admin' | 'editor' | 'viewer',
+          user_id: user.id,
+          is_active: true,
+          created_at: new Date().toISOString(),
           space: item.space as Space
         }));
         
@@ -138,7 +125,7 @@ const Profile = () => {
         // Extract just the spaces
         const spacesList = processedMemberships
           .map(membership => membership.space)
-          .filter(Boolean) as Space[];
+          .filter((space): space is Space => !!space); // Type guard to ensure space is not null/undefined
         
         setSpaces(spacesList);
       }
