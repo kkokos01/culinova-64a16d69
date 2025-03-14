@@ -6,14 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { UserProfile, Space, UserSpace } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 const DatabaseTester = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [userSpaces, setUserSpaces] = useState<UserSpace[]>([]);
   const [testResults, setTestResults] = useState<{[key: string]: boolean | string}>({});
   const [loading, setLoading] = useState(false);
+  const [creatingSpace, setCreatingSpace] = useState(false);
 
   // Test 1: Check if user profile exists
   const testUserProfile = async () => {
@@ -126,6 +129,39 @@ const DatabaseTester = () => {
     setLoading(false);
   };
 
+  // Function to create a default space for the user
+  const createDefaultSpace = async () => {
+    if (!user) return;
+    
+    setCreatingSpace(true);
+    try {
+      // Call our function to create a space for an existing user
+      const { data, error } = await supabase
+        .rpc('create_space_for_existing_user', {
+          user_id_param: user.id
+        });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Space created",
+        description: "Default space has been created successfully!",
+      });
+      
+      // Re-run the tests to update the UI
+      await runAllTests();
+    } catch (error: any) {
+      console.error("Error creating default space:", error);
+      toast({
+        title: "Error creating space",
+        description: error.message || "Could not create default space",
+        variant: "destructive",
+      });
+    } finally {
+      setCreatingSpace(false);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       runAllTests();
@@ -174,6 +210,23 @@ const DatabaseTester = () => {
                   </div>
                 </div>
               </div>
+              
+              {/* Button to create default space for existing user */}
+              {testResults.userProfile && !testResults.userSpaces && (
+                <div className="my-4">
+                  <Button 
+                    onClick={createDefaultSpace} 
+                    disabled={creatingSpace}
+                    className="w-full"
+                  >
+                    {creatingSpace ? "Creating Space..." : "Create Default Space"}
+                  </Button>
+                  <p className="text-xs text-slate-500 mt-2">
+                    Your account was created before space functionality was added. 
+                    Click the button above to create a default space.
+                  </p>
+                </div>
+              )}
               
               <Separator />
               
