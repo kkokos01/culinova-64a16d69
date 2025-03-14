@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth state changed:", _event);
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -43,11 +44,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     setIsLoading(true);
+    
+    // Get the absolute URL for the auth callback
+    const redirectUrl = new URL('/auth/callback', window.location.origin).toString();
+    console.log("Signup redirect URL:", redirectUrl);
+    
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: redirectUrl,
+        data: {
+          email_confirmed_at: new Date().toISOString(),
+        },
       },
     });
     setIsLoading(false);

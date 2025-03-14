@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
@@ -9,20 +9,22 @@ const AuthCallback = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const handleAuthCallback = async () => {
-      // Get the 'code' query parameter from the URL
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
-      
-      if (!code) {
-        setError("No code provided");
-        setIsLoading(false);
-        return;
-      }
-
       try {
+        // Get the necessary parameters from the URL
+        const code = searchParams.get("code");
+        const type = searchParams.get("type");
+        
+        // Log parameters for debugging
+        console.log("Auth callback params:", { code, type });
+        
+        if (!code) {
+          throw new Error("No authentication code provided");
+        }
+
         // Exchange the code for a session
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         
@@ -30,18 +32,23 @@ const AuthCallback = () => {
           throw error;
         }
 
+        // Get the current session to verify it worked
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("Session established:", !!session);
+
         toast({
-          title: "Authentication successful",
+          title: type === "signup" ? "Email verified successfully" : "Authentication successful",
           description: "You are now signed in",
         });
         
         // Redirect to home page after successful auth
         navigate("/");
       } catch (err: any) {
-        setError(err.message);
+        console.error("Auth callback error:", err);
+        setError(err.message || "Authentication failed");
         toast({
           title: "Authentication failed",
-          description: err.message,
+          description: err.message || "Please try again",
           variant: "destructive",
         });
       } finally {
@@ -50,12 +57,13 @@ const AuthCallback = () => {
     };
 
     handleAuthCallback();
-  }, [navigate, toast]);
+  }, [navigate, toast, searchParams]);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-sage-500 border-t-transparent"></div>
+        <p className="ml-2 text-slate-700">Verifying your account...</p>
       </div>
     );
   }
