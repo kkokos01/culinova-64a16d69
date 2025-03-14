@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -89,9 +90,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     const isProduction = window.location.hostname !== 'localhost';
+    // Use the /auth/v1/callback path to match Google OAuth configuration
     const redirectTo = isProduction 
-      ? `https://culinova.lovable.app/auth/callback`
-      : `${window.location.origin}/auth/callback`;
+      ? `https://culinova.lovable.app/auth/v1/callback`
+      : `${window.location.origin}/auth/v1/callback`;
     
     console.log("Redirecting to:", redirectTo);
     

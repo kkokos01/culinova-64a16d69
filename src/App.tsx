@@ -33,6 +33,7 @@ const App = () => (
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/auth/v1/callback" element={<AuthCallback />} />
             
             {/* Protected routes */}
             <Route 
