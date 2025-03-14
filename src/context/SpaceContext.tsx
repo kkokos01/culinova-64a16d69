@@ -41,15 +41,15 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Get spaces the user has created - the query now uses the security function
-      const { data: ownedSpaces, error: ownedError } = await supabase
+      // With our improved RLS policies, we can simply fetch all spaces the user has access to
+      const { data: spacesData, error: spacesError } = await supabase
         .from("spaces")
         .select("*")
         .eq("is_active", true);
       
-      if (ownedError) {
-        console.error("Error fetching spaces:", ownedError);
-        throw ownedError;
+      if (spacesError) {
+        console.error("Error fetching spaces:", spacesError);
+        throw spacesError;
       }
       
       // Get user's space memberships
@@ -64,15 +64,12 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
         throw membershipError;
       }
       
-      // Since we now have proper RLS policies, the spaces query above will already include
-      // both owned spaces and spaces the user is a member of, so no need to do another query
-      
-      setSpaces(ownedSpaces as Space[] || []);
+      setSpaces(spacesData as Space[] || []);
       setMemberships(membershipData as UserSpace[] || []);
       
       // Set default space if none is already selected and we have spaces
-      if (ownedSpaces && ownedSpaces.length > 0 && !currentSpace) {
-        setCurrentSpace(ownedSpaces[0]);
+      if (spacesData && spacesData.length > 0 && !currentSpace) {
+        setCurrentSpace(spacesData[0]);
       }
       
     } catch (error: any) {
@@ -110,16 +107,14 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
       
       if (newSpace) {
         // Create a membership for this space
-        const { data: newMembership, error: membershipError } = await supabase
+        const { error: membershipError } = await supabase
           .from("user_spaces")
           .insert({
             user_id: user.id,
             space_id: newSpace.id,
             role: 'admin',
             is_active: true
-          })
-          .select()
-          .single();
+          });
           
         if (membershipError) throw membershipError;
         
