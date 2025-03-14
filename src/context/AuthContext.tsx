@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,14 +23,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("Auth state changed:", _event);
       setSession(session);
@@ -45,7 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string) => {
     setIsLoading(true);
     
-    // Using proper redirect URL with the connected Supabase
     const redirectUrl = new URL('/auth/callback', window.location.origin).toString();
     
     const { error } = await supabase.auth.signUp({
@@ -92,10 +88,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
+    const isProduction = window.location.hostname !== 'localhost';
+    const redirectTo = isProduction 
+      ? `https://culinova.lovable.app/auth/callback`
+      : `${window.location.origin}/auth/callback`;
+    
+    console.log("Redirecting to:", redirectTo);
+    
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo,
       },
     });
   };
