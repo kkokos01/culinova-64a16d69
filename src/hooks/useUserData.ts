@@ -137,6 +137,65 @@ export function useUserData(userId: string | undefined) {
     }
   };
 
+  const createSpace = async (name: string) => {
+    if (!userId) return null;
+    
+    try {
+      setIsLoading(true);
+      
+      // Create a new space
+      const { data: spaceData, error: spaceError } = await supabase
+        .from("spaces")
+        .insert({
+          name,
+          created_by: userId,
+          max_recipes: 100, // Default values
+          max_users: 5,
+          is_active: true
+        })
+        .select()
+        .single();
+      
+      if (spaceError) throw spaceError;
+      
+      if (spaceData) {
+        // Add the creator as an admin of the space
+        const { error: membershipError } = await supabase
+          .from("user_spaces")
+          .insert({
+            user_id: userId,
+            space_id: spaceData.id,
+            role: 'admin',
+            is_active: true
+          });
+        
+        if (membershipError) throw membershipError;
+        
+        // Refresh spaces list
+        await fetchSpaces();
+        
+        toast({
+          title: "Space created",
+          description: `Your new space "${name}" has been created successfully.`,
+        });
+        
+        return spaceData as Space;
+      }
+      
+      return null;
+    } catch (error: any) {
+      console.error("Error creating space:", error);
+      toast({
+        title: "Error creating space",
+        description: error.message || "Could not create the space. Please try again.",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (userId) {
       fetchProfile();
@@ -153,5 +212,6 @@ export function useUserData(userId: string | undefined) {
     memberships,
     fetchSpaces,
     fetchProfile,
+    createSpace,
   };
 }

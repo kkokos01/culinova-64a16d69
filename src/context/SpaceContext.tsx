@@ -12,6 +12,7 @@ interface SpaceContextType {
   isLoading: boolean;
   setCurrentSpace: (space: Space | null) => void;
   refreshSpaces: () => Promise<void>;
+  createSpace: (name: string) => Promise<Space | null>;
   userRole: 'admin' | 'editor' | 'viewer' | null;
   canManageSpace: boolean;
   canEditContent: boolean;
@@ -113,9 +114,71 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
       console.error("Error fetching spaces:", error);
       toast({
         title: "Error loading spaces",
-        description: error.message,
+        description: error.message || "Could not load your spaces.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createSpace = async (name: string): Promise<Space | null> => {
+    if (!user?.id) return null;
+    
+    try {
+      setIsLoading(true);
+      
+      // Create a new space
+      const { data: spaceData, error: spaceError } = await supabase
+        .from("spaces")
+        .insert({
+          name,
+          created_by: user.id,
+          max_recipes: 100, // Default values
+          max_users: 5,
+          is_active: true
+        })
+        .select()
+        .single();
+      
+      if (spaceError) throw spaceError;
+      
+      if (spaceData) {
+        // Add the creator as an admin of the space
+        const { error: membershipError } = await supabase
+          .from("user_spaces")
+          .insert({
+            user_id: user.id,
+            space_id: spaceData.id,
+            role: 'admin',
+            is_active: true
+          });
+        
+        if (membershipError) throw membershipError;
+        
+        // Refresh spaces list
+        await fetchSpaces();
+        
+        // Set the newly created space as the current space
+        setCurrentSpace(spaceData as Space);
+        
+        toast({
+          title: "Space created",
+          description: `Your new space "${name}" has been created successfully.`,
+        });
+        
+        return spaceData as Space;
+      }
+      
+      return null;
+    } catch (error: any) {
+      console.error("Error creating space:", error);
+      toast({
+        title: "Error creating space",
+        description: error.message || "Could not create the space. Please try again.",
+        variant: "destructive",
+      });
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -135,6 +198,7 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
         isLoading,
         setCurrentSpace,
         refreshSpaces: fetchSpaces,
+        createSpace,
         userRole,
         canManageSpace,
         canEditContent
