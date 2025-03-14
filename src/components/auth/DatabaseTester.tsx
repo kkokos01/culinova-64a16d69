@@ -7,10 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { UserProfile, Space, UserSpace } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { useSpace } from "@/context/SpaceContext";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 const DatabaseTester = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { refreshSpaces } = useSpace();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [userSpaces, setUserSpaces] = useState<UserSpace[]>([]);
@@ -28,15 +31,19 @@ const DatabaseTester = () => {
         .from("user_profiles")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
       
       if (error) {
         setErrorMessages(prev => ({ ...prev, userProfile: error.message }));
         throw error;
       }
       
-      setUserProfile(data as UserProfile);
-      return !!data;
+      if (data) {
+        setUserProfile(data as UserProfile);
+        return true;
+      } else {
+        return false;
+      }
     } catch (error: any) {
       console.error("Error testing user profile:", error);
       setErrorMessages(prev => ({ ...prev, userProfile: error.message }));
@@ -49,26 +56,53 @@ const DatabaseTester = () => {
     if (!user) return false;
     
     try {
-      const { data, error } = await supabase
+      // First try directly owned spaces
+      const { data: ownedSpaces, error: ownedError } = await supabase
         .from("spaces")
-        .select(`
-          id, 
-          name, 
-          created_by, 
-          max_recipes, 
-          max_users, 
-          is_active, 
-          created_at
-        `)
+        .select("*")
         .eq("created_by", user.id);
       
-      if (error) {
-        setErrorMessages(prev => ({ ...prev, userSpaces: error.message }));
-        throw error;
+      if (ownedError) {
+        console.error("Error testing owned spaces:", ownedError);
+        setErrorMessages(prev => ({ ...prev, userSpaces: ownedError.message }));
       }
       
-      setSpaces(data as Space[]);
-      return data.length > 0;
+      // Then try spaces user is a member of
+      const { data: memberships, error: membershipError } = await supabase
+        .from("user_spaces")
+        .select("space_id")
+        .eq("user_id", user.id);
+        
+      if (membershipError) {
+        console.error("Error testing memberships:", membershipError);
+        setErrorMessages(prev => ({ ...prev, userSpacesMembership: membershipError.message }));
+      }
+      
+      // If we have memberships, fetch those spaces
+      let memberSpaces: Space[] = [];
+      if (memberships && memberships.length > 0) {
+        const spaceIds = memberships.map(m => m.space_id);
+        const { data: spaces, error: spacesError } = await supabase
+          .from("spaces")
+          .select("*")
+          .in("id", spaceIds);
+          
+        if (spacesError) {
+          console.error("Error testing member spaces:", spacesError);
+          setErrorMessages(prev => ({ ...prev, memberSpaces: spacesError.message }));
+        } else if (spaces) {
+          memberSpaces = spaces as Space[];
+        }
+      }
+      
+      // Combine and deduplicate spaces
+      const allSpaces = [...(ownedSpaces || []), ...memberSpaces];
+      const uniqueSpacesMap = new Map();
+      allSpaces.forEach(space => uniqueSpacesMap.set(space.id, space));
+      const uniqueSpaces = Array.from(uniqueSpacesMap.values()) as Space[];
+      
+      setSpaces(uniqueSpaces);
+      return uniqueSpaces.length > 0;
     } catch (error: any) {
       console.error("Error testing user spaces:", error);
       setErrorMessages(prev => ({ ...prev, userSpaces: error.message }));
@@ -156,23 +190,48 @@ const DatabaseTester = () => {
     try {
       console.log("Creating default space for user:", user.id);
       
-      // Call our function to create a space for an existing user
-      const { data, error } = await supabase
-        .rpc('create_space_for_existing_user', {
-          user_id_param: user.id
-        });
-      
-      if (error) {
-        console.error("RPC Error:", error);
-        throw error;
+      // Directly create a space instead of using RPC
+      const { data: space, error: spaceError } = await supabase
+        .from("spaces")
+        .insert({
+          name: 'My Recipes',
+          created_by: user.id,
+          max_recipes: 100,
+          max_users: 5,
+          is_active: true
+        })
+        .select()
+        .single();
+        
+      if (spaceError) {
+        console.error("Space creation error:", spaceError);
+        throw spaceError;
       }
       
-      console.log("Space created successfully, space_id:", data);
+      console.log("Space created successfully, space_id:", space.id);
+      
+      // Create membership
+      const { error: membershipError } = await supabase
+        .from("user_spaces")
+        .insert({
+          user_id: user.id,
+          space_id: space.id,
+          role: 'admin',
+          is_active: true
+        });
+        
+      if (membershipError) {
+        console.error("Membership creation error:", membershipError);
+        throw membershipError;
+      }
       
       toast({
         title: "Space created",
         description: "Default space has been created successfully!",
       });
+      
+      // Refresh spaces in the SpaceContext
+      await refreshSpaces();
       
       // Wait a moment for the database to update
       setTimeout(async () => {
@@ -216,28 +275,44 @@ const DatabaseTester = () => {
               <div>
                 <h3 className="text-lg font-medium">Test Results</h3>
                 <div className="mt-2 space-y-2">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center py-1">
                     <span>User Profile Created:</span>
-                    <span className={testResults.userProfile ? "text-green-500" : "text-red-500"}>
-                      {testResults.userProfile ? "✓ Pass" : "✗ Fail"}
+                    <span className={`flex items-center ${testResults.userProfile ? "text-green-500" : "text-red-500"}`}>
+                      {testResults.userProfile ? (
+                        <><CheckCircle2 className="w-4 h-4 mr-1" /> Pass</>
+                      ) : (
+                        <><AlertCircle className="w-4 h-4 mr-1" /> Fail</>
+                      )}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center py-1">
                     <span>Default Space Created:</span>
-                    <span className={testResults.userSpaces ? "text-green-500" : "text-red-500"}>
-                      {testResults.userSpaces ? "✓ Pass" : "✗ Fail"}
+                    <span className={`flex items-center ${testResults.userSpaces ? "text-green-500" : "text-red-500"}`}>
+                      {testResults.userSpaces ? (
+                        <><CheckCircle2 className="w-4 h-4 mr-1" /> Pass</>
+                      ) : (
+                        <><AlertCircle className="w-4 h-4 mr-1" /> Fail</>
+                      )}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center py-1">
                     <span>Admin Role Assigned:</span>
-                    <span className={testResults.spaceMembership ? "text-green-500" : "text-red-500"}>
-                      {testResults.spaceMembership ? "✓ Pass" : "✗ Fail"}
+                    <span className={`flex items-center ${testResults.spaceMembership ? "text-green-500" : "text-red-500"}`}>
+                      {testResults.spaceMembership ? (
+                        <><CheckCircle2 className="w-4 h-4 mr-1" /> Pass</>
+                      ) : (
+                        <><AlertCircle className="w-4 h-4 mr-1" /> Fail</>
+                      )}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center py-1">
                     <span>RLS Policies Working:</span>
-                    <span className={testResults.rlsPolicies ? "text-green-500" : "text-red-500"}>
-                      {testResults.rlsPolicies ? "✓ Pass" : "✗ Fail"}
+                    <span className={`flex items-center ${testResults.rlsPolicies ? "text-green-500" : "text-red-500"}`}>
+                      {testResults.rlsPolicies ? (
+                        <><CheckCircle2 className="w-4 h-4 mr-1" /> Pass</>
+                      ) : (
+                        <><AlertCircle className="w-4 h-4 mr-1" /> Fail</>
+                      )}
                     </span>
                   </div>
                 </div>
@@ -245,7 +320,12 @@ const DatabaseTester = () => {
               
               {/* Button to create default space for existing user */}
               {testResults.userProfile && !testResults.userSpaces && (
-                <div className="my-4">
+                <div className="my-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                  <h4 className="text-sm font-medium text-blue-800 mb-2">Create Default Space</h4>
+                  <p className="text-sm text-slate-600 mb-3">
+                    Your account was created before space functionality was added. 
+                    Click the button below to create a default space.
+                  </p>
                   <Button 
                     onClick={createDefaultSpace} 
                     disabled={creatingSpace}
@@ -253,12 +333,8 @@ const DatabaseTester = () => {
                   >
                     {creatingSpace ? "Creating Space..." : "Create Default Space"}
                   </Button>
-                  <p className="text-xs text-slate-500 mt-2">
-                    Your account was created before space functionality was added. 
-                    Click the button above to create a default space.
-                  </p>
                   {errorMessages.createSpace && (
-                    <p className="text-xs text-red-500 mt-1">
+                    <p className="text-xs text-red-500 mt-2">
                       Error: {errorMessages.createSpace}
                     </p>
                   )}

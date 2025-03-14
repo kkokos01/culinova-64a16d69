@@ -41,32 +41,66 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Get user's space memberships
+      // Fetch spaces directly first, using the new RLS policy
+      const { data: spacesData, error: spacesError } = await supabase
+        .from("spaces")
+        .select("*")
+        .eq("created_by", user.id)
+        .eq("is_active", true);
+      
+      if (spacesError) {
+        console.error("Error fetching spaces:", spacesError);
+        throw spacesError;
+      }
+      
+      // Get user's space memberships 
       const { data: membershipData, error: membershipError } = await supabase
         .from("user_spaces")
-        .select("*, space:spaces(*)")
+        .select("*")
         .eq("user_id", user.id)
         .eq("is_active", true);
 
-      if (membershipError) throw membershipError;
+      if (membershipError) {
+        console.error("Error fetching memberships:", membershipError);
+        throw membershipError;
+      }
       
-      if (membershipData) {
-        // Extract the spaces from memberships
-        const userSpaces: Space[] = membershipData
-          .filter(item => item.space)
-          .map(item => item.space as Space);
-        
-        setMemberships(membershipData as unknown as UserSpace[]);
-        setSpaces(userSpaces);
-        
-        // Set default space if none is already selected
-        if (userSpaces.length > 0 && !currentSpace) {
-          setCurrentSpace(userSpaces[0]);
+      // Get all space IDs from memberships
+      const spaceIds = membershipData?.map(m => m.space_id) || [];
+      
+      // If we have space IDs from memberships, fetch those spaces too
+      let spacesFromMemberships: Space[] = [];
+      if (spaceIds.length > 0) {
+        const { data: memberSpaces, error: memberSpacesError } = await supabase
+          .from("spaces")
+          .select("*")
+          .in("id", spaceIds)
+          .eq("is_active", true);
+          
+        if (memberSpacesError) {
+          console.error("Error fetching spaces from memberships:", memberSpacesError);
+          throw memberSpacesError;
         }
+        
+        spacesFromMemberships = memberSpaces as Space[] || [];
+      }
+      
+      // Combine directly owned spaces and spaces from memberships, removing duplicates
+      const allSpaces = [...(spacesData || []), ...spacesFromMemberships];
+      const uniqueSpacesMap = new Map();
+      allSpaces.forEach(space => uniqueSpacesMap.set(space.id, space));
+      const uniqueSpaces = Array.from(uniqueSpacesMap.values()) as Space[];
+      
+      setSpaces(uniqueSpaces);
+      setMemberships(membershipData as UserSpace[] || []);
+      
+      // Set default space if none is already selected and we have spaces
+      if (uniqueSpaces.length > 0 && !currentSpace) {
+        setCurrentSpace(uniqueSpaces[0]);
       }
       
     } catch (error: any) {
-      console.error("Error fetching spaces:", error);
+      console.error("Error in fetchSpaces:", error);
       toast({
         title: "Error loading spaces",
         description: error.message || "Could not load your spaces.",
@@ -140,7 +174,14 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
 
   // Fetch spaces when the user changes
   useEffect(() => {
-    fetchSpaces();
+    if (user?.id) {
+      fetchSpaces();
+    } else {
+      // Clear spaces when user logs out
+      setSpaces([]);
+      setMemberships([]);
+      setCurrentSpace(null);
+    }
   }, [user?.id]);
 
   return (
