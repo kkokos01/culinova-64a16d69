@@ -61,12 +61,54 @@ export function useUserData(userId: string | undefined) {
     }
   };
 
-  // For now, spaces and memberships will be empty since we need to update the database schema
-  // We'll simulate the spaces functionality until the database is updated
-
   const fetchSpaces = async () => {
-    // For now, just set loading to false as we can't fetch real spaces yet
-    setIsLoading(false);
+    if (!userId) return;
+    
+    try {
+      setIsLoading(true);
+      setIsError(false);
+      
+      // Step 1: Get all space memberships for the user
+      const { data: membershipData, error: membershipError } = await supabase
+        .from("user_spaces")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("is_active", true);
+        
+      if (membershipError) throw membershipError;
+      
+      if (membershipData && membershipData.length > 0) {
+        setMemberships(membershipData);
+        
+        // Step 2: Get all spaces based on memberships
+        const spaceIds = membershipData.map(membership => membership.space_id);
+        
+        const { data: spacesData, error: spacesError } = await supabase
+          .from("spaces")
+          .select("*")
+          .in("id", spaceIds)
+          .eq("is_active", true);
+          
+        if (spacesError) throw spacesError;
+        
+        if (spacesData) {
+          setSpaces(spacesData);
+        }
+      } else {
+        // If no memberships found, clear spaces
+        setSpaces([]);
+      }
+    } catch (error) {
+      console.error("Error fetching spaces:", error);
+      setIsError(true);
+      toast({
+        title: "Error loading spaces",
+        description: "Could not load your spaces. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const createSpace = async (name: string) => {
@@ -75,14 +117,50 @@ export function useUserData(userId: string | undefined) {
     try {
       setIsLoading(true);
       
-      // For now, just show a message that space creation isn't available
+      // Create a new space
+      const { data: spaceData, error: spaceError } = await supabase
+        .from("spaces")
+        .insert([
+          { 
+            name, 
+            created_by: userId, 
+            max_recipes: 100, 
+            max_users: 5, 
+            is_active: true 
+          }
+        ])
+        .select()
+        .single();
+        
+      if (spaceError) throw spaceError;
+      
+      if (!spaceData) throw new Error("Failed to create space");
+      
+      // Create membership as admin for the creator
+      const { data: membershipData, error: membershipError } = await supabase
+        .from("user_spaces")
+        .insert([
+          {
+            user_id: userId,
+            space_id: spaceData.id,
+            role: "admin",
+            is_active: true
+          }
+        ])
+        .select()
+        .single();
+        
+      if (membershipError) throw membershipError;
+      
+      // Refresh spaces list
+      await fetchSpaces();
+      
       toast({
-        title: "Space creation unavailable",
-        description: "Space creation is currently unavailable - database schema needs updating.",
-        variant: "destructive",
+        title: "Space created",
+        description: `"${name}" has been created successfully.`,
       });
       
-      return null;
+      return spaceData;
     } catch (error: any) {
       console.error("Error creating space:", error);
       toast({

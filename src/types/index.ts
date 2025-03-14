@@ -79,6 +79,8 @@ export interface Recipe {
   servings: number;
   difficulty: 'easy' | 'medium' | 'hard';
   is_public: boolean;
+  // Enhanced privacy settings
+  privacy_level: 'private' | 'space' | 'public' | 'shared';
   created_at: string;
   updated_at: string;
   tags?: string[];

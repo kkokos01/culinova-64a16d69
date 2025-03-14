@@ -9,6 +9,7 @@ import { MOCK_RECIPES } from "@/data/mockRecipes";
 import { filterRecipes } from "@/utils/recipeUtils";
 import { Recipe } from "@/types";
 import { useAuth } from "@/context/AuthContext";
+import { useSpace } from "@/context/SpaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,6 +22,7 @@ const Recipes = () => {
   const [sortOption, setSortOption] = useState("newest");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const { user } = useAuth();
+  const { currentSpace } = useSpace();
   const { toast } = useToast();
   
   useEffect(() => {
@@ -30,10 +32,22 @@ const Recipes = () => {
       setIsLoading(true);
       
       try {
-        // If we have a user and Supabase is integrated, we can make a real query
+        if (user && currentSpace) {
+          // If we have a user and current space, fetch recipes from that space
+          console.log(`Fetching recipes for space: ${currentSpace.id}`);
+          // For now, still use mock data but log future query structure
+          console.log(`Future query: SELECT * FROM recipes WHERE space_id = '${currentSpace.id}' OR is_public = true`);
+        }
+        
         // For now, just use mock data
         const timer = setTimeout(() => {
-          setRecipes(MOCK_RECIPES);
+          // Add privacy_level to mock recipes for UI testing
+          const enhancedMockRecipes = MOCK_RECIPES.map(recipe => ({
+            ...recipe,
+            privacy_level: recipe.is_public ? 'public' : 'space'
+          }));
+          
+          setRecipes(enhancedMockRecipes);
           setIsLoading(false);
         }, 500);
         
@@ -50,7 +64,7 @@ const Recipes = () => {
     };
     
     fetchRecipes();
-  }, [toast]);
+  }, [toast, user, currentSpace]);
   
   const filteredRecipes = filterRecipes(
     recipes,
