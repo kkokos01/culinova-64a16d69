@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 // This component handles authentication callbacks from Supabase
+// It supports both /auth/callback and /auth/v1/callback paths
+// The /auth/v1/callback path is specifically used for Google OAuth
 const AuthCallback = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
