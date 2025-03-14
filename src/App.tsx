@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,47 +14,53 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import Profile from "./pages/auth/Profile";
 import AuthCallback from "./pages/auth/AuthCallback";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import DatabaseTest from "@/pages/auth/DatabaseTest";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <SpaceProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/recipes" element={<Recipes />} />
-              
-              {/* Auth routes */}
-              <Route path="/sign-in" element={<SignIn />} />
-              <Route path="/sign-up" element={<SignUp />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              
-              {/* Auth callback route - used for both email and Google OAuth */}
-              <Route path="/auth/v1/callback" element={<AuthCallback />} />
-              
-              {/* Protected routes */}
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </SpaceProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <SpaceProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/recipes" element={<Recipes />} />
+                
+                {/* Auth routes */}
+                <Route path="/sign-in" element={<SignIn />} />
+                <Route path="/sign-up" element={<SignUp />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                
+                {/* Auth callback route - used for both email and Google OAuth */}
+                <Route path="/auth/v1/callback" element={<AuthCallback />} />
+                
+                {/* Protected routes */}
+                <Route 
+                  path="/profile" 
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Catch-all route */}
+                <Route path="*" element={<NotFound />} />
+                
+                {/* Auth test route */}
+                <Route path="/auth/test" element={<DatabaseTest />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </SpaceProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
