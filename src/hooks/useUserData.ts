@@ -39,10 +39,10 @@ export function useUserData(userId: string | undefined) {
         setProfileData({
           display_name: data.display_name || "",
           avatar_url: data.avatar_url || "",
-          default_unit_system: data.preferred_units === "imperial" ? "imperial" : "metric",
-          theme_preference: "light", // Default value since it doesn't exist in DB
-          default_servings: 2, // Default value since it doesn't exist in DB
-          show_nutritional_info: true // Default value since it doesn't exist in DB
+          default_unit_system: data.default_unit_system || data.preferred_units || "metric",
+          theme_preference: data.theme_preference || "light",
+          default_servings: data.default_servings || 2,
+          show_nutritional_info: data.show_nutritional_info || true
         });
       }
     } catch (error) {
@@ -58,7 +58,6 @@ export function useUserData(userId: string | undefined) {
     }
   };
 
-  // For now, we'll use mock data for spaces since the tables don't exist in the schema
   const fetchSpaces = async () => {
     if (!userId) return;
     
@@ -66,33 +65,29 @@ export function useUserData(userId: string | undefined) {
       setIsLoading(true);
       setIsError(false);
       
-      // Mock data for now
-      const mockSpaces: Space[] = [
-        {
-          id: "1",
-          name: "My Recipes",
-          created_by: userId,
-          max_recipes: 100,
-          max_users: 5,
-          is_active: true,
-          created_at: new Date().toISOString()
-        }
-      ];
+      // Get user's space memberships
+      const { data: membershipData, error: membershipError } = await supabase
+        .from("user_spaces")
+        .select("*, space:spaces(*)")
+        .eq("user_id", userId)
+        .eq("is_active", true);
+
+      if (membershipError) throw membershipError;
       
-      const mockMemberships: UserSpace[] = [
-        {
-          id: "1",
-          user_id: userId,
-          space_id: "1",
-          role: "admin",
-          is_active: true,
-          created_at: new Date().toISOString(),
-          space: mockSpaces[0]
+      if (membershipData) {
+        // Extract the spaces from memberships
+        const userSpaces: Space[] = membershipData
+          .filter(item => item.space)
+          .map(item => item.space as Space);
+        
+        setMemberships(membershipData as unknown as UserSpace[]);
+        setSpaces(userSpaces);
+        
+        // Set default space if none is already selected
+        if (userSpaces.length > 0 && !spaces.length) {
+          console.log("Setting default space:", userSpaces[0]);
         }
-      ];
-      
-      setMemberships(mockMemberships);
-      setSpaces(mockSpaces);
+      }
       
     } catch (error) {
       console.error("Error fetching spaces:", error);
@@ -113,39 +108,48 @@ export function useUserData(userId: string | undefined) {
     try {
       setIsLoading(true);
       
-      // For now, create a mock space since the tables don't exist
-      const newSpace: Space = {
-        id: Date.now().toString(),
-        name,
-        created_by: userId,
-        max_recipes: 100,
-        max_users: 5,
-        is_active: true,
-        created_at: new Date().toISOString()
-      };
+      // Insert a new space
+      const { data: newSpace, error: spaceError } = await supabase
+        .from("spaces")
+        .insert({
+          name,
+          created_by: userId,
+          max_recipes: 100,
+          max_users: 5,
+          is_active: true
+        })
+        .select()
+        .single();
       
-      // Add to existing spaces
-      setSpaces(prev => [...prev, newSpace]);
+      if (spaceError) throw spaceError;
       
-      // Create a membership for this space
-      const newMembership: UserSpace = {
-        id: Date.now().toString(),
-        user_id: userId,
-        space_id: newSpace.id,
-        role: "admin",
-        is_active: true,
-        created_at: new Date().toISOString(),
-        space: newSpace
-      };
+      if (newSpace) {
+        // Create a membership for this space
+        const { data: newMembership, error: membershipError } = await supabase
+          .from("user_spaces")
+          .insert({
+            user_id: userId,
+            space_id: newSpace.id,
+            role: 'admin',
+            is_active: true
+          })
+          .select()
+          .single();
+          
+        if (membershipError) throw membershipError;
+        
+        // Refresh the spaces after creating a new one
+        await fetchSpaces();
+        
+        toast({
+          title: "Space created",
+          description: `"${name}" has been created successfully.`,
+        });
+        
+        return newSpace as Space;
+      }
       
-      setMemberships(prev => [...prev, newMembership]);
-      
-      toast({
-        title: "Space created",
-        description: `"${name}" has been created successfully.`,
-      });
-      
-      return newSpace;
+      return null;
     } catch (error: any) {
       console.error("Error creating space:", error);
       toast({

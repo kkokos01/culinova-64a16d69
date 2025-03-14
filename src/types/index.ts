@@ -12,6 +12,10 @@ export interface UserProfile {
   display_name?: string;
   avatar_url?: string;
   preferred_units?: string;
+  default_unit_system?: 'metric' | 'imperial';
+  theme_preference?: 'light' | 'dark' | 'system';
+  default_servings?: number;
+  show_nutritional_info?: boolean;
   created_at: string;
   updated_at: string;
 }

@@ -35,41 +35,34 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
   const canManageSpace = userRole === 'admin';
   const canEditContent = userRole === 'admin' || userRole === 'editor';
 
-  // For now, we'll use simulated data since the database schema doesn't match
-  // what our code expects
   const fetchSpaces = async () => {
     if (!user?.id) return;
     
     try {
       setIsLoading(true);
       
-      // Simulate a single default space for now
-      const defaultSpace: Space = {
-        id: "default",
-        name: "My Recipes",
-        created_by: user.id,
-        max_recipes: 100,
-        max_users: 5,
-        is_active: true,
-        created_at: new Date().toISOString()
-      };
+      // Get user's space memberships
+      const { data: membershipData, error: membershipError } = await supabase
+        .from("user_spaces")
+        .select("*, space:spaces(*)")
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+
+      if (membershipError) throw membershipError;
       
-      const defaultMembership: UserSpace = {
-        id: "default-membership",
-        user_id: user.id,
-        space_id: "default",
-        role: 'admin',
-        is_active: true,
-        created_at: new Date().toISOString(),
-        space: defaultSpace
-      };
-      
-      setSpaces([defaultSpace]);
-      setMemberships([defaultMembership]);
-      
-      // Set the default space as current if none is selected
-      if (!currentSpace) {
-        setCurrentSpace(defaultSpace);
+      if (membershipData) {
+        // Extract the spaces from memberships
+        const userSpaces: Space[] = membershipData
+          .filter(item => item.space)
+          .map(item => item.space as Space);
+        
+        setMemberships(membershipData as unknown as UserSpace[]);
+        setSpaces(userSpaces);
+        
+        // Set default space if none is already selected
+        if (userSpaces.length > 0 && !currentSpace) {
+          setCurrentSpace(userSpaces[0]);
+        }
       }
       
     } catch (error: any) {
@@ -90,12 +83,46 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Show a toast that this functionality isn't available yet
-      toast({
-        title: "Space creation unavailable",
-        description: "Space creation is currently unavailable - database schema needs updating.",
-        variant: "destructive",
-      });
+      // Insert a new space
+      const { data: newSpace, error: spaceError } = await supabase
+        .from("spaces")
+        .insert({
+          name,
+          created_by: user.id,
+          max_recipes: 100,
+          max_users: 5,
+          is_active: true
+        })
+        .select()
+        .single();
+      
+      if (spaceError) throw spaceError;
+      
+      if (newSpace) {
+        // Create a membership for this space
+        const { data: newMembership, error: membershipError } = await supabase
+          .from("user_spaces")
+          .insert({
+            user_id: user.id,
+            space_id: newSpace.id,
+            role: 'admin',
+            is_active: true
+          })
+          .select()
+          .single();
+          
+        if (membershipError) throw membershipError;
+        
+        // Refresh the spaces after creating a new one
+        await fetchSpaces();
+        
+        toast({
+          title: "Space created",
+          description: `"${name}" has been created successfully.`,
+        });
+        
+        return newSpace as Space;
+      }
       
       return null;
     } catch (error: any) {

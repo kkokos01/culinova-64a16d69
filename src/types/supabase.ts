@@ -22,6 +22,7 @@ export interface Database {
           image_url?: string
           user_id: string
           is_public: boolean
+          privacy_level: 'private' | 'space' | 'public' | 'shared'
           created_at: string
           updated_at: string
         }
@@ -36,6 +37,7 @@ export interface Database {
           image_url?: string
           user_id: string
           is_public?: boolean
+          privacy_level?: 'private' | 'space' | 'public' | 'shared'
           created_at?: string
           updated_at?: string
         }
@@ -50,6 +52,7 @@ export interface Database {
           image_url?: string
           user_id?: string
           is_public?: boolean
+          privacy_level?: 'private' | 'space' | 'public' | 'shared'
           created_at?: string
           updated_at?: string
         }
@@ -155,6 +158,7 @@ export interface Database {
           user_id: string
           display_name?: string
           avatar_url?: string
+          preferred_units?: string
           default_unit_system?: 'metric' | 'imperial'
           theme_preference?: 'light' | 'dark' | 'system'
           default_servings?: number
@@ -167,6 +171,7 @@ export interface Database {
           user_id: string
           display_name?: string
           avatar_url?: string
+          preferred_units?: string
           default_unit_system?: 'metric' | 'imperial'
           theme_preference?: 'light' | 'dark' | 'system'
           default_servings?: number
@@ -179,38 +184,13 @@ export interface Database {
           user_id?: string
           display_name?: string
           avatar_url?: string
+          preferred_units?: string
           default_unit_system?: 'metric' | 'imperial'
           theme_preference?: 'light' | 'dark' | 'system'
           default_servings?: number
           show_nutritional_info?: boolean
           created_at?: string
           updated_at?: string
-        }
-      }
-      user_spaces: {
-        Row: {
-          id: string
-          user_id: string
-          space_id: string
-          role: 'admin' | 'editor' | 'viewer'
-          is_active: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          space_id: string
-          role?: 'admin' | 'editor' | 'viewer'
-          is_active?: boolean
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          space_id?: string
-          role?: 'admin' | 'editor' | 'viewer'
-          is_active?: boolean
-          created_at?: string
         }
       }
       spaces: {
@@ -241,6 +221,56 @@ export interface Database {
           is_active?: boolean
           created_at?: string
         }
+      }
+      user_spaces: {
+        Row: {
+          id: string
+          user_id: string
+          space_id: string
+          role: 'admin' | 'editor' | 'viewer'
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          space_id: string
+          role?: 'admin' | 'editor' | 'viewer'
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          space_id?: string
+          role?: 'admin' | 'editor' | 'viewer'
+          is_active?: boolean
+          created_at?: string
+        }
+      }
+      schema_migrations: {
+        Row: {
+          version: string
+          description: string
+          applied_at?: string | null
+          success?: boolean | null
+          rollback_script?: string | null
+        }
+        Insert: {
+          version: string
+          description: string
+          applied_at?: string | null
+          success?: boolean | null
+          rollback_script?: string | null
+        }
+        Update: {
+          version?: string
+          description?: string
+          applied_at?: string | null
+          success?: boolean | null
+          rollback_script?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

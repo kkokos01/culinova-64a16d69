@@ -33,35 +33,112 @@ export type Database = {
         }
         Relationships: []
       }
+      spaces: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          max_recipes: number
+          max_users: number
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          max_recipes?: number
+          max_users?: number
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          max_recipes?: number
+          max_users?: number
+          name?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
+          default_servings: number | null
+          default_unit_system: string | null
           display_name: string | null
           id: string
           preferred_units: string | null
+          show_nutritional_info: boolean | null
+          theme_preference: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          default_servings?: number | null
+          default_unit_system?: string | null
           display_name?: string | null
           id?: string
           preferred_units?: string | null
+          show_nutritional_info?: boolean | null
+          theme_preference?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          default_servings?: number | null
+          default_unit_system?: string | null
           display_name?: string | null
           id?: string
           preferred_units?: string | null
+          show_nutritional_info?: boolean | null
+          theme_preference?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      user_spaces: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          role: string
+          space_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          role?: string
+          space_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          role?: string
+          space_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_spaces_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
