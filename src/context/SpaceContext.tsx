@@ -67,23 +67,28 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
 
       if (membershipData) {
         // Process memberships
-        const processedMemberships: UserSpace[] = membershipData.map(item => ({
-          id: item.id,
-          space_id: item.space_id,
-          user_id: item.user_id,
-          role: item.role as 'admin' | 'editor' | 'viewer',
-          is_active: item.is_active,
-          created_at: item.created_at,
-          space: item.space ? {
-            id: item.space.id,
-            name: item.space.name,
-            created_by: item.space.created_by,
-            max_recipes: item.space.max_recipes || 0,
-            max_users: item.space.max_users || 0,
-            is_active: item.space.is_active,
-            created_at: item.space.created_at
-          } as Space : undefined
-        }));
+        const processedMemberships: UserSpace[] = membershipData.map(item => {
+          // Extract the space object from the item
+          const spaceData = item.space as any; // Temporary type for extraction
+          
+          return {
+            id: item.id,
+            space_id: item.space_id,
+            user_id: item.user_id,
+            role: item.role as 'admin' | 'editor' | 'viewer',
+            is_active: item.is_active,
+            created_at: item.created_at,
+            space: spaceData ? {
+              id: spaceData.id,
+              name: spaceData.name,
+              created_by: spaceData.created_by,
+              max_recipes: spaceData.max_recipes || 0,
+              max_users: spaceData.max_users || 0,
+              is_active: spaceData.is_active,
+              created_at: spaceData.created_at
+            } as Space : undefined
+          };
+        });
         
         setMemberships(processedMemberships);
         
