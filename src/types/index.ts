@@ -11,10 +11,7 @@ export interface UserProfile {
   user_id: string;
   display_name?: string;
   avatar_url?: string;
-  default_unit_system: 'metric' | 'imperial';
-  theme_preference: 'light' | 'dark' | 'system';
-  default_servings: number;
-  show_nutritional_info: boolean;
+  preferred_units?: string;
   created_at: string;
   updated_at: string;
 }
@@ -79,7 +76,6 @@ export interface Recipe {
   servings: number;
   difficulty: 'easy' | 'medium' | 'hard';
   is_public: boolean;
-  // Enhanced privacy settings
   privacy_level: 'private' | 'space' | 'public' | 'shared';
   created_at: string;
   updated_at: string;

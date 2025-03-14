@@ -13,6 +13,7 @@ export const MOCK_RECIPES: Recipe[] = [
     servings: 4,
     difficulty: "medium",
     is_public: true,
+    privacy_level: "public",
     tags: ["chicken", "dinner", "creamy"],
     created_at: "2023-08-15T14:00:00Z",
     updated_at: "2023-08-15T14:00:00Z"
@@ -28,6 +29,7 @@ export const MOCK_RECIPES: Recipe[] = [
     servings: 6,
     difficulty: "easy",
     is_public: true,
+    privacy_level: "public",
     tags: ["vegetarian", "salad", "healthy"],
     created_at: "2023-08-12T10:30:00Z",
     updated_at: "2023-08-12T10:30:00Z"
@@ -43,6 +45,7 @@ export const MOCK_RECIPES: Recipe[] = [
     servings: 2,
     difficulty: "medium",
     is_public: true,
+    privacy_level: "public",
     tags: ["asian", "spicy", "noodles"],
     created_at: "2023-08-10T18:15:00Z",
     updated_at: "2023-08-10T18:15:00Z"
@@ -58,6 +61,7 @@ export const MOCK_RECIPES: Recipe[] = [
     servings: 8,
     difficulty: "medium",
     is_public: true,
+    privacy_level: "public",
     tags: ["italian", "pizza", "vegetarian"],
     created_at: "2023-08-05T19:45:00Z",
     updated_at: "2023-08-05T19:45:00Z"
@@ -73,6 +77,7 @@ export const MOCK_RECIPES: Recipe[] = [
     servings: 24,
     difficulty: "easy",
     is_public: true,
+    privacy_level: "public",
     tags: ["dessert", "baking", "cookies"],
     created_at: "2023-08-03T11:20:00Z",
     updated_at: "2023-08-03T11:20:00Z"
@@ -88,6 +93,7 @@ export const MOCK_RECIPES: Recipe[] = [
     servings: 6,
     difficulty: "hard",
     is_public: true,
+    privacy_level: "public",
     tags: ["french", "beef", "stew"],
     created_at: "2023-07-28T16:30:00Z",
     updated_at: "2023-07-28T16:30:00Z"
@@ -103,6 +109,7 @@ export const MOCK_RECIPES: Recipe[] = [
     servings: 2,
     difficulty: "easy",
     is_public: true,
+    privacy_level: "public",
     tags: ["breakfast", "vegetarian", "quick"],
     created_at: "2023-07-25T09:15:00Z",
     updated_at: "2023-07-25T09:15:00Z"
@@ -118,6 +125,7 @@ export const MOCK_RECIPES: Recipe[] = [
     servings: 4,
     difficulty: "hard",
     is_public: true,
+    privacy_level: "public",
     tags: ["japanese", "seafood", "sushi"],
     created_at: "2023-07-20T17:40:00Z",
     updated_at: "2023-07-20T17:40:00Z"

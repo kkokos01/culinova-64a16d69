@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import SearchFilters from "@/components/recipes/SearchFilters";
@@ -41,13 +40,8 @@ const Recipes = () => {
         
         // For now, just use mock data
         const timer = setTimeout(() => {
-          // Add privacy_level to mock recipes for UI testing
-          const enhancedMockRecipes = MOCK_RECIPES.map(recipe => ({
-            ...recipe,
-            privacy_level: recipe.is_public ? 'public' : 'space'
-          }));
-          
-          setRecipes(enhancedMockRecipes);
+          // Use mock recipes directly - they now have the privacy_level property
+          setRecipes(MOCK_RECIPES);
           setIsLoading(false);
         }, 500);
         
