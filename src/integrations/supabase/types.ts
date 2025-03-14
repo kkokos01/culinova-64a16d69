@@ -145,7 +145,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_space_for_existing_user: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

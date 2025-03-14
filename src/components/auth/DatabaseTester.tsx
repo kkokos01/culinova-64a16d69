@@ -17,6 +17,7 @@ const DatabaseTester = () => {
   const [testResults, setTestResults] = useState<{[key: string]: boolean | string}>({});
   const [loading, setLoading] = useState(false);
   const [creatingSpace, setCreatingSpace] = useState(false);
+  const [errorMessages, setErrorMessages] = useState<{[key: string]: string}>({});
 
   // Test 1: Check if user profile exists
   const testUserProfile = async () => {
@@ -29,11 +30,16 @@ const DatabaseTester = () => {
         .eq("user_id", user.id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        setErrorMessages(prev => ({ ...prev, userProfile: error.message }));
+        throw error;
+      }
+      
       setUserProfile(data as UserProfile);
       return !!data;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error testing user profile:", error);
+      setErrorMessages(prev => ({ ...prev, userProfile: error.message }));
       return false;
     }
   };
@@ -56,11 +62,16 @@ const DatabaseTester = () => {
         `)
         .eq("created_by", user.id);
       
-      if (error) throw error;
+      if (error) {
+        setErrorMessages(prev => ({ ...prev, userSpaces: error.message }));
+        throw error;
+      }
+      
       setSpaces(data as Space[]);
       return data.length > 0;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error testing user spaces:", error);
+      setErrorMessages(prev => ({ ...prev, userSpaces: error.message }));
       return false;
     }
   };
@@ -76,14 +87,19 @@ const DatabaseTester = () => {
         .eq("user_id", user.id)
         .eq("space_id", spaces[0].id);
       
-      if (error) throw error;
+      if (error) {
+        setErrorMessages(prev => ({ ...prev, spaceMembership: error.message }));
+        throw error;
+      }
+      
       setUserSpaces(data as UserSpace[]);
       
       if (data.length === 0) return false;
       // Check if user is admin of at least one space
       return data.some(membership => membership.role === 'admin');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error testing space membership:", error);
+      setErrorMessages(prev => ({ ...prev, spaceMembership: error.message }));
       return false;
     }
   };
@@ -117,6 +133,7 @@ const DatabaseTester = () => {
     if (!user) return;
     
     setLoading(true);
+    setErrorMessages({});
     
     const results = {
       userProfile: await testUserProfile(),
@@ -134,24 +151,39 @@ const DatabaseTester = () => {
     if (!user) return;
     
     setCreatingSpace(true);
+    setErrorMessages({});
+    
     try {
+      console.log("Creating default space for user:", user.id);
+      
       // Call our function to create a space for an existing user
       const { data, error } = await supabase
         .rpc('create_space_for_existing_user', {
           user_id_param: user.id
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error("RPC Error:", error);
+        throw error;
+      }
+      
+      console.log("Space created successfully, space_id:", data);
       
       toast({
         title: "Space created",
         description: "Default space has been created successfully!",
       });
       
-      // Re-run the tests to update the UI
-      await runAllTests();
+      // Wait a moment for the database to update
+      setTimeout(async () => {
+        // Re-run the tests to update the UI
+        await runAllTests();
+      }, 1000);
+      
     } catch (error: any) {
       console.error("Error creating default space:", error);
+      setErrorMessages(prev => ({ ...prev, createSpace: error.message }));
+      
       toast({
         title: "Error creating space",
         description: error.message || "Could not create default space",
@@ -225,6 +257,23 @@ const DatabaseTester = () => {
                     Your account was created before space functionality was added. 
                     Click the button above to create a default space.
                   </p>
+                  {errorMessages.createSpace && (
+                    <p className="text-xs text-red-500 mt-1">
+                      Error: {errorMessages.createSpace}
+                    </p>
+                  )}
+                </div>
+              )}
+              
+              {/* Display any error messages */}
+              {Object.keys(errorMessages).length > 0 && (
+                <div className="my-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                  <h4 className="text-sm font-medium text-red-800">Troubleshooting Information:</h4>
+                  <ul className="text-xs text-red-700 mt-1 list-disc pl-5">
+                    {Object.entries(errorMessages).map(([key, message]) => (
+                      <li key={key}>{key}: {message}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
               
