@@ -1,14 +1,24 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChefHat, Search, User, ShoppingCart, Calendar } from 'lucide-react';
+import { Menu, X, ChefHat, Search, User, ShoppingCart, Calendar, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -103,19 +113,52 @@ const Navbar = () => {
           >
             <Calendar className="h-5 w-5" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-slate-600 hover:text-sage-600 hover:bg-sage-100"
-            aria-label="User Account"
-          >
-            <User className="h-5 w-5" />
-          </Button>
-          <Button 
-            className="bg-sage-400 hover:bg-sage-500 text-white"
-          >
-            Create Recipe
-          </Button>
+          
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full h-9 w-9 p-0"
+                >
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={user.user_metadata?.avatar_url} />
+                    <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link to="/profile">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => signOut()}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button 
+              asChild
+              className="bg-sage-400 hover:bg-sage-500 text-white"
+            >
+              <Link to="/sign-in">Sign In</Link>
+            </Button>
+          )}
+          
+          {user && (
+            <Button 
+              className="bg-sage-400 hover:bg-sage-500 text-white"
+              asChild
+            >
+              <Link to="/create-recipe">Create Recipe</Link>
+            </Button>
+          )}
         </div>
         
         {/* Mobile Menu Button */}
@@ -174,19 +217,43 @@ const Navbar = () => {
               <Calendar className="h-5 w-5" />
               <span>Meal Plans</span>
             </Link>
-            <Link 
-              to="/profile" 
-              className="flex items-center space-x-2 text-slate-700 hover:text-sage-600"
-            >
-              <User className="h-5 w-5" />
-              <span>Profile</span>
-            </Link>
+            
+            {user ? (
+              <>
+                <Link 
+                  to="/profile" 
+                  className="flex items-center space-x-2 text-slate-700 hover:text-sage-600"
+                >
+                  <User className="h-5 w-5" />
+                  <span>Profile</span>
+                </Link>
+                <button 
+                  onClick={() => signOut()}
+                  className="flex items-center space-x-2 text-slate-700 hover:text-sage-600"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>Log out</span>
+                </button>
+              </>
+            ) : (
+              <Link 
+                to="/sign-in" 
+                className="flex items-center space-x-2 text-slate-700 hover:text-sage-600"
+              >
+                <User className="h-5 w-5" />
+                <span>Sign In</span>
+              </Link>
+            )}
           </div>
-          <Button 
-            className="mt-6 bg-sage-400 hover:bg-sage-500 text-white w-full"
-          >
-            Create Recipe
-          </Button>
+          
+          {user && (
+            <Button 
+              className="mt-6 bg-sage-400 hover:bg-sage-500 text-white w-full"
+              asChild
+            >
+              <Link to="/create-recipe">Create Recipe</Link>
+            </Button>
+          )}
         </nav>
       </div>
     </header>

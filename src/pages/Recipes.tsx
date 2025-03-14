@@ -8,6 +8,9 @@ import PageHeader from "@/components/recipes/PageHeader";
 import { MOCK_RECIPES } from "@/data/mockRecipes";
 import { filterRecipes } from "@/utils/recipeUtils";
 import { Recipe } from "@/types";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 const Recipes = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -17,15 +20,37 @@ const Recipes = () => {
   const [timeFilter, setTimeFilter] = useState("all");
   const [sortOption, setSortOption] = useState("newest");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const { user } = useAuth();
+  const { toast } = useToast();
   
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setRecipes(MOCK_RECIPES);
-      setIsLoading(false);
-    }, 500);
+    // For initial development, we'll use mock recipes
+    // Later we'll replace this with a Supabase query
+    const fetchRecipes = async () => {
+      setIsLoading(true);
+      
+      try {
+        // If we have a user and Supabase is integrated, we can make a real query
+        // For now, just use mock data
+        const timer = setTimeout(() => {
+          setRecipes(MOCK_RECIPES);
+          setIsLoading(false);
+        }, 500);
+        
+        return () => clearTimeout(timer);
+      } catch (error) {
+        console.error("Error fetching recipes:", error);
+        toast({
+          title: "Error fetching recipes",
+          description: "There was a problem loading the recipes. Please try again.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+      }
+    };
     
-    return () => clearTimeout(timer);
-  }, []);
+    fetchRecipes();
+  }, [toast]);
   
   const filteredRecipes = filterRecipes(
     recipes,
