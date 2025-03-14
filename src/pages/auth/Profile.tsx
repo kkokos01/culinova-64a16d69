@@ -97,7 +97,8 @@ const Profile = () => {
             max_recipes,
             max_users,
             is_active,
-            created_at
+            created_at,
+            created_by
           )
         `)
         .eq("user_id", user.id)
@@ -110,7 +111,7 @@ const Profile = () => {
 
       if (membershipData) {
         // Type assertion to ensure TypeScript understands the structure
-        const processedMemberships = membershipData.map(item => ({
+        const processedMemberships: UserSpace[] = membershipData.map(item => ({
           id: item.id as string,
           space_id: item.space_id as string,
           role: item.role as 'admin' | 'editor' | 'viewer',
@@ -123,9 +124,9 @@ const Profile = () => {
         setMemberships(processedMemberships);
         
         // Extract just the spaces
-        const spacesList = processedMemberships
+        const spacesList: Space[] = processedMemberships
           .map(membership => membership.space)
-          .filter((space): space is Space => !!space); // Type guard to ensure space is not null/undefined
+          .filter((space): space is Space => space !== null && space !== undefined);
         
         setSpaces(spacesList);
       }
