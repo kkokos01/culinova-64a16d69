@@ -14,6 +14,7 @@ const SignUp = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [success, setSuccess] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -40,9 +41,46 @@ const SignUp = () => {
       setErrorMessage(error.message);
       setIsSubmitting(false);
     } else {
-      navigate("/sign-in");
+      setSuccess(true);
+      setIsSubmitting(false);
     }
   };
+
+  if (success) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
+        <div className="flex items-center mb-6">
+          <ChefHat className="h-8 w-8 text-sage-500 mr-2" />
+          <h1 className="text-2xl font-display font-semibold text-sage-600">Culinova</h1>
+        </div>
+
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-xl">Verification email sent!</CardTitle>
+            <CardDescription>
+              Check your email to complete your registration
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-slate-700 mb-6">
+              We've sent a verification link to <span className="font-medium">{email}</span>. Click the link in that email to verify your account.
+            </p>
+            <p className="text-sm text-slate-500">
+              If you don't see the email, check your spam folder.
+            </p>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button
+              variant="outline"
+              onClick={() => navigate("/sign-in")}
+            >
+              Back to Sign In
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">

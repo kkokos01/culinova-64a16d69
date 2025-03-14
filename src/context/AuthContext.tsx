@@ -46,6 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
     setIsLoading(false);
     
@@ -73,6 +76,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: error.message,
         variant: "destructive",
       });
+    } else {
+      toast({
+        title: "Login successful",
+        description: "Welcome back!",
+      });
     }
     
     return { error };
@@ -91,6 +99,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     await supabase.auth.signOut();
     setIsLoading(false);
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully",
+    });
   };
 
   const resetPassword = async (email: string) => {
