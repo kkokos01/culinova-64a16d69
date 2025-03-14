@@ -43,7 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string) => {
     setIsLoading(true);
     
-    const redirectUrl = new URL('/auth/callback', window.location.origin).toString();
+    // Update to use the v1 path for email auth as well
+    const redirectUrl = new URL('/auth/v1/callback', window.location.origin).toString();
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -90,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     const isProduction = window.location.hostname !== 'localhost';
-    // Use the /auth/v1/callback path to match Google OAuth configuration
+    // Already using the v1 path, no changes needed here
     const redirectTo = isProduction 
       ? `https://culinova.lovable.app/auth/v1/callback`
       : `${window.location.origin}/auth/v1/callback`;
@@ -117,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetPassword = async (email: string) => {
     setIsLoading(true);
+    // Update to use the v1 path for password reset as well
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });

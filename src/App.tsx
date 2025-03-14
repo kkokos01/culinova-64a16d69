@@ -33,10 +33,7 @@ const App = () => (
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             
-            {/* Auth callback routes - both paths point to the same component */}
-            {/* /auth/callback - Used for email and password authentication */}
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            {/* /auth/v1/callback - Used specifically for Google OAuth */}
+            {/* Auth callback route - used for both email and Google OAuth */}
             <Route path="/auth/v1/callback" element={<AuthCallback />} />
             
             {/* Protected routes */}
