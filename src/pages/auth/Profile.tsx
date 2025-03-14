@@ -27,6 +27,7 @@ const Profile = () => {
   const fetchProfile = async () => {
     try {
       setIsLoading(true);
+      // Now that the user_profiles table exists, this query should work
       const { data, error } = await supabase
         .from("user_profiles")
         .select("*")
@@ -50,7 +51,8 @@ const Profile = () => {
   const updateProfile = async () => {
     try {
       setIsLoading(true);
-
+      
+      // Now properly interfacing with the user_profiles table
       const { error } = await supabase
         .from("user_profiles")
         .upsert({
