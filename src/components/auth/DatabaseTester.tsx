@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,53 +55,20 @@ const DatabaseTester = () => {
     if (!user) return false;
     
     try {
-      // First try directly owned spaces
-      const { data: ownedSpaces, error: ownedError } = await supabase
+      // With the new RLS policies, we can directly query spaces
+      const { data: userSpaces, error: spacesError } = await supabase
         .from("spaces")
         .select("*")
-        .eq("created_by", user.id);
+        .eq("is_active", true);
       
-      if (ownedError) {
-        console.error("Error testing owned spaces:", ownedError);
-        setErrorMessages(prev => ({ ...prev, userSpaces: ownedError.message }));
+      if (spacesError) {
+        console.error("Error testing user spaces:", spacesError);
+        setErrorMessages(prev => ({ ...prev, userSpaces: spacesError.message }));
+        throw spacesError;
       }
       
-      // Then try spaces user is a member of
-      const { data: memberships, error: membershipError } = await supabase
-        .from("user_spaces")
-        .select("space_id")
-        .eq("user_id", user.id);
-        
-      if (membershipError) {
-        console.error("Error testing memberships:", membershipError);
-        setErrorMessages(prev => ({ ...prev, userSpacesMembership: membershipError.message }));
-      }
-      
-      // If we have memberships, fetch those spaces
-      let memberSpaces: Space[] = [];
-      if (memberships && memberships.length > 0) {
-        const spaceIds = memberships.map(m => m.space_id);
-        const { data: spaces, error: spacesError } = await supabase
-          .from("spaces")
-          .select("*")
-          .in("id", spaceIds);
-          
-        if (spacesError) {
-          console.error("Error testing member spaces:", spacesError);
-          setErrorMessages(prev => ({ ...prev, memberSpaces: spacesError.message }));
-        } else if (spaces) {
-          memberSpaces = spaces as Space[];
-        }
-      }
-      
-      // Combine and deduplicate spaces
-      const allSpaces = [...(ownedSpaces || []), ...memberSpaces];
-      const uniqueSpacesMap = new Map();
-      allSpaces.forEach(space => uniqueSpacesMap.set(space.id, space));
-      const uniqueSpaces = Array.from(uniqueSpacesMap.values()) as Space[];
-      
-      setSpaces(uniqueSpaces);
-      return uniqueSpaces.length > 0;
+      setSpaces(userSpaces as Space[] || []);
+      return userSpaces && userSpaces.length > 0;
     } catch (error: any) {
       console.error("Error testing user spaces:", error);
       setErrorMessages(prev => ({ ...prev, userSpaces: error.message }));
@@ -119,7 +85,8 @@ const DatabaseTester = () => {
         .from("user_spaces")
         .select("*")
         .eq("user_id", user.id)
-        .eq("space_id", spaces[0].id);
+        .eq("space_id", spaces[0].id)
+        .eq("is_active", true);
       
       if (error) {
         setErrorMessages(prev => ({ ...prev, spaceMembership: error.message }));
@@ -190,7 +157,7 @@ const DatabaseTester = () => {
     try {
       console.log("Creating default space for user:", user.id);
       
-      // Directly create a space instead of using RPC
+      // Create a space
       const { data: space, error: spaceError } = await supabase
         .from("spaces")
         .insert({

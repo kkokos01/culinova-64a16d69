@@ -41,19 +41,18 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Fetch spaces directly first, using the new RLS policy
-      const { data: spacesData, error: spacesError } = await supabase
+      // Get spaces the user has created - the query now uses the security function
+      const { data: ownedSpaces, error: ownedError } = await supabase
         .from("spaces")
         .select("*")
-        .eq("created_by", user.id)
         .eq("is_active", true);
       
-      if (spacesError) {
-        console.error("Error fetching spaces:", spacesError);
-        throw spacesError;
+      if (ownedError) {
+        console.error("Error fetching spaces:", ownedError);
+        throw ownedError;
       }
       
-      // Get user's space memberships 
+      // Get user's space memberships
       const { data: membershipData, error: membershipError } = await supabase
         .from("user_spaces")
         .select("*")
@@ -65,38 +64,15 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
         throw membershipError;
       }
       
-      // Get all space IDs from memberships
-      const spaceIds = membershipData?.map(m => m.space_id) || [];
+      // Since we now have proper RLS policies, the spaces query above will already include
+      // both owned spaces and spaces the user is a member of, so no need to do another query
       
-      // If we have space IDs from memberships, fetch those spaces too
-      let spacesFromMemberships: Space[] = [];
-      if (spaceIds.length > 0) {
-        const { data: memberSpaces, error: memberSpacesError } = await supabase
-          .from("spaces")
-          .select("*")
-          .in("id", spaceIds)
-          .eq("is_active", true);
-          
-        if (memberSpacesError) {
-          console.error("Error fetching spaces from memberships:", memberSpacesError);
-          throw memberSpacesError;
-        }
-        
-        spacesFromMemberships = memberSpaces as Space[] || [];
-      }
-      
-      // Combine directly owned spaces and spaces from memberships, removing duplicates
-      const allSpaces = [...(spacesData || []), ...spacesFromMemberships];
-      const uniqueSpacesMap = new Map();
-      allSpaces.forEach(space => uniqueSpacesMap.set(space.id, space));
-      const uniqueSpaces = Array.from(uniqueSpacesMap.values()) as Space[];
-      
-      setSpaces(uniqueSpaces);
+      setSpaces(ownedSpaces as Space[] || []);
       setMemberships(membershipData as UserSpace[] || []);
       
       // Set default space if none is already selected and we have spaces
-      if (uniqueSpaces.length > 0 && !currentSpace) {
-        setCurrentSpace(uniqueSpaces[0]);
+      if (ownedSpaces && ownedSpaces.length > 0 && !currentSpace) {
+        setCurrentSpace(ownedSpaces[0]);
       }
       
     } catch (error: any) {
