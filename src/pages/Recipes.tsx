@@ -37,6 +37,12 @@ const Recipes = () => {
   );
   
   const handleTagToggle = (tag: string) => {
+    // If tag is empty string, clear all tags
+    if (tag === '') {
+      setSelectedTags([]);
+      return;
+    }
+    
     setSelectedTags(prev => 
       prev.includes(tag)
         ? prev.filter(t => t !== tag)
@@ -71,7 +77,6 @@ const Recipes = () => {
           sortOption={sortOption}
           setSortOption={setSortOption}
           selectedTags={selectedTags}
-          setSelectedTags={setSelectedTags}
           handleTagToggle={handleTagToggle}
         />
         
