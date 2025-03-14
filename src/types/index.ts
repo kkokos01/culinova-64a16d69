@@ -6,6 +6,39 @@ export interface User {
   avatar_url?: string;
 }
 
+export interface UserProfile {
+  id: string;
+  user_id: string;
+  display_name?: string;
+  avatar_url?: string;
+  default_unit_system: 'metric' | 'imperial';
+  theme_preference: 'light' | 'dark' | 'system';
+  default_servings: number;
+  show_nutritional_info: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Space {
+  id: string;
+  name: string;
+  created_by: string;
+  max_recipes: number;
+  max_users: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface UserSpace {
+  id: string;
+  user_id: string;
+  space_id: string;
+  role: 'admin' | 'editor' | 'viewer';
+  is_active: boolean;
+  created_at: string;
+  space?: Space;
+}
+
 export interface Food {
   id: string;
   name: string;

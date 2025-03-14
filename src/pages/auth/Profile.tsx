@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 
 interface ProfileData {
   display_name: string;
@@ -82,6 +82,7 @@ const Profile = () => {
         setProfileData({
           display_name: data.display_name || "",
           avatar_url: data.avatar_url || "",
+          // Handle the case where these fields might not exist yet in some records
           default_unit_system: data.default_unit_system || "metric",
           theme_preference: data.theme_preference || "light",
           default_servings: data.default_servings || 2,
@@ -96,8 +97,10 @@ const Profile = () => {
   };
 
   const fetchSpaces = async () => {
+    if (!user) return;
+    
     try {
-      // Fetch spaces the user is a member of
+      // First, query the user_spaces table to find memberships
       const { data: membershipData, error: membershipError } = await supabase
         .from("user_spaces")
         .select(`
@@ -113,15 +116,19 @@ const Profile = () => {
             created_at
           )
         `)
-        .eq("user_id", user?.id)
+        .eq("user_id", user.id)
         .eq("is_active", true);
 
-      if (membershipError) throw membershipError;
+      if (membershipError) {
+        console.error("Error fetching memberships:", membershipError);
+        return;
+      }
 
       if (membershipData) {
+        // Type assertion to ensure TypeScript understands the structure
         const processedMemberships = membershipData.map(item => ({
-          id: item.id,
-          space_id: item.space_id,
+          id: item.id as string,
+          space_id: item.space_id as string,
           role: item.role as 'admin' | 'editor' | 'viewer',
           space: item.space as Space
         }));
@@ -129,11 +136,11 @@ const Profile = () => {
         setMemberships(processedMemberships);
         
         // Extract just the spaces
-        const spaces = processedMemberships
+        const spacesList = processedMemberships
           .map(membership => membership.space)
           .filter(Boolean) as Space[];
         
-        setSpaces(spaces);
+        setSpaces(spacesList);
       }
     } catch (error) {
       console.error("Error fetching spaces:", error);
@@ -180,6 +187,8 @@ const Profile = () => {
   };
 
   const createNewSpace = async () => {
+    if (!user) return;
+    
     try {
       const spaceName = prompt("Enter a name for your new space:");
       if (!spaceName) return;
@@ -191,14 +200,13 @@ const Profile = () => {
         .from("spaces")
         .insert({
           name: spaceName,
-          created_by: user?.id,
+          created_by: user.id,
         })
         .select()
         .single();
 
       if (spaceError) throw spaceError;
 
-      // No need to manually create user_spaces entry due to RLS
       // Refresh the spaces list
       await fetchSpaces();
       
@@ -309,7 +317,7 @@ const Profile = () => {
                         <Label htmlFor="defaultUnitSystem">Default Unit System</Label>
                         <Select 
                           value={profileData.default_unit_system} 
-                          onValueChange={(value: any) => setProfileData({...profileData, default_unit_system: value})}
+                          onValueChange={(value: 'metric' | 'imperial') => setProfileData({...profileData, default_unit_system: value})}
                         >
                           <SelectTrigger id="defaultUnitSystem">
                             <SelectValue placeholder="Select unit system" />
@@ -325,7 +333,7 @@ const Profile = () => {
                         <Label htmlFor="themePreference">Theme Preference</Label>
                         <Select 
                           value={profileData.theme_preference} 
-                          onValueChange={(value: any) => setProfileData({...profileData, theme_preference: value})}
+                          onValueChange={(value: 'light' | 'dark' | 'system') => setProfileData({...profileData, theme_preference: value})}
                         >
                           <SelectTrigger id="themePreference">
                             <SelectValue placeholder="Select theme" />
