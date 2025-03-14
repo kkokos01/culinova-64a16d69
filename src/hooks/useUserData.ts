@@ -36,10 +36,13 @@ export function useUserData(userId: string | undefined) {
       if (error) throw error;
 
       if (data) {
+        // Cast preferred_units to the expected type or use default if not valid
+        const unitSystem = data.preferred_units === "imperial" ? "imperial" : "metric";
+        
         setProfileData({
           display_name: data.display_name || "",
           avatar_url: data.avatar_url || "",
-          default_unit_system: data.preferred_units || "metric", // Map from preferred_units
+          default_unit_system: unitSystem, // Ensure it's either "metric" or "imperial"
           theme_preference: "light", // Default value since it doesn't exist in DB
           default_servings: 2, // Default value since it doesn't exist in DB
           show_nutritional_info: true // Default value since it doesn't exist in DB
