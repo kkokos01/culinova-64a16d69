@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -49,11 +50,18 @@ function App() {
                   } 
                 />
                 
+                {/* Auth test route - protected */}
+                <Route 
+                  path="/auth/test" 
+                  element={
+                    <ProtectedRoute>
+                      <DatabaseTest />
+                    </ProtectedRoute>
+                  } 
+                />
+                
                 {/* Catch-all route */}
                 <Route path="*" element={<NotFound />} />
-                
-                {/* Auth test route */}
-                <Route path="/auth/test" element={<DatabaseTest />} />
               </Routes>
             </BrowserRouter>
           </TooltipProvider>

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChefHat, Search, User, ShoppingCart, Calendar, LogOut } from 'lucide-react';
+import { Menu, X, ChefHat, Search, User, ShoppingCart, Calendar, LogOut, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -114,6 +114,20 @@ const Navbar = () => {
             <Calendar className="h-5 w-5" />
           </Button>
           
+          {user && (
+            <Button 
+              variant="ghost"
+              size="icon" 
+              className="text-slate-600 hover:text-sage-600 hover:bg-sage-100"
+              aria-label="Database Test"
+              asChild
+            >
+              <Link to="/auth/test">
+                <Database className="h-5 w-5" />
+              </Link>
+            </Button>
+          )}
+          
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -133,6 +147,12 @@ const Navbar = () => {
                   <Link to="/profile">
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/auth/test">
+                    <Database className="mr-2 h-4 w-4" />
+                    <span>Database Test</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -217,6 +237,16 @@ const Navbar = () => {
               <Calendar className="h-5 w-5" />
               <span>Meal Plans</span>
             </Link>
+            
+            {user && (
+              <Link 
+                to="/auth/test" 
+                className="flex items-center space-x-2 text-slate-700 hover:text-sage-600"
+              >
+                <Database className="h-5 w-5" />
+                <span>Database Test</span>
+              </Link>
+            )}
             
             {user ? (
               <>
