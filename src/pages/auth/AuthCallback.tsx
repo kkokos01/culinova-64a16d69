@@ -4,6 +4,8 @@ import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
+// This component handles authentication callbacks from Supabase
+// After connecting the native Supabase integration, this component will work automatically
 const AuthCallback = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -14,11 +16,10 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Get the necessary parameters from the URL
+        // Get the code from the URL (this is standard for Supabase auth)
         const code = searchParams.get("code");
         const type = searchParams.get("type");
         
-        // Log parameters for debugging
         console.log("Auth callback params:", { code, type });
         
         if (!code) {

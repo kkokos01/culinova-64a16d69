@@ -2,11 +2,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/supabase';
 
-// Real Supabase project credentials
-const supabaseUrl = 'https://zujlsbkxxsmiiwgyodph.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1amxzYmt4eHNtaWl3Z3lvZHBoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5MjU3OTgsImV4cCI6MjA1NzUwMTc5OH0.sUuM7V1rESlwZPAr_4rzQMVlPh54GDSTolPGtrZA3kY';
-
+// This is a placeholder file that will be replaced by Lovable's Supabase integration
+// When you connect Supabase through the Lovable UI, this will be automatically configured
 export const supabase = createClient<Database>(
-  supabaseUrl,
-  supabaseAnonKey
+  'https://placeholder-url.supabase.co',
+  'placeholder-key'
 );
+
+// NOTE: After connecting Supabase in the Lovable UI, you will need to restart your app
+// This file will be automatically updated with the correct credentials
