@@ -1,13 +1,12 @@
-
 import { useEffect, useState } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // This component handles authentication callbacks from Supabase
 // It works with the /auth/v1/callback path for both email and Google OAuth
 const AuthCallback = () => {
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -23,19 +22,36 @@ const AuthCallback = () => {
         console.log("Auth callback params:", { code, type });
         
         if (!code) {
-          throw new Error("No authentication code provided");
+          console.error("No authentication code provided");
+          toast({
+            title: "Authentication failed",
+            description: "No authentication code provided. Please try again.",
+            variant: "destructive",
+          });
+          // Redirect to sign-in page after a short delay
+          setTimeout(() => navigate("/sign-in"), 1500);
+          return;
         }
 
         // Exchange the code for a session
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         
         if (error) {
+          console.error("Auth session exchange error:", error);
           throw error;
         }
+
+        // After successful code exchange, give a small delay to ensure
+        // the auth state is properly updated across the application
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         // Get the current session to verify it worked
         const { data: { session } } = await supabase.auth.getSession();
         console.log("Session established:", !!session);
+
+        if (!session) {
+          throw new Error("Failed to establish session");
+        }
 
         toast({
           title: type === "signup" ? "Email verified successfully" : "Authentication successful",
@@ -43,49 +59,40 @@ const AuthCallback = () => {
         });
         
         // Redirect to home page after successful auth
-        navigate("/");
+        navigate("/", { replace: true });
       } catch (err: any) {
         console.error("Auth callback error:", err);
-        setError(err.message || "Authentication failed");
+        
         toast({
           title: "Authentication failed",
           description: err.message || "Please try again",
           variant: "destructive",
         });
+        
+        // Redirect to sign-in page after a short delay
+        setTimeout(() => navigate("/sign-in"), 1500);
       } finally {
-        setIsLoading(false);
+        // We'll keep isLoading true until we navigate away
+        // This prevents UI flickering during the redirection
       }
     };
 
     handleAuthCallback();
   }, [navigate, toast, searchParams]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-sage-500 border-t-transparent"></div>
-        <p className="ml-2 text-slate-700">Verifying your account...</p>
+  // Always show loading state in this component as we'll always navigate away
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <div className="flex items-center space-x-4 mb-6">
+        <Skeleton className="h-12 w-12 rounded-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-[250px]" />
+          <Skeleton className="h-4 w-[200px]" />
+        </div>
       </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <h1 className="text-2xl font-semibold text-red-600 mb-4">Authentication Error</h1>
-        <p className="text-slate-700 mb-6">{error}</p>
-        <button 
-          className="px-4 py-2 bg-sage-500 text-white rounded hover:bg-sage-600"
-          onClick={() => navigate("/sign-in")}
-        >
-          Back to Sign In
-        </button>
-      </div>
-    );
-  }
-
-  // Default case: redirect to home if everything went well
-  return <Navigate to="/" />;
+      <p className="text-slate-600 animate-pulse">Completing authentication...</p>
+    </div>
+  );
 };
 
 export default AuthCallback;
