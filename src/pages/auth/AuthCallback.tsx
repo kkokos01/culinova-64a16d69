@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,12 +23,33 @@ const AuthCallback = () => {
         console.log("Auth callback params:", { code, type });
         
         if (!code) {
-          console.error("No authentication code provided");
+          console.log("No authentication code in URL, checking for active session");
+          
+          // If there's no code, check if we still have a valid session
+          // This can happen with some OAuth providers where the flow is different
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (session) {
+            console.log("Active session found despite no code parameter");
+            // We have a session, so the auth likely succeeded through another flow
+            toast({
+              title: "Authentication successful",
+              description: "You are now signed in",
+            });
+            
+            // Redirect to home page
+            navigate("/", { replace: true });
+            return;
+          }
+          
+          // No code and no session means authentication failed
+          console.error("No authentication code provided and no active session");
           toast({
             title: "Authentication failed",
             description: "No authentication code provided. Please try again.",
             variant: "destructive",
           });
+          
           // Redirect to sign-in page after a short delay
           setTimeout(() => navigate("/sign-in"), 1500);
           return;
@@ -43,7 +65,7 @@ const AuthCallback = () => {
 
         // After successful code exchange, give a small delay to ensure
         // the auth state is properly updated across the application
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         // Get the current session to verify it worked
         const { data: { session } } = await supabase.auth.getSession();
