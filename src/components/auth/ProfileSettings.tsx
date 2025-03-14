@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,10 +67,7 @@ const ProfileSettings = ({ userId, profileData, setProfileData }: ProfileSetting
           user_id: userId,
           display_name: values.display_name,
           avatar_url: values.avatar_url,
-          default_unit_system: values.default_unit_system,
-          theme_preference: values.theme_preference,
-          default_servings: values.default_servings,
-          show_nutritional_info: values.show_nutritional_info,
+          preferred_units: values.default_unit_system, // Map to the correct column name
           updated_at: new Date().toISOString(),
         });
 

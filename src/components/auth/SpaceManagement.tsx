@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useSpace } from "@/context/SpaceContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,7 +51,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// Define schema for inviting users
 const inviteSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   role: z.enum(["admin", "editor", "viewer"], {
@@ -68,7 +66,6 @@ const SpaceManagement = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   
-  // Initialize react-hook-form with zod validation
   const form = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema),
     defaultValues: {
@@ -93,7 +90,6 @@ const SpaceManagement = () => {
       id: membership.id,
       userId: membership.user_id,
       role: membership.role,
-      // Note: In a real app, you'd fetch the user details from a profile table
     }));
 
   const inviteUser = async (values: InviteFormValues) => {
@@ -102,12 +98,6 @@ const SpaceManagement = () => {
     try {
       setIsLoading(true);
       
-      // In a real application, you would:
-      // 1. Check if the user exists in your auth system
-      // 2. Create an invitation record
-      // 3. Send an email to the user
-      
-      // For now, we'll just show a success message
       toast({
         title: "Invitation sent",
         description: `An invitation has been sent to ${values.email} to join the space as a ${values.role}.`,

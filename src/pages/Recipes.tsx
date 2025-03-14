@@ -9,7 +9,7 @@ import { MOCK_RECIPES } from "@/data/mockRecipes";
 import { filterRecipes } from "@/utils/recipeUtils";
 import { Recipe } from "@/types";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const Recipes = () => {

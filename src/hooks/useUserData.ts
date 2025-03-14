@@ -39,10 +39,10 @@ export function useUserData(userId: string | undefined) {
         setProfileData({
           display_name: data.display_name || "",
           avatar_url: data.avatar_url || "",
-          default_unit_system: data.default_unit_system || "metric",
-          theme_preference: data.theme_preference || "light",
-          default_servings: data.default_servings || 2,
-          show_nutritional_info: data.show_nutritional_info !== undefined ? data.show_nutritional_info : true
+          default_unit_system: data.preferred_units || "metric", // Map from preferred_units
+          theme_preference: "light", // Default value since it doesn't exist in DB
+          default_servings: 2, // Default value since it doesn't exist in DB
+          show_nutritional_info: true // Default value since it doesn't exist in DB
         });
       }
     } catch (error) {
@@ -58,83 +58,12 @@ export function useUserData(userId: string | undefined) {
     }
   };
 
+  // For now, spaces and memberships will be empty since we need to update the database schema
+  // We'll simulate the spaces functionality until the database is updated
+
   const fetchSpaces = async () => {
-    if (!userId) return;
-    
-    try {
-      setIsLoading(true);
-      setIsError(false);
-      
-      // Query the user_spaces table to find memberships
-      const { data: membershipData, error: membershipError } = await supabase
-        .from("user_spaces")
-        .select(`
-          id,
-          space_id,
-          role,
-          space:spaces(
-            id,
-            name,
-            max_recipes,
-            max_users,
-            is_active,
-            created_at,
-            created_by
-          )
-        `)
-        .eq("user_id", userId)
-        .eq("is_active", true);
-
-      if (membershipError) {
-        throw membershipError;
-      }
-
-      if (membershipData) {
-        // Process memberships with proper type assertions
-        const processedMemberships: UserSpace[] = membershipData.map(item => {
-          // Extract the space object from the item
-          const spaceData = item.space as any; // Temporary type for extraction
-          
-          return {
-            id: item.id,
-            space_id: item.space_id,
-            role: item.role as 'admin' | 'editor' | 'viewer',
-            user_id: userId,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            // Process the space object
-            space: spaceData ? {
-              id: spaceData.id,
-              name: spaceData.name,
-              created_by: spaceData.created_by,
-              max_recipes: spaceData.max_recipes || 0,
-              max_users: spaceData.max_users || 0,
-              is_active: spaceData.is_active || true,
-              created_at: spaceData.created_at
-            } as Space : undefined
-          };
-        });
-        
-        setMemberships(processedMemberships);
-        
-        // Extract spaces from memberships
-        const spacesList: Space[] = processedMemberships
-          .map(membership => membership.space)
-          .filter((space): space is Space => space !== undefined);
-        
-        setSpaces(spacesList);
-      }
-    } catch (error: any) {
-      console.error("Error fetching spaces:", error);
-      setIsError(true);
-      toast({
-        title: "Error fetching spaces",
-        description: "Could not load your spaces. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // For now, just set loading to false as we can't fetch real spaces yet
+    setIsLoading(false);
   };
 
   const createSpace = async (name: string) => {
@@ -143,44 +72,12 @@ export function useUserData(userId: string | undefined) {
     try {
       setIsLoading(true);
       
-      // Create a new space
-      const { data: spaceData, error: spaceError } = await supabase
-        .from("spaces")
-        .insert({
-          name,
-          created_by: userId,
-          max_recipes: 100, // Default values
-          max_users: 5,
-          is_active: true
-        })
-        .select()
-        .single();
-      
-      if (spaceError) throw spaceError;
-      
-      if (spaceData) {
-        // Add the creator as an admin of the space
-        const { error: membershipError } = await supabase
-          .from("user_spaces")
-          .insert({
-            user_id: userId,
-            space_id: spaceData.id,
-            role: 'admin',
-            is_active: true
-          });
-        
-        if (membershipError) throw membershipError;
-        
-        // Refresh spaces list
-        await fetchSpaces();
-        
-        toast({
-          title: "Space created",
-          description: `Your new space "${name}" has been created successfully.`,
-        });
-        
-        return spaceData as Space;
-      }
+      // For now, just show a message that space creation isn't available
+      toast({
+        title: "Space creation unavailable",
+        description: "Space creation is currently unavailable - database schema needs updating.",
+        variant: "destructive",
+      });
       
       return null;
     } catch (error: any) {
