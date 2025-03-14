@@ -151,15 +151,12 @@ export type Database = {
         }
         Returns: string
       }
-      current_user_belongs_to_space: {
-        Args: {
-          space_id: string
-        }
-        Returns: boolean
-      }
-      get_user_space_ids: {
+      get_user_memberships: {
         Args: Record<PropertyKey, never>
-        Returns: string[]
+        Returns: {
+          space_id: string
+          role: string
+        }[]
       }
     }
     Enums: {

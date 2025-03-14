@@ -41,7 +41,8 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       
-      // With our improved RLS policies, we can simply fetch all spaces the user has access to
+      // With our simplified RLS policies, we can directly query spaces
+      // The RLS will automatically filter to only return spaces the user can access
       const { data: spacesData, error: spacesError } = await supabase
         .from("spaces")
         .select("*")
@@ -56,7 +57,6 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
       const { data: membershipData, error: membershipError } = await supabase
         .from("user_spaces")
         .select("*")
-        .eq("user_id", user.id)
         .eq("is_active", true);
 
       if (membershipError) {
