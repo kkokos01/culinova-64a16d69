@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      schema_migrations: {
+        Row: {
+          applied_at: string | null
+          description: string
+          rollback_script: string | null
+          success: boolean | null
+          version: string
+        }
+        Insert: {
+          applied_at?: string | null
+          description: string
+          rollback_script?: string | null
+          success?: boolean | null
+          version: string
+        }
+        Update: {
+          applied_at?: string | null
+          description?: string
+          rollback_script?: string | null
+          success?: boolean | null
+          version?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           avatar_url: string | null
