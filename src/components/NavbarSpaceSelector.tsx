@@ -15,7 +15,8 @@ import { SpaceCreator } from "@/components/auth/SpaceCreator";
 export default function NavbarSpaceSelector() {
   const { currentSpace, spaces, setCurrentSpace } = useSpace();
   
-  if (!currentSpace || spaces.length === 0) return null;
+  // Only show the selector if there are multiple spaces
+  if (!currentSpace || spaces.length <= 1) return null;
 
   return (
     <div className="flex items-center">

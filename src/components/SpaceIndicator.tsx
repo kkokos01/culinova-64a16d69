@@ -11,7 +11,8 @@ import { ChevronDown, HomeIcon } from "lucide-react";
 export function SpaceIndicator() {
   const { currentSpace, spaces, setCurrentSpace } = useSpace();
   
-  if (!currentSpace) return null;
+  // Only show the indicator if there are multiple spaces
+  if (!currentSpace || spaces.length <= 1) return null;
 
   return (
     <Popover>
