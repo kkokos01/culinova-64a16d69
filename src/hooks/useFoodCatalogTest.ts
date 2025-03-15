@@ -231,7 +231,7 @@ export function useFoodCatalogTest() {
       // Test get_food_descendants RPC
       const { data: descendants, error: descendantsError } = await supabase
         .rpc('get_food_descendants', { 
-          food_path: food.path.toString() 
+          food_path: food.path
         });
         
       if (descendantsError) {
@@ -244,7 +244,7 @@ export function useFoodCatalogTest() {
       // Test get_food_ancestors RPC
       const { data: ancestors, error: ancestorsError } = await supabase
         .rpc('get_food_ancestors', { 
-          food_path: childFood.path.toString() 
+          food_path: childFood.path
         });
         
       if (ancestorsError) {

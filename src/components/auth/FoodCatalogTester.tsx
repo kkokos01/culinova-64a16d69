@@ -24,7 +24,7 @@ const FoodCatalogTester = () => {
 
   useEffect(() => {
     if (user) {
-      // Run tests automatically when component mounts
+      // Run tests automatically when component mounts and user is available
       runAllTests();
     }
   }, [user, runAllTests]);
