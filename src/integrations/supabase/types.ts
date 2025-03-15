@@ -9,6 +9,63 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      custom_units: {
+        Row: {
+          abbreviation: string
+          base_unit_id: string
+          conversion_to_base: number
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          plural_name: string
+          space_id: string
+          unit_type: Database["public"]["Enums"]["unit_type"]
+          updated_at: string
+        }
+        Insert: {
+          abbreviation: string
+          base_unit_id: string
+          conversion_to_base: number
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          plural_name: string
+          space_id: string
+          unit_type: Database["public"]["Enums"]["unit_type"]
+          updated_at?: string
+        }
+        Update: {
+          abbreviation?: string
+          base_unit_id?: string
+          conversion_to_base?: number
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          plural_name?: string
+          space_id?: string
+          unit_type?: Database["public"]["Enums"]["unit_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_units_base_unit_id_fkey"
+            columns: ["base_unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_units_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schema_migrations: {
         Row: {
           applied_at: string | null
@@ -60,6 +117,93 @@ export type Database = {
           max_recipes?: number
           max_users?: number
           name?: string
+        }
+        Relationships: []
+      }
+      unit_conversions: {
+        Row: {
+          bidirectional: boolean
+          created_at: string
+          food_id: string | null
+          from_amount: number
+          from_unit_id: string
+          id: string
+          to_amount: number
+          to_unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          bidirectional?: boolean
+          created_at?: string
+          food_id?: string | null
+          from_amount: number
+          from_unit_id: string
+          id?: string
+          to_amount: number
+          to_unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          bidirectional?: boolean
+          created_at?: string
+          food_id?: string | null
+          from_amount?: number
+          from_unit_id?: string
+          id?: string
+          to_amount?: number
+          to_unit_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      units: {
+        Row: {
+          abbreviation: string
+          alternative_names: string[] | null
+          base_unit: boolean
+          common_name: string | null
+          conversion_to_base: number | null
+          created_at: string
+          display_order: number
+          formatting_template: string | null
+          id: string
+          measurement_system: Database["public"]["Enums"]["measurement_system"]
+          name: string
+          plural_name: string
+          unit_type: Database["public"]["Enums"]["unit_type"]
+          updated_at: string
+        }
+        Insert: {
+          abbreviation: string
+          alternative_names?: string[] | null
+          base_unit?: boolean
+          common_name?: string | null
+          conversion_to_base?: number | null
+          created_at?: string
+          display_order?: number
+          formatting_template?: string | null
+          id?: string
+          measurement_system: Database["public"]["Enums"]["measurement_system"]
+          name: string
+          plural_name: string
+          unit_type: Database["public"]["Enums"]["unit_type"]
+          updated_at?: string
+        }
+        Update: {
+          abbreviation?: string
+          alternative_names?: string[] | null
+          base_unit?: boolean
+          common_name?: string | null
+          conversion_to_base?: number | null
+          created_at?: string
+          display_order?: number
+          formatting_template?: string | null
+          id?: string
+          measurement_system?: Database["public"]["Enums"]["measurement_system"]
+          name?: string
+          plural_name?: string
+          unit_type?: Database["public"]["Enums"]["unit_type"]
+          updated_at?: string
         }
         Relationships: []
       }
@@ -145,6 +289,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      convert_units: {
+        Args: {
+          value: number
+          from_unit_id: string
+          to_unit_id: string
+          food_id?: string
+        }
+        Returns: number
+      }
       create_space_for_existing_user: {
         Args: {
           user_id_param: string
@@ -165,9 +318,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      repair_missing_memberships: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
     }
     Enums: {
-      [_ in never]: never
+      measurement_system: "metric" | "imperial" | "universal"
+      unit_type: "mass" | "volume" | "count" | "temperature" | "length" | "area"
     }
     CompositeTypes: {
       [_ in never]: never
