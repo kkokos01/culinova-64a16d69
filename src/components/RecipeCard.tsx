@@ -37,7 +37,7 @@ const RecipeCard = ({ recipe, className }: RecipeCardProps) => {
   
   return (
     <Link to={`/recipes/${recipe.id}`}>
-      <Card className={cn("overflow-hidden h-full recipe-card", className)}>
+      <Card className={cn("overflow-hidden h-full recipe-card transition-all duration-200 hover:shadow-md", className)}>
         {/* Image with gradient overlay */}
         <div className="aspect-video relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>

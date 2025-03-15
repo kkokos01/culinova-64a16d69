@@ -9,6 +9,7 @@ import { SpaceProvider } from "@/context/SpaceContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Recipes from "./pages/Recipes";
+import RecipeDetail from "./pages/RecipeDetail";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import ResetPassword from "./pages/auth/ResetPassword";
@@ -31,6 +32,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/recipes" element={<Recipes />} />
+                <Route path="/recipes/:id" element={<RecipeDetail />} />
                 
                 {/* Auth routes */}
                 <Route path="/sign-in" element={<SignIn />} />

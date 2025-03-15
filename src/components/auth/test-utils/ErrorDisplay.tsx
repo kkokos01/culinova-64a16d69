@@ -6,7 +6,7 @@ type ErrorDisplayProps = {
 };
 
 export const ErrorDisplay = ({ errors }: ErrorDisplayProps) => {
-  if (Object.keys(errors).length === 0) return null;
+  if (!errors || Object.keys(errors).length === 0) return null;
   
   return (
     <div className="my-4 p-3 bg-red-50 border border-red-200 rounded-md">

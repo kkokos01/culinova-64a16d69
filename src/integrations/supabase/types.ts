@@ -258,6 +258,244 @@ export type Database = {
           },
         ]
       }
+      ingredients: {
+        Row: {
+          amount: number
+          created_at: string
+          food_id: string
+          id: string
+          order_index: number
+          recipe_id: string
+          unit_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          food_id: string
+          id?: string
+          order_index: number
+          recipe_id: string
+          unit_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          food_id?: string
+          id?: string
+          order_index?: number
+          recipe_id?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingredients_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingredients_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_version_ingredients: {
+        Row: {
+          amount: number
+          created_at: string
+          food_id: string
+          id: string
+          order_index: number
+          unit_id: string
+          version_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          food_id: string
+          id?: string
+          order_index: number
+          unit_id: string
+          version_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          food_id?: string
+          id?: string
+          order_index?: number
+          unit_id?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_version_ingredients_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_version_ingredients_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_version_ingredients_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_version_steps: {
+        Row: {
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          instruction: string
+          order_number: number
+          version_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          instruction: string
+          order_number: number
+          version_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          instruction?: string
+          order_number?: number
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_version_steps_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_versions: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_current: boolean
+          modification_parameters: Json | null
+          modification_type: string
+          parent_version_id: string | null
+          recipe_id: string
+          version_number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          is_current?: boolean
+          modification_parameters?: Json | null
+          modification_type: string
+          parent_version_id?: string | null
+          recipe_id: string
+          version_number: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_current?: boolean
+          modification_parameters?: Json | null
+          modification_type?: string
+          parent_version_id?: string | null
+          recipe_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_versions_parent_version_id_fkey"
+            columns: ["parent_version_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_versions_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipes: {
+        Row: {
+          cook_time_minutes: number
+          created_at: string
+          description: string
+          difficulty: string
+          id: string
+          image_url: string | null
+          is_public: boolean
+          prep_time_minutes: number
+          privacy_level: string
+          servings: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cook_time_minutes: number
+          created_at?: string
+          description: string
+          difficulty: string
+          id?: string
+          image_url?: string | null
+          is_public?: boolean
+          prep_time_minutes: number
+          privacy_level?: string
+          servings: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cook_time_minutes?: number
+          created_at?: string
+          description?: string
+          difficulty?: string
+          id?: string
+          image_url?: string | null
+          is_public?: boolean
+          prep_time_minutes?: number
+          privacy_level?: string
+          servings?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       schema_migrations: {
         Row: {
           applied_at: string | null
@@ -365,6 +603,41 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      steps: {
+        Row: {
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          instruction: string
+          order_number: number
+          recipe_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          instruction: string
+          order_number: number
+          recipe_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          instruction?: string
+          order_number?: number
+          recipe_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "steps_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       unit_conversions: {
         Row: {
