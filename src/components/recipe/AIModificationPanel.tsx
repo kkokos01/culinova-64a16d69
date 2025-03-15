@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Info, ChevronRight, Settings } from "lucide-react";
+import { Info, Settings, Clock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Recipe } from "@/types";
@@ -31,7 +31,7 @@ const modificationTypes = [
     id: "time",
     title: "Quick & Easy",
     description: "Simplify and speed up preparation",
-    icon: <ChevronRight className="h-8 w-8 text-amber-500" />
+    icon: <Clock className="h-8 w-8 text-amber-500" />
   }
 ];
 
@@ -44,16 +44,16 @@ const AIModificationPanel: React.FC<AIModificationPanelProps> = ({
   const [selectedModification, setSelectedModification] = React.useState("");
   
   return (
-    <div className="h-full overflow-y-auto p-4">
-      <h2 className="text-xl font-bold mb-4">Recipe Modification</h2>
+    <div className="h-full overflow-y-auto">
+      <h2 className="text-2xl font-bold mb-2">Recipe Modification</h2>
       <p className="text-gray-600 mb-6">
         Select how you'd like to modify this recipe using AI
       </p>
       
       <Tabs defaultValue="options" className="w-full">
-        <TabsList className="w-full mb-4">
-          <TabsTrigger value="options" className="flex-1">Modification Options</TabsTrigger>
-          <TabsTrigger value="custom" className="flex-1">Custom Instructions</TabsTrigger>
+        <TabsList className="w-full mb-4 grid grid-cols-2">
+          <TabsTrigger value="options" className="text-sm">Modification Options</TabsTrigger>
+          <TabsTrigger value="custom" className="text-sm">Custom Instructions</TabsTrigger>
         </TabsList>
         
         <TabsContent value="options">

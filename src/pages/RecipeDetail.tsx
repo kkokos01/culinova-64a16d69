@@ -1,19 +1,21 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Navbar from "@/components/Navbar";
-import { supabase } from "@/integrations/supabase/client";
-import { Recipe, Ingredient, Step, Food, Unit } from "@/types";
+import { Ingredient } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { RecipeProvider, useRecipe } from "@/context/RecipeContext";
 
-// Import our new components
+// Import our new hook for mock data
+import { useMockRecipe } from "@/hooks/useMockRecipe";
+
+// Import our components
 import RecipeHeader from "@/components/recipe/RecipeHeader";
 import RecipeContent from "@/components/recipe/RecipeContent";
 import AIModificationPanel from "@/components/recipe/AIModificationPanel";
@@ -39,66 +41,16 @@ const RecipeDetailContainer = () => {
     resetToOriginal
   } = useRecipe();
   
-  // Fetch recipe data
-  const { data: recipeData, isLoading, error } = useQuery({
-    queryKey: ['recipe', id],
-    queryFn: async () => {
-      if (!id) throw new Error("Recipe ID is required");
-
-      const { data: recipeData, error: recipeError } = await supabase
-        .from('recipes')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (recipeError) throw recipeError;
-      if (!recipeData) throw new Error("Recipe not found");
-
-      // Fetch ingredients
-      const { data: ingredientsData, error: ingredientsError } = await supabase
-        .from('ingredients')
-        .select(`
-          id, 
-          amount, 
-          order_index,
-          food_id, 
-          unit_id,
-          foods:food_id (id, name, description),
-          units:unit_id (id, name, abbreviation)
-        `)
-        .eq('recipe_id', id)
-        .order('order_index');
-
-      if (ingredientsError) throw ingredientsError;
-
-      // Fetch steps
-      const { data: stepsData, error: stepsError } = await supabase
-        .from('steps')
-        .select('*')
-        .eq('recipe_id', id)
-        .order('order_number');
-
-      if (stepsError) throw stepsError;
-
-      // Transform data to match our types
-      const transformedIngredients: Ingredient[] = ingredientsData.map(ing => ({
-        id: ing.id,
-        food_id: ing.food_id,
-        unit_id: ing.unit_id,
-        amount: ing.amount,
-        // Fix the type issue by correctly handling the food and unit objects
-        food: ing.foods as unknown as Food, // Cast to Food instead of Food[]
-        unit: ing.units as unknown as Unit  // Cast to Unit instead of Unit[]
-      }));
-
-      return {
-        ...recipeData,
-        ingredients: transformedIngredients,
-        steps: stepsData
-      } as Recipe;
-    },
-    staleTime: 5 * 60 * 1000 // 5 minutes
-  });
+  // Use our mock recipe hook instead of react-query
+  const { recipe: recipeData, loading: isLoading, error } = useMockRecipe(id || "");
+  
+  // Set recipe in context when data is loaded
+  useEffect(() => {
+    if (recipeData) {
+      setRecipe(recipeData);
+      setOriginalRecipe(recipeData);
+    }
+  }, [recipeData, setRecipe, setOriginalRecipe]);
   
   // Handle errors
   useEffect(() => {
@@ -110,14 +62,6 @@ const RecipeDetailContainer = () => {
       });
     }
   }, [error, toast]);
-  
-  // Set recipe in context when data is loaded
-  useEffect(() => {
-    if (recipeData) {
-      setRecipe(recipeData);
-      setOriginalRecipe(recipeData);
-    }
-  }, [recipeData, setRecipe, setOriginalRecipe]);
   
   const handleModifyWithAI = () => {
     // Open the AI modification panel

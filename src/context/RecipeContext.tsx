@@ -14,6 +14,8 @@ type RecipeContextType = {
   setIsProcessingAI: (isProcessing: boolean) => void;
   setSelectedIngredient: (ingredient: Ingredient | null) => void;
   resetToOriginal: () => void;
+  // Added new function to support AI modifications
+  applyAIModification: (modifiedRecipe: Recipe) => void;
 };
 
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
@@ -32,6 +34,12 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  const applyAIModification = (modifiedRecipe: Recipe) => {
+    setRecipe(modifiedRecipe);
+    setIsModified(true);
+    setIsProcessingAI(false);
+  };
+
   return (
     <RecipeContext.Provider
       value={{
@@ -46,6 +54,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setIsProcessingAI,
         setSelectedIngredient,
         resetToOriginal,
+        applyAIModification,
       }}
     >
       {children}
