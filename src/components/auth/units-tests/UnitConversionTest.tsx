@@ -65,8 +65,7 @@ export const useUnitConversionTest = (updateResult: (result: any) => void, index
       
       // Test direct conversion between units
       try {
-        // Match the renamed parameter names from the function signature:
-        // CREATE OR REPLACE FUNCTION public.convert_units(input_value numeric, input_from_unit_id uuid, input_to_unit_id uuid, input_food_id uuid DEFAULT NULL::uuid)
+        // Match the renamed parameter names from the function signature
         const conversionParams = {
           input_value: 100,
           input_from_unit_id: gramUnit.id,

@@ -32,9 +32,10 @@ export const useTemperatureConversionTest = (updateResult: (result: any) => void
       const { data: resultCtoF, error: errorCtoF } = await supabase.rpc(
         "convert_units",
         {
-          value: 0,
-          from_unit_id: celsiusUnit.id,
-          to_unit_id: fahrenheitUnit.id
+          input_value: 0,
+          input_from_unit_id: celsiusUnit.id,
+          input_to_unit_id: fahrenheitUnit.id,
+          input_food_id: null
         }
       );
       
@@ -44,9 +45,10 @@ export const useTemperatureConversionTest = (updateResult: (result: any) => void
       const { data: resultFtoC, error: errorFtoC } = await supabase.rpc(
         "convert_units",
         {
-          value: 32,
-          from_unit_id: fahrenheitUnit.id,
-          to_unit_id: celsiusUnit.id
+          input_value: 32,
+          input_from_unit_id: fahrenheitUnit.id,
+          input_to_unit_id: celsiusUnit.id,
+          input_food_id: null
         }
       );
       
