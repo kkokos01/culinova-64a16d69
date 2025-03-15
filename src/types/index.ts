@@ -27,6 +27,7 @@ export interface Space {
   max_recipes: number;
   max_users: number;
   is_active: boolean;
+  is_default: boolean;
   created_at: string;
 }
 
