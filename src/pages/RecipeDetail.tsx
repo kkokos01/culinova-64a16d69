@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
-import { Recipe, Ingredient, Step } from "@/types";
+import { Recipe, Ingredient, Step, Food, Unit } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { useMediaQuery } from "@/hooks/use-mobile";
@@ -69,8 +69,9 @@ const RecipeDetail = () => {
         food_id: ing.food_id,
         unit_id: ing.unit_id,
         amount: ing.amount,
-        food: ing.foods,
-        unit: ing.units
+        // Fix the type issue by correctly handling the food and unit objects
+        food: ing.foods as unknown as Food, // Cast to Food instead of Food[]
+        unit: ing.units as unknown as Unit  // Cast to Unit instead of Unit[]
       }));
 
       return {
