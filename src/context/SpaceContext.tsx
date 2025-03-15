@@ -16,6 +16,9 @@ interface SpaceContextType {
   userRole: 'admin' | 'editor' | 'viewer' | null;
   canManageSpace: boolean;
   canEditContent: boolean;
+  deleteSpace: (spaceId: string) => Promise<boolean>;
+  leaveSpace: (spaceId: string) => Promise<boolean>;
+  inviteToSpace: (email: string, role: 'admin' | 'editor' | 'viewer', spaceId: string) => Promise<boolean>;
 }
 
 const SpaceContext = createContext<SpaceContextType | undefined>(undefined);
@@ -45,33 +48,45 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
       const { data: membershipData, error: membershipError } = await supabase
         .from("user_spaces")
         .select("*")
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .eq("user_id", user.id);
 
       if (membershipError) {
         console.error("Error fetching memberships:", membershipError);
         throw membershipError;
       }
       
-      // With our improved RLS, this will only return the user's memberships
       setMemberships(membershipData as UserSpace[] || []);
       
-      // Fetch spaces - the RLS will apply correctly
-      const { data: spacesData, error: spacesError } = await supabase
-        .from("spaces")
-        .select("*")
-        .eq("is_active", true);
-      
-      if (spacesError) {
-        console.error("Error fetching spaces:", spacesError);
-        throw spacesError;
-      }
-      
-      // With our improved RLS, this will only return the user's spaces
-      setSpaces(spacesData as Space[] || []);
-      
-      // Set default space if none is already selected and we have spaces
-      if (spacesData && spacesData.length > 0 && !currentSpace) {
-        setCurrentSpace(spacesData[0]);
+      if (membershipData && membershipData.length > 0) {
+        // Get space IDs from memberships
+        const spaceIds = membershipData.map((membership) => membership.space_id);
+        
+        // Fetch spaces with these IDs
+        const { data: spacesData, error: spacesError } = await supabase
+          .from("spaces")
+          .select("*")
+          .eq("is_active", true)
+          .in("id", spaceIds);
+        
+        if (spacesError) {
+          console.error("Error fetching spaces:", spacesError);
+          throw spacesError;
+        }
+        
+        // With our improved RLS, this will only return the user's spaces
+        setSpaces(spacesData as Space[] || []);
+        
+        // Set default space if none is already selected and we have spaces
+        if (spacesData && spacesData.length > 0 && !currentSpace) {
+          setCurrentSpace(spacesData[0]);
+        } else if (currentSpace && !spacesData?.some(space => space.id === currentSpace.id)) {
+          // If current space is no longer available, reset it
+          setCurrentSpace(spacesData?.[0] || null);
+        }
+      } else {
+        setSpaces([]);
+        setCurrentSpace(null);
       }
       
     } catch (error: any) {
@@ -145,6 +160,100 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const deleteSpace = async (spaceId: string): Promise<boolean> => {
+    if (!user?.id || !canManageSpace) return false;
+
+    try {
+      setIsLoading(true);
+      
+      // Only mark the space as inactive rather than deleting it
+      const { error } = await supabase
+        .from("spaces")
+        .update({ is_active: false })
+        .eq("id", spaceId)
+        .eq("created_by", user.id);
+        
+      if (error) throw error;
+      
+      // Refresh spaces
+      await fetchSpaces();
+      
+      toast({
+        title: "Space deleted",
+        description: "The space has been deleted successfully.",
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error deleting space:", error);
+      toast({
+        title: "Error deleting space",
+        description: error.message || "Could not delete the space. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const leaveSpace = async (spaceId: string): Promise<boolean> => {
+    if (!user?.id) return false;
+
+    try {
+      setIsLoading(true);
+      
+      // Find the user's membership record for this space
+      const membership = memberships.find(m => m.space_id === spaceId && m.user_id === user.id);
+      
+      if (!membership) {
+        throw new Error("You're not a member of this space");
+      }
+      
+      // Mark the membership as inactive
+      const { error } = await supabase
+        .from("user_spaces")
+        .update({ is_active: false })
+        .eq("id", membership.id)
+        .eq("user_id", user.id);
+        
+      if (error) throw error;
+      
+      // Refresh spaces
+      await fetchSpaces();
+      
+      toast({
+        title: "Left space",
+        description: "You have left the space successfully.",
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error("Error leaving space:", error);
+      toast({
+        title: "Error leaving space",
+        description: error.message || "Could not leave the space. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const inviteToSpace = async (email: string, role: 'admin' | 'editor' | 'viewer', spaceId: string): Promise<boolean> => {
+    if (!user?.id || !currentSpace || !canManageSpace) return false;
+    
+    // For now, we'll just show a toast since we need to implement user lookup by email
+    // and proper invitation flow in later changes
+    toast({
+      title: "Invitation feature coming soon",
+      description: `This would invite ${email} as a ${role} to your space.`,
+    });
+    
+    return true;
+  };
+
   // Fetch spaces when the user changes
   useEffect(() => {
     if (user?.id) {
@@ -169,7 +278,10 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
         createSpace,
         userRole,
         canManageSpace,
-        canEditContent
+        canEditContent,
+        deleteSpace,
+        leaveSpace,
+        inviteToSpace
       }}
     >
       {children}
