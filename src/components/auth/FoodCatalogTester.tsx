@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useSpace } from "@/context/SpaceContext";
@@ -11,7 +12,7 @@ import TestStatus from "./test-utils/TestStatus";
 import ErrorDisplay from "./test-utils/ErrorDisplay";
 import ResultDisplay from "./test-utils/ResultDisplay";
 import { supabase } from "@/integrations/supabase/client";
-import { RPCGetFoodDescendants, RPCSearchFoods } from "@/types/supabase-rpc";
+import { RPCGetFoodDescendants, RPCGetFoodAncestors, RPCSearchFoods } from "@/types/supabase-rpc";
 
 type TestResult = {
   success: boolean;
@@ -26,6 +27,7 @@ const FoodCatalogTester = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessages, setErrorMessages] = useState<{[key: string]: string}>({});
   const [spaceId, setSpaceId] = useState<string | null>(null);
+  const [testSequenceRunning, setTestSequenceRunning] = useState(false);
   
   useEffect(() => {
     if (currentSpace) {
@@ -59,8 +61,19 @@ const FoodCatalogTester = () => {
     return null;
   };
   
+  const updateTestResult = (testKey: string, result: TestResult) => {
+    console.log(`Test ${testKey} completed:`, result);
+    setTestResults(prev => ({
+      ...prev,
+      [testKey]: result
+    }));
+  };
+  
   const testFetchCategories = async () => {
     try {
+      // Add delay to ensure DB is ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const { data, error } = await supabase
         .from("food_categories")
         .select("*")
@@ -72,15 +85,11 @@ const FoodCatalogTester = () => {
         success: data && data.length > 0,
         message: data && data.length > 0 
           ? `Successfully fetched ${data.length} food categories` 
-          : "No food categories found",
+          : "No food categories found - the table may be empty",
         data: data && data.length > 0 ? data.slice(0, 5) : null
       };
       
-      setTestResults({
-        ...testResults,
-        fetchCategories: result
-      });
-      
+      updateTestResult("fetchCategories", result);
       return result;
     } catch (error: any) {
       console.error("Error fetching food categories:", error);
@@ -90,11 +99,7 @@ const FoodCatalogTester = () => {
         message: `Error fetching food categories: ${error.message}`
       };
       
-      setTestResults({
-        ...testResults,
-        fetchCategories: result
-      });
-      
+      updateTestResult("fetchCategories", result);
       return result;
     }
   };
@@ -108,11 +113,7 @@ const FoodCatalogTester = () => {
         message: "No active space available for testing"
       };
       
-      setTestResults({
-        ...testResults,
-        createFood: result
-      });
-      
+      updateTestResult("createFood", result);
       return result;
     }
     
@@ -150,6 +151,9 @@ const FoodCatalogTester = () => {
       
       if (error) throw error;
       
+      // Add a delay to ensure trigger functions complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const result: TestResult = {
         success: data && data.length > 0,
         message: data && data.length > 0 
@@ -158,11 +162,7 @@ const FoodCatalogTester = () => {
         data: data && data.length > 0 ? data[0] : null
       };
       
-      setTestResults({
-        ...testResults,
-        createFood: result
-      });
-      
+      updateTestResult("createFood", result);
       return result;
     } catch (error: any) {
       console.error("Error creating test food:", error);
@@ -172,11 +172,7 @@ const FoodCatalogTester = () => {
         message: `Error creating test food: ${error.message}`
       };
       
-      setTestResults({
-        ...testResults,
-        createFood: result
-      });
-      
+      updateTestResult("createFood", result);
       return result;
     }
   };
@@ -190,11 +186,7 @@ const FoodCatalogTester = () => {
         message: "No active space available for testing"
       };
       
-      setTestResults({
-        ...testResults,
-        ltreeHierarchy: result
-      });
-      
+      updateTestResult("ltreeHierarchy", result);
       return result;
     }
     
@@ -219,6 +211,9 @@ const FoodCatalogTester = () => {
         throw new Error("Failed to create parent food");
       }
       
+      // Wait for triggers to run
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Now create a child food linking to the parent
       const childFood = {
         name: `Child of ${parentData[0].name}`,
@@ -239,6 +234,9 @@ const FoodCatalogTester = () => {
         throw new Error("Failed to create child food");
       }
       
+      // Wait for triggers to run
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Now fetch both to verify the path structure
       const { data: parentWithPath, error: pathError } = await supabase
         .from("foods")
@@ -256,15 +254,47 @@ const FoodCatalogTester = () => {
       
       if (childPathError) throw childPathError;
       
-      // Now test the get_food_descendants RPC
+      console.log("Parent path:", parentWithPath.path);
+      console.log("Child path:", childWithPath.path);
+      
+      // Now test the get_food_descendants RPC with proper string conversion
+      // First ensure parentWithPath.path is a string
+      const parentPathStr = String(parentWithPath.path);
+      
       const params: RPCGetFoodDescendants = {
-        food_path: parentWithPath.path
+        food_path: parentPathStr
       };
+      
+      console.log("Calling get_food_descendants with params:", params);
       
       const { data: descendants, error: descendantsError } = await supabase
         .rpc('get_food_descendants', params);
       
-      if (descendantsError) throw descendantsError;
+      if (descendantsError) {
+        console.error("Error fetching descendants:", descendantsError);
+        throw descendantsError;
+      }
+      
+      console.log("Descendants:", descendants);
+      
+      // Also test get_food_ancestors
+      const childPathStr = String(childWithPath.path);
+      
+      const ancestorParams: RPCGetFoodAncestors = {
+        food_path: childPathStr
+      };
+      
+      console.log("Calling get_food_ancestors with params:", ancestorParams);
+      
+      const { data: ancestors, error: ancestorsError } = await supabase
+        .rpc('get_food_ancestors', ancestorParams);
+      
+      if (ancestorsError) {
+        console.error("Error fetching ancestors:", ancestorsError);
+        throw ancestorsError;
+      }
+      
+      console.log("Ancestors:", ancestors);
       
       const result: TestResult = {
         success: true,
@@ -272,14 +302,12 @@ const FoodCatalogTester = () => {
         data: {
           parent: parentWithPath,
           child: childWithPath,
-          descendants: descendants
+          descendants: descendants,
+          ancestors: ancestors
         }
       };
       
-      setTestResults({
-        ...testResults,
-        ltreeHierarchy: result
-      });
+      updateTestResult("ltreeHierarchy", result);
       
       return result;
     } catch (error: any) {
@@ -290,10 +318,7 @@ const FoodCatalogTester = () => {
         message: `Error testing ltree hierarchy: ${error.message}`
       };
       
-      setTestResults({
-        ...testResults,
-        ltreeHierarchy: result
-      });
+      updateTestResult("ltreeHierarchy", result);
       
       return result;
     }
@@ -308,10 +333,7 @@ const FoodCatalogTester = () => {
         message: "No active space available for testing"
       };
       
-      setTestResults({
-        ...testResults,
-        foodProperties: result
-      });
+      updateTestResult("foodProperties", result);
       
       return result;
     }
@@ -337,17 +359,27 @@ const FoodCatalogTester = () => {
         throw new Error("Failed to create test food for properties");
       }
       
+      // Wait for food to be fully created
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Get some units for testing
       const { data: units, error: unitsError } = await supabase
         .from("units")
         .select("*")
-        .in("unit_type", ["mass", "volume"])
-        .limit(2);
+        .limit(5);
       
       if (unitsError) throw unitsError;
       
-      if (!units || units.length < 2) {
+      if (!units || units.length === 0) {
         throw new Error("Couldn't find units for property test");
+      }
+      
+      console.log("Available units:", units.map(u => `${u.id}: ${u.name} (${u.unit_type})`));
+      
+      // Find appropriate units
+      const massUnit = units.find(u => u.unit_type === 'mass');
+      if (!massUnit) {
+        throw new Error("No mass unit available for testing");
       }
       
       // Add some properties to the food
@@ -356,7 +388,7 @@ const FoodCatalogTester = () => {
         property_type: "calories",
         value: 150,
         per_amount: 100,
-        per_unit_id: units[0].id
+        per_unit_id: massUnit.id  // Use massUnit
       };
       
       const proteinProperty = {
@@ -364,15 +396,22 @@ const FoodCatalogTester = () => {
         property_type: "protein",
         value: 5.2,
         per_amount: 100,
-        per_unit_id: units[0].id
+        per_unit_id: massUnit.id  // Use massUnit
       };
+      
+      console.log("Adding properties:", [caloriesProperty, proteinProperty]);
       
       const { data: propertiesData, error: propertiesError } = await supabase
         .from("food_properties")
         .insert([caloriesProperty, proteinProperty])
         .select();
       
-      if (propertiesError) throw propertiesError;
+      if (propertiesError) {
+        console.error("Error adding properties:", propertiesError);
+        throw propertiesError;
+      }
+      
+      console.log("Properties added:", propertiesData);
       
       // Now fetch the food with its properties
       const { data: foodWithProperties, error: fetchError } = await supabase
@@ -392,10 +431,7 @@ const FoodCatalogTester = () => {
         data: foodWithProperties
       };
       
-      setTestResults({
-        ...testResults,
-        foodProperties: result
-      });
+      updateTestResult("foodProperties", result);
       
       return result;
     } catch (error: any) {
@@ -406,10 +442,7 @@ const FoodCatalogTester = () => {
         message: `Error testing food properties: ${error.message}`
       };
       
-      setTestResults({
-        ...testResults,
-        foodProperties: result
-      });
+      updateTestResult("foodProperties", result);
       
       return result;
     }
@@ -424,10 +457,7 @@ const FoodCatalogTester = () => {
         message: "No active space available for testing"
       };
       
-      setTestResults({
-        ...testResults,
-        foodSearch: result
-      });
+      updateTestResult("foodSearch", result);
       
       return result;
     }
@@ -455,8 +485,8 @@ const FoodCatalogTester = () => {
         throw new Error("Failed to create test food for search");
       }
       
-      // Wait briefly for text search vectors to update
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wait for text search vectors to update
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Now test searching for this food using the RPC
       const searchParams: RPCSearchFoods = {
@@ -464,10 +494,17 @@ const FoodCatalogTester = () => {
         space_id: activeSpaceId
       };
       
+      console.log("Running search with params:", searchParams);
+      
       const { data: searchResults, error: searchError } = await supabase
         .rpc('search_foods', searchParams);
       
-      if (searchError) throw searchError;
+      if (searchError) {
+        console.error("Search error:", searchError);
+        throw searchError;
+      }
+      
+      console.log("Search results count:", searchResults?.length ?? 0);
       
       const hasNewFood = searchResults?.some(food => food.id === foodData[0].id);
       
@@ -483,10 +520,7 @@ const FoodCatalogTester = () => {
         }
       };
       
-      setTestResults({
-        ...testResults,
-        foodSearch: result
-      });
+      updateTestResult("foodSearch", result);
       
       return result;
     } catch (error: any) {
@@ -497,10 +531,7 @@ const FoodCatalogTester = () => {
         message: `Error testing food search: ${error.message}`
       };
       
-      setTestResults({
-        ...testResults,
-        foodSearch: result
-      });
+      updateTestResult("foodSearch", result);
       
       return result;
     }
@@ -508,10 +539,20 @@ const FoodCatalogTester = () => {
   
   const testCreateFoodCatalogRpcs = async () => {
     try {
+      console.log("Testing create_food_catalog_rpcs function");
+      
+      // Add delay to ensure DB is ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const { data, error } = await supabase
         .rpc('create_food_catalog_rpcs');
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error calling create_food_catalog_rpcs:", error);
+        throw error;
+      }
+      
+      console.log("RPC function result:", data);
       
       const result: TestResult = {
         success: true,
@@ -519,10 +560,7 @@ const FoodCatalogTester = () => {
         data
       };
       
-      setTestResults({
-        ...testResults,
-        createRpcs: result
-      });
+      updateTestResult("createRpcs", result);
       
       return result;
     } catch (error: any) {
@@ -533,31 +571,51 @@ const FoodCatalogTester = () => {
         message: `Error testing food catalog RPCs: ${error.message}`
       };
       
-      setTestResults({
-        ...testResults,
-        createRpcs: result
-      });
+      updateTestResult("createRpcs", result);
       
       return result;
     }
   };
   
   const runAllTests = async () => {
+    if (testSequenceRunning) return;
+    
     setLoading(true);
+    setTestSequenceRunning(true);
+    setErrorMessages({});
     
-    // Run tests in sequence
-    await testCreateFoodCatalogRpcs();
-    await testFetchCategories();
-    await testCreateFood();
-    await testLtreeHierarchy();
-    await testFoodProperties();
-    await testFoodSearch();
-    
-    setLoading(false);
+    try {
+      // Run tests in sequence with delay between tests
+      console.log("Starting test sequence");
+      
+      await testCreateFoodCatalogRpcs();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await testFetchCategories();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await testCreateFood();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await testLtreeHierarchy();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await testFoodProperties();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await testFoodSearch();
+      
+      console.log("All tests completed");
+    } catch (error) {
+      console.error("Error in test sequence:", error);
+    } finally {
+      setLoading(false);
+      setTestSequenceRunning(false);
+    }
   };
   
   useEffect(() => {
-    if (user) {
+    if (user && spaceId) {
       runAllTests();
     }
   }, [user, spaceId]);
@@ -616,7 +674,7 @@ const FoodCatalogTester = () => {
               
               <Button 
                 onClick={runAllTests} 
-                disabled={loading}
+                disabled={loading || testSequenceRunning}
                 className="w-full mt-4"
               >
                 {loading ? "Running Tests..." : "Run All Tests"}
