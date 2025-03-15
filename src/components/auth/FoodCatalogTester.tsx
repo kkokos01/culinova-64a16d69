@@ -27,7 +27,7 @@ const FoodCatalogTester = () => {
       // Run tests automatically when component mounts
       runAllTests();
     }
-  }, [user]);
+  }, [user, runAllTests]);
 
   return (
     <Card className="w-full">
@@ -57,6 +57,7 @@ const FoodCatalogTester = () => {
             
             <SearchResultsDisplay
               searchResults={searchResults}
+              errorMessage={errorMessages.foodSearch}
             />
             
             <HierarchyResultsDisplay

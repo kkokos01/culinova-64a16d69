@@ -1,12 +1,33 @@
 
 import { Food } from "@/hooks/useFoodCatalogTest";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface SearchResultsDisplayProps {
   searchResults: Food[];
+  errorMessage?: string;
 }
 
-const SearchResultsDisplay = ({ searchResults }: SearchResultsDisplayProps) => {
+const SearchResultsDisplay = ({ searchResults, errorMessage }: SearchResultsDisplayProps) => {
+  // Show error message if provided
+  if (errorMessage) {
+    return (
+      <Card className="mt-4">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Food Search</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Don't render anything if no results
   if (searchResults.length === 0) return null;
   
   return (

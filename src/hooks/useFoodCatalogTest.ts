@@ -1,7 +1,9 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSpace } from "@/context/SpaceContext";
+import { useAuth } from "@/context/AuthContext";
 
 export interface FoodCategory {
   id: string;
@@ -19,6 +21,8 @@ export interface Food {
   tags: string[];
   properties: Record<string, any>;
   inheritable_properties: Record<string, any>;
+  space_id: string;
+  created_by: string;
 }
 
 export function useFoodCatalogTest() {
@@ -34,15 +38,17 @@ export function useFoodCatalogTest() {
   }>({ ancestors: [], descendants: [] });
   const { toast } = useToast();
   const [isTestRunning, setIsTestRunning] = useState(false);
+  const { currentSpace } = useSpace();
+  const { user } = useAuth();
   
   // Reset all test states
-  const resetTests = () => {
+  const resetTests = useCallback(() => {
     setTestResults({});
     setErrorMessages({});
     setCreatedFood(null);
     setSearchResults([]);
     setHierarchyResults({ ancestors: [], descendants: [] });
-  };
+  }, []);
 
   // Test 1: Verify RPC Functions exist and are callable
   const verifyRpcFunctions = async (): Promise<boolean> => {
@@ -51,7 +57,7 @@ export function useFoodCatalogTest() {
       // Check if search_foods RPC function exists
       const { error: searchError } = await supabase.rpc('search_foods', {
         search_query: "",
-        space_id: ""
+        space_id: currentSpace?.id || ""
       });
       
       // It's expected to fail with a validation error, not a function not found error
@@ -127,6 +133,11 @@ export function useFoodCatalogTest() {
   const createTestFood = async (): Promise<Food> => {
     console.log("Starting create food test");
     try {
+      // Ensure we have a space and user
+      if (!currentSpace || !user) {
+        throw new Error("No active space or user found");
+      }
+      
       // Generate unique name to avoid conflicts
       const timestamp = Date.now().toString();
       const foodName = `Test Food ${timestamp}`;
@@ -141,9 +152,13 @@ export function useFoodCatalogTest() {
         name: foodName,
         description: "A food created for testing purposes",
         path: foodPath,
+        space_id: currentSpace.id,
         category_id: categoryId,
+        created_by: user.id,
         tags: ['test', 'catalog', 'validation']
       };
+      
+      console.log("Creating food with data:", foodData);
       
       const { data, error } = await supabase
         .from('foods')
@@ -170,6 +185,11 @@ export function useFoodCatalogTest() {
   const testLtreeHierarchy = async (food: Food): Promise<boolean> => {
     console.log("Starting ltree hierarchy test with food:", food);
     try {
+      // Ensure we have a space and user
+      if (!currentSpace || !user) {
+        throw new Error("No active space or user found");
+      }
+      
       // Create a child food item
       const timestamp = Date.now().toString();
       const childName = `Child Food ${timestamp}`;
@@ -183,6 +203,8 @@ export function useFoodCatalogTest() {
         description: "A child food for testing hierarchy",
         path: childPath,
         parent_id: food.id,
+        space_id: currentSpace.id,
+        created_by: user.id,
         tags: ['child', 'test']
       };
       
@@ -316,6 +338,11 @@ export function useFoodCatalogTest() {
   const testFoodSearch = async (): Promise<boolean> => {
     console.log("Starting food search test");
     try {
+      // Ensure we have a space and user
+      if (!currentSpace || !user) {
+        throw new Error("No active space or user found");
+      }
+      
       // Create a searchable food item
       const timestamp = Date.now().toString();
       const searchTerm = "avocado";
@@ -325,6 +352,8 @@ export function useFoodCatalogTest() {
         name: foodName,
         description: `This ${searchTerm} is a superfood with healthy fats.`,
         path: foodName.toLowerCase().replace(/\s+/g, '_'),
+        space_id: currentSpace.id,
+        created_by: user.id,
         tags: [searchTerm, 'organic', 'superfood']
       };
       
@@ -346,11 +375,10 @@ export function useFoodCatalogTest() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Test search_foods RPC
-      const spaceId = searchableFood.space_id;
       const { data: searchResults, error: searchError } = await supabase
         .rpc('search_foods', {
           search_query: searchTerm,
-          space_id: spaceId
+          space_id: currentSpace.id
         });
         
       if (searchError) throw searchError;
@@ -374,9 +402,18 @@ export function useFoodCatalogTest() {
   };
 
   // Run all tests in sequence
-  const runAllTests = async () => {
+  const runAllTests = useCallback(async () => {
     if (isTestRunning) {
       console.log("Test is already running, skipping");
+      return;
+    }
+    
+    if (!currentSpace || !user) {
+      toast({
+        title: "Missing requirements",
+        description: "You need to have an active space to run these tests",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -467,7 +504,7 @@ export function useFoodCatalogTest() {
       console.log("Final test results:", newResults);
       console.log("Error messages:", newErrors);
     }
-  };
+  }, [isTestRunning, currentSpace, user, resetTests, toast]);
 
   return {
     isLoading,
