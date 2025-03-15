@@ -65,13 +65,13 @@ export const useUnitConversionTest = (updateResult: (result: any) => void, index
       
       // Test direct conversion between units
       try {
-        // Match the exact parameter names from the function signature:
-        // CREATE OR REPLACE FUNCTION public.convert_units(value numeric, from_unit_id uuid, to_unit_id uuid, food_id uuid DEFAULT NULL::uuid)
+        // Match the renamed parameter names from the function signature:
+        // CREATE OR REPLACE FUNCTION public.convert_units(input_value numeric, input_from_unit_id uuid, input_to_unit_id uuid, input_food_id uuid DEFAULT NULL::uuid)
         const conversionParams = {
-          value: 100,
-          from_unit_id: gramUnit.id,
-          to_unit_id: ounceUnit.id,
-          food_id: null
+          input_value: 100,
+          input_from_unit_id: gramUnit.id,
+          input_to_unit_id: ounceUnit.id,
+          input_food_id: null
         };
         
         console.log("Calling convert_units with params:", conversionParams);
