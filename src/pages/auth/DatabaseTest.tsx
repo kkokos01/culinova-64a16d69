@@ -12,6 +12,9 @@ const DatabaseTest = () => {
   const { user } = useAuth();
   const { currentSpace, spaces } = useSpace();
 
+  // Check if user has a default space
+  const hasDefaultSpace = spaces.some(space => space.is_default);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -26,6 +29,15 @@ const DatabaseTest = () => {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 You don't have any spaces yet. Some tests require an active space.
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {user && spaces.length > 0 && !hasDefaultSpace && (
+            <Alert variant="warning" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                You have spaces but none is marked as default. The first created space will be used as default.
               </AlertDescription>
             </Alert>
           )}

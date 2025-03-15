@@ -73,19 +73,37 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
           throw spacesError;
         }
         
-        // With our improved RLS, this will only return the user's spaces
-        setSpaces(spacesData as Space[] || []);
-        
-        // Set default space if none is already selected and we have spaces
-        if (spacesData && spacesData.length > 0 && !currentSpace) {
-          setCurrentSpace(spacesData[0]);
-        } else if (currentSpace && !spacesData?.some(space => space.id === currentSpace.id)) {
-          // If current space is no longer available, reset it
-          setCurrentSpace(spacesData?.[0] || null);
+        if (spacesData && spacesData.length > 0) {
+          setSpaces(spacesData as Space[] || []);
+          
+          // First try to find the default space
+          const defaultSpace = spacesData.find(space => space.is_default);
+          
+          // Set space priority: Current selected space (if still valid) > Default space > First space
+          if (currentSpace && spacesData.some(space => space.id === currentSpace.id)) {
+            // Keep current selection
+          } else if (defaultSpace) {
+            setCurrentSpace(defaultSpace);
+          } else {
+            setCurrentSpace(spacesData[0]);
+          }
+        } else {
+          setSpaces([]);
+          setCurrentSpace(null);
         }
       } else {
         setSpaces([]);
         setCurrentSpace(null);
+        
+        // If user has no spaces, call the function to create a default space
+        if (user?.id) {
+          console.log("User has no spaces, creating default space");
+          const spaceId = await createDefaultSpaceForUser(user.id);
+          if (spaceId) {
+            // Re-fetch spaces after creating the default space
+            await fetchSpaces();
+          }
+        }
       }
       
     } catch (error: any) {
@@ -100,13 +118,29 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const createDefaultSpaceForUser = async (userId: string): Promise<string | null> => {
+    try {
+      // Call the Supabase function to create a default space
+      const { data, error } = await supabase.rpc('create_space_for_existing_user', {
+        user_id_param: userId
+      });
+      
+      if (error) throw error;
+      
+      return data;
+    } catch (error: any) {
+      console.error("Error creating default space:", error);
+      return null;
+    }
+  };
+
   const createSpace = async (name: string): Promise<Space | null> => {
     if (!user?.id) return null;
     
     try {
       setIsLoading(true);
       
-      // Insert a new space
+      // Insert a new space (not setting as default since users should only have one default space)
       const { data: newSpace, error: spaceError } = await supabase
         .from("spaces")
         .insert({
@@ -114,7 +148,8 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
           created_by: user.id,
           max_recipes: 100,
           max_users: 5,
-          is_active: true
+          is_active: true,
+          is_default: false // Not setting as default for additional spaces
         })
         .select()
         .single();

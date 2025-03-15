@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,7 +51,7 @@ const DatabaseTester = () => {
     }
   };
 
-  // Test 2: Check if user has at least one space
+  // Test 2: Check if user has at least one space and a default space
   const testUserSpaces = async () => {
     if (!user) return false;
     
@@ -68,7 +69,7 @@ const DatabaseTester = () => {
       }
       
       setSpaces(userSpaces as Space[] || []);
-      return userSpaces && userSpaces.length > 0;
+      return userSpaces && userSpaces.length > 0 && userSpaces.some(space => space.is_default);
     } catch (error: any) {
       console.error("Error testing user spaces:", error);
       setErrorMessages(prev => ({ ...prev, userSpaces: error.message }));
@@ -81,11 +82,14 @@ const DatabaseTester = () => {
     if (!user || spaces.length === 0) return false;
     
     try {
+      // Find the default space
+      const defaultSpace = spaces.find(space => space.is_default) || spaces[0];
+      
       const { data, error } = await supabase
         .from("user_spaces")
         .select("*")
         .eq("user_id", user.id)
-        .eq("space_id", spaces[0].id)
+        .eq("space_id", defaultSpace.id)
         .eq("is_active", true);
       
       if (error) {
@@ -96,7 +100,7 @@ const DatabaseTester = () => {
       setUserSpaces(data as UserSpace[]);
       
       if (data.length === 0) return false;
-      // Check if user is admin of at least one space
+      // Check if user is admin of their default space
       return data.some(membership => membership.role === 'admin');
     } catch (error: any) {
       console.error("Error testing space membership:", error);
@@ -165,7 +169,8 @@ const DatabaseTester = () => {
           created_by: user.id,
           max_recipes: 100,
           max_users: 5,
-          is_active: true
+          is_active: true,
+          is_default: true
         })
         .select()
         .single();

@@ -96,6 +96,7 @@ export type Database = {
           created_by: string
           id: string
           is_active: boolean
+          is_default: boolean
           max_recipes: number
           max_users: number
           name: string
@@ -105,6 +106,7 @@ export type Database = {
           created_by: string
           id?: string
           is_active?: boolean
+          is_default?: boolean
           max_recipes?: number
           max_users?: number
           name: string
@@ -114,6 +116,7 @@ export type Database = {
           created_by?: string
           id?: string
           is_active?: boolean
+          is_default?: boolean
           max_recipes?: number
           max_users?: number
           name?: string
@@ -296,6 +299,10 @@ export type Database = {
           to_unit_id: string
           food_id?: string
         }
+        Returns: number
+      }
+      create_default_spaces_for_existing_users: {
+        Args: Record<PropertyKey, never>
         Returns: number
       }
       create_space_for_existing_user: {
