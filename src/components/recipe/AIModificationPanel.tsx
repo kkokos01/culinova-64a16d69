@@ -52,8 +52,18 @@ const AIModificationPanel: React.FC<AIModificationPanelProps> = ({
       
       <Tabs defaultValue="options" className="w-full">
         <TabsList className="w-full mb-4 grid grid-cols-2">
-          <TabsTrigger value="options" className="text-xs sm:text-sm">Modification Options</TabsTrigger>
-          <TabsTrigger value="custom" className="text-xs sm:text-sm">Custom Instructions</TabsTrigger>
+          <TabsTrigger 
+            value="options" 
+            className="text-xs sm:text-sm px-2 py-1.5 break-words line-clamp-2 h-auto min-h-[40px] whitespace-normal"
+          >
+            Modification Options
+          </TabsTrigger>
+          <TabsTrigger 
+            value="custom" 
+            className="text-xs sm:text-sm px-2 py-1.5 break-words line-clamp-2 h-auto min-h-[40px] whitespace-normal"
+          >
+            Custom Instructions
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="options">
@@ -71,8 +81,8 @@ const AIModificationPanel: React.FC<AIModificationPanelProps> = ({
                     {type.icon}
                   </div>
                   <div className="min-w-0">
-                    <CardTitle className="text-base">{type.title}</CardTitle>
-                    <CardDescription className="text-xs sm:text-sm line-clamp-2">{type.description}</CardDescription>
+                    <CardTitle className="text-base break-words">{type.title}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm line-clamp-2 break-words">{type.description}</CardDescription>
                   </div>
                 </CardHeader>
                 {selectedModification === type.id && (
@@ -95,8 +105,8 @@ const AIModificationPanel: React.FC<AIModificationPanelProps> = ({
         <TabsContent value="custom">
           <Card>
             <CardHeader className="p-4">
-              <CardTitle className="text-base">Custom AI Instructions</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
+              <CardTitle className="text-base break-words">Custom AI Instructions</CardTitle>
+              <CardDescription className="text-xs sm:text-sm break-words">
                 Tell the AI exactly how you want to modify this recipe
               </CardDescription>
             </CardHeader>
