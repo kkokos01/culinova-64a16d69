@@ -20,9 +20,18 @@ export const useUnitConversionTest = (updateResult: (result: any) => void, index
         throw new Error("Couldn't find enough mass units for conversion test");
       }
       
+      console.log("Found mass units:", massUnits.map(u => u.name));
+      
       // Find units we need in the result set
-      const gramUnit = massUnits.find(u => u.name === "gram" || u.name === "milligram" || u.name === "kilogram");
-      const ounceUnit = massUnits.find(u => u.name === "ounce" || u.name === "pound");
+      const gramUnit = massUnits.find(u => 
+        u.measurement_system === 'metric' && 
+        (u.name === "gram" || u.name === "milligram" || u.name === "kilogram")
+      );
+      
+      const ounceUnit = massUnits.find(u => 
+        u.measurement_system === 'imperial' && 
+        (u.name === "ounce" || u.name === "pound")
+      );
       
       if (!gramUnit) {
         throw new Error("Could not find any metric mass unit (gram, milligram, kilogram)");
@@ -34,21 +43,48 @@ export const useUnitConversionTest = (updateResult: (result: any) => void, index
       
       console.log("Found units for conversion test:", { 
         metricUnit: gramUnit.name, 
-        imperialUnit: ounceUnit.name 
+        imperialUnit: ounceUnit.name,
+        metricUnitId: gramUnit.id,
+        imperialUnitId: ounceUnit.id
       });
       
-      // Test direct conversion between units if available
+      // Try to find if there's a direct conversion defined
+      const { data: directConversions, error: convError } = await supabase
+        .from("unit_conversions")
+        .select("*")
+        .or(`from_unit_id.eq.${gramUnit.id},to_unit_id.eq.${gramUnit.id}`)
+        .or(`from_unit_id.eq.${ounceUnit.id},to_unit_id.eq.${ounceUnit.id}`);
+        
+      if (convError) {
+        console.error("Error checking for direct conversions:", convError);
+      } else if (directConversions && directConversions.length > 0) {
+        console.log("Found existing conversions:", directConversions);
+      } else {
+        console.log("No direct conversions found, will rely on base unit conversions");
+      }
+      
+      // Test direct conversion between units
       try {
+        // Create a simplified version of the parameters to avoid ambiguity in the SQL function
+        const conversionParams = {
+          value: 100,
+          from_unit_id: gramUnit.id,
+          to_unit_id: ounceUnit.id
+        };
+        
+        console.log("Calling convert_units with params:", conversionParams);
+        
         const { data: conversionResult, error: conversionError } = await supabase.rpc(
           "convert_units",
-          {
-            value: 100,
-            from_unit_id: gramUnit.id,
-            to_unit_id: ounceUnit.id
-          }
+          conversionParams
         );
         
-        if (conversionError) throw conversionError;
+        if (conversionError) {
+          console.error("Conversion error:", conversionError);
+          throw conversionError;
+        }
+        
+        console.log("Conversion succeeded:", conversionResult);
         
         // Verify result
         updateResult({
