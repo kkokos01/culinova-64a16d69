@@ -572,6 +572,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      create_food_catalog_rpcs: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       create_space_for_existing_user: {
         Args: {
           user_id_param: string
@@ -581,6 +585,54 @@ export type Database = {
       fix_default_spaces: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      get_food_ancestors: {
+        Args: {
+          food_path: unknown
+        }
+        Returns: {
+          category_id: string | null
+          created_at: string
+          created_by: string
+          default_unit_id: string | null
+          description: string | null
+          id: string
+          inheritable_properties: Json | null
+          is_active: boolean | null
+          name: string
+          parent_id: string | null
+          path: unknown | null
+          properties: Json | null
+          search_vector_en: unknown | null
+          search_vector_es: unknown | null
+          space_id: string | null
+          tags: string[] | null
+          updated_at: string
+        }[]
+      }
+      get_food_descendants: {
+        Args: {
+          food_path: unknown
+        }
+        Returns: {
+          category_id: string | null
+          created_at: string
+          created_by: string
+          default_unit_id: string | null
+          description: string | null
+          id: string
+          inheritable_properties: Json | null
+          is_active: boolean | null
+          name: string
+          parent_id: string | null
+          path: unknown | null
+          properties: Json | null
+          search_vector_en: unknown | null
+          search_vector_es: unknown | null
+          space_id: string | null
+          tags: string[] | null
+          updated_at: string
+        }[]
       }
       is_member_of_space: {
         Args: {
@@ -719,6 +771,31 @@ export type Database = {
       repair_missing_memberships: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      search_foods: {
+        Args: {
+          search_query: string
+          space_id: string
+        }
+        Returns: {
+          category_id: string | null
+          created_at: string
+          created_by: string
+          default_unit_id: string | null
+          description: string | null
+          id: string
+          inheritable_properties: Json | null
+          is_active: boolean | null
+          name: string
+          parent_id: string | null
+          path: unknown | null
+          properties: Json | null
+          search_vector_en: unknown | null
+          search_vector_es: unknown | null
+          space_id: string | null
+          tags: string[] | null
+          updated_at: string
+        }[]
       }
       text2ltree: {
         Args: {

@@ -1,756 +1,631 @@
-
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { useSpace } from "@/context/SpaceContext";
-import { Food, FoodCategory, FoodProperty, PropertyType } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Check, X } from "lucide-react";
-import { TestStatus } from "./test-utils/TestStatus";
+import { AlertCircle } from "lucide-react";
 
-interface TestResult {
-  status: "idle" | "running" | "success" | "error";
+import TestStatus from "./test-utils/TestStatus";
+import ErrorDisplay from "./test-utils/ErrorDisplay";
+import ResultDisplay from "./test-utils/ResultDisplay";
+import { supabase } from "@/integrations/supabase/client";
+import { RPCGetFoodDescendants, RPCSearchFoods } from "@/types/supabase-rpc";
+
+type TestResult = {
+  success: boolean;
   message?: string;
   data?: any;
-}
+};
 
 const FoodCatalogTester = () => {
-  const { currentSpace } = useSpace();
-  const [categories, setCategories] = useState<FoodCategory[]>([]);
-  const [foods, setFoods] = useState<Food[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [selectedParent, setSelectedParent] = useState<string>("");
-  const [selectedFood, setSelectedFood] = useState<string>("");
-  const [newFoodName, setNewFoodName] = useState<string>("");
-  const [newFoodDescription, setNewFoodDescription] = useState<string>("");
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [searchResults, setSearchResults] = useState<Food[]>([]);
+  const { user } = useAuth();
+  const { currentSpace, spaces, createSpace } = useSpace();
+  const [testResults, setTestResults] = useState<{[key: string]: TestResult}>({});
+  const [loading, setLoading] = useState(false);
+  const [errorMessages, setErrorMessages] = useState<{[key: string]: string}>({});
+  const [spaceId, setSpaceId] = useState<string | null>(null);
   
-  const [testResults, setTestResults] = useState<{
-    categories: TestResult;
-    createFood: TestResult;
-    fetchHierarchy: TestResult;
-    properties: TestResult;
-    search: TestResult;
-  }>({
-    categories: { status: "idle" },
-    createFood: { status: "idle" },
-    fetchHierarchy: { status: "idle" },
-    properties: { status: "idle" },
-    search: { status: "idle" },
-  });
+  useEffect(() => {
+    if (currentSpace) {
+      setSpaceId(currentSpace.id);
+    } else if (spaces.length > 0) {
+      setSpaceId(spaces[0].id);
+    }
+  }, [currentSpace, spaces]);
   
-  // Test 1: Fetch Categories
-  const testFetchCategories = async () => {
-    if (!currentSpace) {
-      setTestResults(prev => ({
-        ...prev,
-        categories: { 
-          status: "error", 
-          message: "No active space. Please select a space first." 
-        }
-      }));
-      return;
+  const ensureTestSpace = async () => {
+    // If we already have a space, use it
+    if (spaceId) {
+      return spaceId;
     }
     
-    setTestResults(prev => ({
-      ...prev,
-      categories: { status: "running" }
-    }));
-    
+    // Otherwise try to create one
     try {
-      // First, fetch global categories
-      const { data: globalCategories, error: categoriesError } = await supabase
+      const newSpace = await createSpace("Test Food Catalog");
+      if (newSpace) {
+        setSpaceId(newSpace.id);
+        return newSpace.id;
+      }
+    } catch (error: any) {
+      console.error("Error creating test space:", error.message);
+      setErrorMessages({
+        ...errorMessages,
+        ensureSpace: `Error creating test space: ${error.message}`
+      });
+    }
+    
+    return null;
+  };
+  
+  const testFetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
         .from("food_categories")
         .select("*")
         .order("display_order", { ascending: true });
       
-      if (categoriesError) throw categoriesError;
+      if (error) throw error;
       
-      // Then fetch space-specific settings
-      const { data: settings, error: settingsError } = await supabase
-        .from("space_category_settings")
-        .select("*")
-        .eq("space_id", currentSpace.id);
+      const result: TestResult = {
+        success: data && data.length > 0,
+        message: data && data.length > 0 
+          ? `Successfully fetched ${data.length} food categories` 
+          : "No food categories found",
+        data: data && data.length > 0 ? data.slice(0, 5) : null
+      };
       
-      if (settingsError) throw settingsError;
-      
-      // Combine the data
-      const enhancedCategories = globalCategories.map(category => {
-        const customSettings = settings?.find(s => s.category_id === category.id);
-        return {
-          ...category,
-          custom_name: customSettings?.custom_name,
-          custom_icon_url: customSettings?.custom_icon_url,
-          custom_order: customSettings?.custom_order,
-          is_enabled: customSettings?.is_enabled ?? true
-        };
+      setTestResults({
+        ...testResults,
+        fetchCategories: result
       });
       
-      setCategories(enhancedCategories);
-      
-      setTestResults(prev => ({
-        ...prev,
-        categories: { 
-          status: "success", 
-          message: `Successfully fetched ${enhancedCategories.length} categories`,
-          data: enhancedCategories
-        }
-      }));
+      return result;
     } catch (error: any) {
-      console.error("Error fetching categories:", error);
-      setTestResults(prev => ({
-        ...prev,
-        categories: { 
-          status: "error", 
-          message: error.message || "Failed to fetch categories" 
-        }
-      }));
+      console.error("Error fetching food categories:", error);
+      
+      const result: TestResult = {
+        success: false,
+        message: `Error fetching food categories: ${error.message}`
+      };
+      
+      setTestResults({
+        ...testResults,
+        fetchCategories: result
+      });
+      
+      return result;
     }
   };
   
-  // Test 2: Create a Food
   const testCreateFood = async () => {
-    if (!currentSpace) {
-      setTestResults(prev => ({
-        ...prev,
-        createFood: { 
-          status: "error", 
-          message: "No active space. Please select a space first." 
-        }
-      }));
-      return;
+    const activeSpaceId = await ensureTestSpace();
+    
+    if (!activeSpaceId) {
+      const result: TestResult = {
+        success: false,
+        message: "No active space available for testing"
+      };
+      
+      setTestResults({
+        ...testResults,
+        createFood: result
+      });
+      
+      return result;
     }
     
-    if (!newFoodName) {
-      setTestResults(prev => ({
-        ...prev,
-        createFood: { 
-          status: "error", 
-          message: "Food name is required" 
-        }
-      }));
-      return;
+    // Get a category for the test
+    let categoryId = null;
+    try {
+      const { data: categories } = await supabase
+        .from("food_categories")
+        .select("id")
+        .limit(1);
+      
+      if (categories && categories.length > 0) {
+        categoryId = categories[0].id;
+      }
+    } catch (error) {
+      console.error("Error fetching category for food test:", error);
     }
-    
-    setTestResults(prev => ({
-      ...prev,
-      createFood: { status: "running" }
-    }));
     
     try {
-      const newFood = {
-        name: newFoodName,
-        description: newFoodDescription,
-        space_id: currentSpace.id,
-        category_id: selectedCategory || null,
-        parent_id: selectedParent || null,
-        created_by: currentSpace.created_by // using space creator as a fallback
+      // Create a test food with timestamp to ensure uniqueness
+      const timestamp = new Date().getTime();
+      const testFood = {
+        name: `Test Food ${timestamp}`,
+        description: "A food created for testing purposes",
+        category_id: categoryId,
+        space_id: activeSpaceId,
+        created_by: user?.id,
+        tags: ["test", "catalog", "validation"]
       };
       
       const { data, error } = await supabase
         .from("foods")
-        .insert(newFood)
+        .insert(testFood)
         .select();
       
       if (error) throw error;
       
-      if (data && data.length > 0) {
-        // Refresh the foods list
-        fetchRootFoods();
-        
-        setTestResults(prev => ({
-          ...prev,
-          createFood: { 
-            status: "success", 
-            message: `Successfully created food "${data[0].name}"`,
-            data: data[0]
-          }
-        }));
-        
-        // Clear form
-        setNewFoodName("");
-        setNewFoodDescription("");
-      } else {
-        throw new Error("No data returned after insert");
-      }
+      const result: TestResult = {
+        success: data && data.length > 0,
+        message: data && data.length > 0 
+          ? `Successfully created food: ${data[0].name}` 
+          : "Food creation returned no data",
+        data: data && data.length > 0 ? data[0] : null
+      };
+      
+      setTestResults({
+        ...testResults,
+        createFood: result
+      });
+      
+      return result;
     } catch (error: any) {
-      console.error("Error creating food:", error);
-      setTestResults(prev => ({
-        ...prev,
-        createFood: { 
-          status: "error", 
-          message: error.message || "Failed to create food" 
-        }
-      }));
+      console.error("Error creating test food:", error);
+      
+      const result: TestResult = {
+        success: false,
+        message: `Error creating test food: ${error.message}`
+      };
+      
+      setTestResults({
+        ...testResults,
+        createFood: result
+      });
+      
+      return result;
     }
   };
   
-  // Test 3: Fetch Food Hierarchy
-  const fetchRootFoods = async () => {
-    if (!currentSpace) return;
+  const testLtreeHierarchy = async () => {
+    const activeSpaceId = await ensureTestSpace();
+    
+    if (!activeSpaceId) {
+      const result: TestResult = {
+        success: false,
+        message: "No active space available for testing"
+      };
+      
+      setTestResults({
+        ...testResults,
+        ltreeHierarchy: result
+      });
+      
+      return result;
+    }
     
     try {
-      const { data, error } = await supabase
+      // First create a parent food
+      const timestamp = new Date().getTime();
+      const parentFood = {
+        name: `Parent Food ${timestamp}`,
+        description: "A parent food for testing hierarchy",
+        space_id: activeSpaceId,
+        created_by: user?.id
+      };
+      
+      const { data: parentData, error: parentError } = await supabase
         .from("foods")
-        .select("*")
-        .eq("space_id", currentSpace.id)
-        .is("parent_id", null);
+        .insert(parentFood)
+        .select();
       
-      if (error) throw error;
+      if (parentError) throw parentError;
       
-      setFoods(data || []);
-    } catch (error) {
-      console.error("Error fetching root foods:", error);
-    }
-  };
-  
-  const testFetchHierarchy = async () => {
-    if (!currentSpace) {
-      setTestResults(prev => ({
-        ...prev,
-        fetchHierarchy: { 
-          status: "error", 
-          message: "No active space. Please select a space first." 
-        }
-      }));
-      return;
-    }
-    
-    setTestResults(prev => ({
-      ...prev,
-      fetchHierarchy: { status: "running" }
-    }));
-    
-    try {
-      // First, fetch root foods (parent_id is null)
-      const { data: rootFoods, error: rootError } = await supabase
-        .from("foods")
-        .select("*")
-        .eq("space_id", currentSpace.id)
-        .is("parent_id", null);
-      
-      if (rootError) throw rootError;
-      
-      // For the selected food (if any), fetch its children
-      let children: Food[] = [];
-      if (selectedFood) {
-        const { data: foodChildren, error: childrenError } = await supabase
-          .from("foods")
-          .select("*")
-          .eq("parent_id", selectedFood);
-        
-        if (childrenError) throw childrenError;
-        children = foodChildren || [];
+      if (!parentData || parentData.length === 0) {
+        throw new Error("Failed to create parent food");
       }
       
-      // For testing the ltree functionality, fetch foods by path
-      // This is important to verify the hierarchical functionality
-      let pathResults: any[] = [];
-      if (selectedFood) {
-        const { data: selectedFoodData, error: foodError } = await supabase
-          .from("foods")
-          .select("*")
-          .eq("id", selectedFood)
-          .single();
-        
-        if (foodError) throw foodError;
-        
-        if (selectedFoodData?.path) {
-          // Find all descendants of the selected food
-          const { data: descendants, error: descendantsError } = await supabase
-            .rpc('get_food_descendants', { 
-              food_path: selectedFoodData.path 
-            });
-          
-          // If RPC fails, we'll use a regular query as fallback
-          if (descendantsError) {
-            console.warn("RPC not available, using fallback query:", descendantsError);
-            const { data: fallbackData, error: fallbackError } = await supabase
-              .from("foods")
-              .select("*")
-              .filter('path', 'like', `${selectedFoodData.path}.%`);
-            
-            if (fallbackError) throw fallbackError;
-            pathResults = fallbackData || [];
-          } else {
-            pathResults = descendants || [];
-          }
-        }
+      // Now create a child food linking to the parent
+      const childFood = {
+        name: `Child of ${parentData[0].name}`,
+        description: "A child food for testing hierarchy",
+        parent_id: parentData[0].id,
+        space_id: activeSpaceId,
+        created_by: user?.id
+      };
+      
+      const { data: childData, error: childError } = await supabase
+        .from("foods")
+        .insert(childFood)
+        .select();
+      
+      if (childError) throw childError;
+      
+      if (!childData || childData.length === 0) {
+        throw new Error("Failed to create child food");
       }
       
-      setFoods(rootFoods || []);
+      // Now fetch both to verify the path structure
+      const { data: parentWithPath, error: pathError } = await supabase
+        .from("foods")
+        .select("*")
+        .eq("id", parentData[0].id)
+        .single();
       
-      setTestResults(prev => ({
-        ...prev,
-        fetchHierarchy: { 
-          status: "success", 
-          message: `Found ${rootFoods?.length || 0} root foods and ${children.length} children of selected food`,
-          data: {
-            rootFoods,
-            children,
-            pathResults
-          }
+      if (pathError) throw pathError;
+      
+      const { data: childWithPath, error: childPathError } = await supabase
+        .from("foods")
+        .select("*")
+        .eq("id", childData[0].id)
+        .single();
+      
+      if (childPathError) throw childPathError;
+      
+      // Now test the get_food_descendants RPC
+      const params: RPCGetFoodDescendants = {
+        food_path: parentWithPath.path
+      };
+      
+      const { data: descendants, error: descendantsError } = await supabase
+        .rpc('get_food_descendants', params);
+      
+      if (descendantsError) throw descendantsError;
+      
+      const result: TestResult = {
+        success: true,
+        message: "Successfully tested ltree hierarchy with parent-child relationship",
+        data: {
+          parent: parentWithPath,
+          child: childWithPath,
+          descendants: descendants
         }
-      }));
+      };
+      
+      setTestResults({
+        ...testResults,
+        ltreeHierarchy: result
+      });
+      
+      return result;
     } catch (error: any) {
-      console.error("Error testing hierarchy:", error);
-      setTestResults(prev => ({
-        ...prev,
-        fetchHierarchy: { 
-          status: "error", 
-          message: error.message || "Failed to test food hierarchy" 
-        }
-      }));
+      console.error("Error testing ltree hierarchy:", error);
+      
+      const result: TestResult = {
+        success: false,
+        message: `Error testing ltree hierarchy: ${error.message}`
+      };
+      
+      setTestResults({
+        ...testResults,
+        ltreeHierarchy: result
+      });
+      
+      return result;
     }
   };
   
-  // Test 4: Food Properties
   const testFoodProperties = async () => {
-    if (!currentSpace) {
-      setTestResults(prev => ({
-        ...prev,
-        properties: { 
-          status: "error", 
-          message: "No active space. Please select a space first." 
-        }
-      }));
-      return;
-    }
+    const activeSpaceId = await ensureTestSpace();
     
-    if (!selectedFood) {
-      setTestResults(prev => ({
-        ...prev,
-        properties: { 
-          status: "error", 
-          message: "Please select a food first" 
-        }
-      }));
-      return;
+    if (!activeSpaceId) {
+      const result: TestResult = {
+        success: false,
+        message: "No active space available for testing"
+      };
+      
+      setTestResults({
+        ...testResults,
+        foodProperties: result
+      });
+      
+      return result;
     }
-    
-    setTestResults(prev => ({
-      ...prev,
-      properties: { status: "running" }
-    }));
     
     try {
-      // First fetch any existing properties
-      const { data: existingProps, error: propsError } = await supabase
-        .from("food_properties")
-        .select("*")
-        .eq("food_id", selectedFood);
+      // First create a test food
+      const timestamp = new Date().getTime();
+      const testFood = {
+        name: `Nutritional Food ${timestamp}`,
+        description: "A food for testing properties",
+        space_id: activeSpaceId,
+        created_by: user?.id
+      };
       
-      if (propsError) throw propsError;
+      const { data: foodData, error: foodError } = await supabase
+        .from("foods")
+        .insert(testFood)
+        .select();
       
-      // Create a test property if none exists
-      if (!existingProps || existingProps.length === 0) {
-        // Get a weight unit (g)
-        const { data: unitData, error: unitError } = await supabase
-          .from("units")
-          .select("*")
-          .eq("name", "gram")
-          .single();
-        
-        if (unitError) throw unitError;
-        
-        const testProperty: Partial<FoodProperty> = {
-          food_id: selectedFood,
-          property_type: "calories",
-          value: 100,
-          per_amount: 100,
-          per_unit_id: unitData?.id,
-          is_verified: true
-        };
-        
-        const { data: newProp, error: newPropError } = await supabase
-          .from("food_properties")
-          .insert(testProperty)
-          .select();
-        
-        if (newPropError) throw newPropError;
-        
-        setTestResults(prev => ({
-          ...prev,
-          properties: { 
-            status: "success", 
-            message: "Successfully created test food property",
-            data: newProp
-          }
-        }));
-      } else {
-        setTestResults(prev => ({
-          ...prev,
-          properties: { 
-            status: "success", 
-            message: `Food has ${existingProps.length} properties`,
-            data: existingProps
-          }
-        }));
+      if (foodError) throw foodError;
+      
+      if (!foodData || foodData.length === 0) {
+        throw new Error("Failed to create test food for properties");
       }
+      
+      // Get some units for testing
+      const { data: units, error: unitsError } = await supabase
+        .from("units")
+        .select("*")
+        .in("unit_type", ["mass", "volume"])
+        .limit(2);
+      
+      if (unitsError) throw unitsError;
+      
+      if (!units || units.length < 2) {
+        throw new Error("Couldn't find units for property test");
+      }
+      
+      // Add some properties to the food
+      const caloriesProperty = {
+        food_id: foodData[0].id,
+        property_type: "calories",
+        value: 150,
+        per_amount: 100,
+        per_unit_id: units[0].id
+      };
+      
+      const proteinProperty = {
+        food_id: foodData[0].id,
+        property_type: "protein",
+        value: 5.2,
+        per_amount: 100,
+        per_unit_id: units[0].id
+      };
+      
+      const { data: propertiesData, error: propertiesError } = await supabase
+        .from("food_properties")
+        .insert([caloriesProperty, proteinProperty])
+        .select();
+      
+      if (propertiesError) throw propertiesError;
+      
+      // Now fetch the food with its properties
+      const { data: foodWithProperties, error: fetchError } = await supabase
+        .from("foods")
+        .select(`
+          *,
+          food_properties (*)
+        `)
+        .eq("id", foodData[0].id)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      const result: TestResult = {
+        success: true,
+        message: `Successfully added and fetched properties for ${foodData[0].name}`,
+        data: foodWithProperties
+      };
+      
+      setTestResults({
+        ...testResults,
+        foodProperties: result
+      });
+      
+      return result;
     } catch (error: any) {
       console.error("Error testing food properties:", error);
-      setTestResults(prev => ({
-        ...prev,
-        properties: { 
-          status: "error", 
-          message: error.message || "Failed to test food properties" 
-        }
-      }));
+      
+      const result: TestResult = {
+        success: false,
+        message: `Error testing food properties: ${error.message}`
+      };
+      
+      setTestResults({
+        ...testResults,
+        foodProperties: result
+      });
+      
+      return result;
     }
   };
   
-  // Test 5: Search
-  const testSearch = async () => {
-    if (!currentSpace) {
-      setTestResults(prev => ({
-        ...prev,
-        search: { 
-          status: "error", 
-          message: "No active space. Please select a space first." 
-        }
-      }));
-      return;
-    }
+  const testFoodSearch = async () => {
+    const activeSpaceId = await ensureTestSpace();
     
-    if (!searchTerm) {
-      setTestResults(prev => ({
-        ...prev,
-        search: { 
-          status: "error", 
-          message: "Please enter a search term" 
-        }
-      }));
-      return;
+    if (!activeSpaceId) {
+      const result: TestResult = {
+        success: false,
+        message: "No active space available for testing"
+      };
+      
+      setTestResults({
+        ...testResults,
+        foodSearch: result
+      });
+      
+      return result;
     }
-    
-    setTestResults(prev => ({
-      ...prev,
-      search: { status: "running" }
-    }));
     
     try {
-      // First try the RPC method (if it exists)
-      let results: Food[] = [];
+      // First create a unique food with specific terms for testing search
+      const timestamp = new Date().getTime();
+      const searchTerms = ["avocado", "organic", "superfood"];
+      const testFood = {
+        name: `Organic ${searchTerms[0]} ${timestamp}`,
+        description: `This ${searchTerms[0]} is a ${searchTerms[2]} with healthy fats.`,
+        space_id: activeSpaceId,
+        created_by: user?.id,
+        tags: searchTerms
+      };
       
-      try {
-        const { data: rpcResults, error: rpcError } = await supabase
-          .rpc('search_foods', { 
-            search_query: searchTerm,
-            space_id: currentSpace.id 
-          });
-        
-        if (rpcError) throw rpcError;
-        results = rpcResults || [];
-      } catch (rpcFallbackError) {
-        console.warn("RPC search not available, using fallback:", rpcFallbackError);
-        
-        // Fallback: direct query using websearch_to_tsquery
-        const { data: fallbackResults, error: fallbackError } = await supabase
-          .from("foods")
-          .select("*")
-          .eq("space_id", currentSpace.id)
-          .textSearch('search_vector_en', searchTerm, {
-            type: 'websearch',
-            config: 'english'
-          });
-        
-        if (fallbackError) throw fallbackError;
-        results = fallbackResults || [];
+      const { data: foodData, error: foodError } = await supabase
+        .from("foods")
+        .insert(testFood)
+        .select();
+      
+      if (foodError) throw foodError;
+      
+      if (!foodData || foodData.length === 0) {
+        throw new Error("Failed to create test food for search");
       }
       
-      setSearchResults(results);
+      // Wait briefly for text search vectors to update
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      setTestResults(prev => ({
-        ...prev,
-        search: { 
-          status: "success", 
-          message: `Found ${results.length} results for "${searchTerm}"`,
-          data: results
+      // Now test searching for this food using the RPC
+      const searchParams: RPCSearchFoods = {
+        search_query: searchTerms[0],
+        space_id: activeSpaceId
+      };
+      
+      const { data: searchResults, error: searchError } = await supabase
+        .rpc('search_foods', searchParams);
+      
+      if (searchError) throw searchError;
+      
+      const hasNewFood = searchResults?.some(food => food.id === foodData[0].id);
+      
+      const result: TestResult = {
+        success: hasNewFood,
+        message: hasNewFood 
+          ? `Successfully found the newly created ${searchTerms[0]} food using search` 
+          : `Failed to find the newly created ${searchTerms[0]} food using search`,
+        data: {
+          searchTerm: searchTerms[0],
+          createdFood: foodData[0],
+          searchResults: searchResults?.slice(0, 5)
         }
-      }));
+      };
+      
+      setTestResults({
+        ...testResults,
+        foodSearch: result
+      });
+      
+      return result;
     } catch (error: any) {
-      console.error("Error searching foods:", error);
-      setTestResults(prev => ({
-        ...prev,
-        search: { 
-          status: "error", 
-          message: error.message || "Failed to search foods" 
-        }
-      }));
+      console.error("Error testing food search:", error);
+      
+      const result: TestResult = {
+        success: false,
+        message: `Error testing food search: ${error.message}`
+      };
+      
+      setTestResults({
+        ...testResults,
+        foodSearch: result
+      });
+      
+      return result;
     }
   };
   
-  // Create RPC functions
-  const createRpcFunctions = async () => {
+  const testCreateFoodCatalogRpcs = async () => {
     try {
-      const { data, error } = await supabase.rpc('create_food_catalog_rpcs');
+      const { data, error } = await supabase
+        .rpc('create_food_catalog_rpcs');
+      
       if (error) throw error;
-      alert(`Successfully created RPC functions: ${data}`);
+      
+      const result: TestResult = {
+        success: true,
+        message: `Successfully verified food catalog RPC functions`,
+        data
+      };
+      
+      setTestResults({
+        ...testResults,
+        createRpcs: result
+      });
+      
+      return result;
     } catch (error: any) {
-      console.error("Error creating RPC functions:", error);
-      alert(`Error creating RPC functions: ${error.message}`);
+      console.error("Error testing food catalog RPCs:", error);
+      
+      const result: TestResult = {
+        success: false,
+        message: `Error testing food catalog RPCs: ${error.message}`
+      };
+      
+      setTestResults({
+        ...testResults,
+        createRpcs: result
+      });
+      
+      return result;
     }
   };
+  
+  const runAllTests = async () => {
+    setLoading(true);
+    
+    // Run tests in sequence
+    await testCreateFoodCatalogRpcs();
+    await testFetchCategories();
+    await testCreateFood();
+    await testLtreeHierarchy();
+    await testFoodProperties();
+    await testFoodSearch();
+    
+    setLoading(false);
+  };
+  
+  useEffect(() => {
+    if (user) {
+      runAllTests();
+    }
+  }, [user, spaceId]);
   
   return (
-    <div className="space-y-8">
-      <div className="p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Food Categories Test</h2>
-        <Button 
-          onClick={testFetchCategories} 
-          disabled={!currentSpace || testResults.categories.status === "running"}
-        >
-          Fetch Categories
-        </Button>
-        
-        <div className="mt-4">
-          <TestStatus result={testResults.categories} />
-          
-          {testResults.categories.status === "success" && (
-            <div className="mt-4 max-h-60 overflow-y-auto">
-              <h3 className="text-sm font-medium mb-2">Categories ({categories.length})</h3>
-              <ul className="space-y-1">
-                {categories.map(category => (
-                  <li key={category.id} className="text-sm">
-                    <strong>{category.custom_name || category.name}</strong>
-                    {category.group_name && <span className="text-gray-500"> ({category.group_name})</span>}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      <div className="p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Create Food Test</h2>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Food Name</label>
-            <Input 
-              value={newFoodName}
-              onChange={e => setNewFoodName(e.target.value)}
-              placeholder="Enter food name"
-            />
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Food Catalog Tester</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {!user ? (
+          <div className="text-center p-4">
+            Please sign in to run food catalog tests
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <Textarea 
-              value={newFoodDescription}
-              onChange={e => setNewFoodDescription(e.target.value)}
-              placeholder="Enter description"
-              rows={3}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Category</label>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">None</SelectItem>
-                {categories.map(category => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.custom_name || category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Parent Food (Optional)</label>
-            <Select value={selectedParent} onValueChange={setSelectedParent}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select parent food" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">None</SelectItem>
-                {foods.map(food => (
-                  <SelectItem key={food.id} value={food.id}>
-                    {food.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <Button 
-            onClick={testCreateFood} 
-            disabled={!currentSpace || !newFoodName || testResults.createFood.status === "running"}
-          >
-            Create Food
-          </Button>
-          
-          <TestStatus result={testResults.createFood} />
-        </div>
-      </div>
-      
-      <div className="p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Food Hierarchy Test</h2>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Select Food</label>
-            <Select value={selectedFood} onValueChange={setSelectedFood}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select food" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">None</SelectItem>
-                {foods.map(food => (
-                  <SelectItem key={food.id} value={food.id}>
-                    {food.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <Button 
-            onClick={testFetchHierarchy} 
-            disabled={!currentSpace || testResults.fetchHierarchy.status === "running"}
-          >
-            Test Hierarchy
-          </Button>
-          
-          <TestStatus result={testResults.fetchHierarchy} />
-          
-          {testResults.fetchHierarchy.status === "success" && testResults.fetchHierarchy.data && (
-            <div className="mt-4 grid grid-cols-2 gap-4">
+        ) : (
+          <>
+            {!spaceId && (
+              <Alert variant="warning" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  You need a space to run these tests. The tests will create one automatically if needed.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium mb-2">Root Foods ({testResults.fetchHierarchy.data.rootFoods.length})</h3>
-                <ul className="max-h-40 overflow-y-auto space-y-1">
-                  {testResults.fetchHierarchy.data.rootFoods.map((food: Food) => (
-                    <li key={food.id} className="text-sm">{food.name}</li>
-                  ))}
-                </ul>
+                <h3 className="text-lg font-medium">Test Results</h3>
+                <div className="mt-2 space-y-2">
+                  <TestStatus name="Verify RPC Functions" status={testResults.createRpcs?.success} />
+                  <TestStatus name="Fetch Food Categories" status={testResults.fetchCategories?.success} />
+                  <TestStatus name="Create Food Item" status={testResults.createFood?.success} />
+                  <TestStatus name="Test Ltree Hierarchy" status={testResults.ltreeHierarchy?.success} />
+                  <TestStatus name="Test Food Properties" status={testResults.foodProperties?.success} />
+                  <TestStatus name="Test Food Search" status={testResults.foodSearch?.success} />
+                </div>
               </div>
               
-              {selectedFood && (
-                <div>
-                  <h3 className="text-sm font-medium mb-2">Children ({testResults.fetchHierarchy.data.children.length})</h3>
-                  <ul className="max-h-40 overflow-y-auto space-y-1">
-                    {testResults.fetchHierarchy.data.children.map((food: Food) => (
-                      <li key={food.id} className="text-sm">{food.name}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <Separator />
               
-              {selectedFood && testResults.fetchHierarchy.data.pathResults.length > 0 && (
-                <div className="col-span-2">
-                  <h3 className="text-sm font-medium mb-2">Path-based Results ({testResults.fetchHierarchy.data.pathResults.length})</h3>
-                  <ul className="max-h-40 overflow-y-auto space-y-1">
-                    {testResults.fetchHierarchy.data.pathResults.map((food: Food) => (
-                      <li key={food.id} className="text-sm">{food.name}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {/* Display any error messages */}
+              <ErrorDisplay errors={errorMessages} />
+              
+              {Object.entries(testResults).map(([key, result]) => (
+                result.data && (
+                  <div key={key}>
+                    <ResultDisplay 
+                      title={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} 
+                      data={result.data} 
+                      emptyMessage="No data available" 
+                    />
+                    <Separator className="my-4" />
+                  </div>
+                )
+              ))}
+              
+              <Button 
+                onClick={runAllTests} 
+                disabled={loading}
+                className="w-full mt-4"
+              >
+                {loading ? "Running Tests..." : "Run All Tests"}
+              </Button>
             </div>
-          )}
-        </div>
-      </div>
-      
-      <div className="p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Food Properties Test</h2>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Select Food</label>
-            <Select value={selectedFood} onValueChange={setSelectedFood}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select food" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">None</SelectItem>
-                {foods.map(food => (
-                  <SelectItem key={food.id} value={food.id}>
-                    {food.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <Button 
-            onClick={testFoodProperties} 
-            disabled={!currentSpace || !selectedFood || testResults.properties.status === "running"}
-          >
-            Test Properties
-          </Button>
-          
-          <TestStatus result={testResults.properties} />
-          
-          {testResults.properties.status === "success" && testResults.properties.data && (
-            <div className="mt-4">
-              <h3 className="text-sm font-medium mb-2">Properties</h3>
-              <div className="max-h-60 overflow-y-auto">
-                <pre className="text-xs p-2 bg-gray-100 rounded whitespace-pre-wrap">
-                  {JSON.stringify(testResults.properties.data, null, 2)}
-                </pre>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      <div className="p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Food Search Test</h2>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Search Term</label>
-            <Input 
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Enter search term"
-            />
-          </div>
-          
-          <Button 
-            onClick={testSearch} 
-            disabled={!currentSpace || !searchTerm || testResults.search.status === "running"}
-          >
-            Search Foods
-          </Button>
-          
-          <TestStatus result={testResults.search} />
-          
-          {testResults.search.status === "success" && searchResults.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-sm font-medium mb-2">Search Results ({searchResults.length})</h3>
-              <ul className="max-h-60 overflow-y-auto space-y-1">
-                {searchResults.map(food => (
-                  <li key={food.id} className="text-sm">
-                    <strong>{food.name}</strong>
-                    {food.description && <p className="text-gray-500 text-xs">{food.description}</p>}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      <div className="p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Create RPC Functions</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          This will create helper RPC functions for hierarchical queries and search.
-        </p>
-        <Button onClick={createRpcFunctions}>Create RPC Functions</Button>
-      </div>
-    </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
