@@ -30,7 +30,13 @@ export const useUnitTestRunner = (userId: string | undefined) => {
   };
 
   // Run all tests
-  const runAllTests = async (runTest1: () => Promise<boolean>, runTest2: () => Promise<boolean>, runTest3: () => Promise<boolean>, runTest4: () => Promise<boolean>, runTest5: () => Promise<boolean>) => {
+  const runAllTests = async (
+    runTest1: () => Promise<boolean>,
+    runTest2: () => Promise<boolean>,
+    runTest3: () => Promise<boolean>,
+    runTest4: () => Promise<boolean>,
+    runTest5: () => Promise<boolean>
+  ) => {
     if (!userId) {
       toast({
         title: "Authentication Required",
@@ -43,12 +49,38 @@ export const useUnitTestRunner = (userId: string | undefined) => {
     setLoading(true);
     
     try {
+      console.log("Starting unit tests with user ID:", userId);
+      
       // Run each test sequentially
-      await runTest1();
-      await runTest2();
-      await runTest3();
-      await runTest4();
-      await runTest5();
+      try {
+        await runTest1();
+      } catch (error) {
+        console.error("Error in test 1:", error);
+      }
+      
+      try {
+        await runTest2();
+      } catch (error) {
+        console.error("Error in test 2:", error);
+      }
+      
+      try {
+        await runTest3();
+      } catch (error) {
+        console.error("Error in test 3:", error);
+      }
+      
+      try {
+        await runTest4();
+      } catch (error) {
+        console.error("Error in test 4:", error);
+      }
+      
+      try {
+        await runTest5();
+      } catch (error) {
+        console.error("Error in test 5:", error);
+      }
       
       const successCount = results.filter(r => r.status === "success").length;
       
@@ -70,27 +102,42 @@ export const useUnitTestRunner = (userId: string | undefined) => {
   };
 
   // Create a test space if needed
-  const ensureTestSpace = async (spaceId: string | null, currentSpace: Space | null, spaces: Space[], createSpace: (name: string) => Promise<Space | null>): Promise<string | null> => {
+  const ensureTestSpace = async (
+    spaceId: string | null,
+    currentSpace: Space | null,
+    spaces: Space[],
+    createSpace: (name: string) => Promise<Space | null>
+  ): Promise<string | null> => {
+    console.log("Ensuring test space with:", { 
+      currentSpaceId: currentSpace?.id, 
+      spacesCount: spaces.length 
+    });
+    
     // If we already have a space, use it
     if (currentSpace) {
+      console.log("Using current space:", currentSpace.id);
       return currentSpace.id;
     }
     
     // If we have spaces but no current space, use the first one
     if (spaces.length > 0) {
+      console.log("Using first available space:", spaces[0].id);
       return spaces[0].id;
     }
     
     // Otherwise create a new space
     try {
+      console.log("Creating new test space");
       const newSpace = await createSpace("Test Space");
       if (newSpace) {
+        console.log("Created new space:", newSpace.id);
         return newSpace.id;
       }
     } catch (error) {
       console.error("Error creating test space:", error);
     }
     
+    console.warn("Could not ensure a test space");
     return null;
   };
 

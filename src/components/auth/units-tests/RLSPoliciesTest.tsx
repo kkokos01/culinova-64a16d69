@@ -27,6 +27,10 @@ export const useRLSPoliciesTest = (updateResult: (result: any) => void, index: n
       
       if (standardError) throw standardError;
       
+      if (!standardUnits || standardUnits.length === 0) {
+        throw new Error("Could not retrieve any standard units");
+      }
+      
       // 2. Try to modify a standard unit (this should fail due to RLS)
       let hasExpectedError = false;
       try {
@@ -41,27 +45,40 @@ export const useRLSPoliciesTest = (updateResult: (result: any) => void, index: n
         } else {
           // We got the expected error, which means RLS is working
           hasExpectedError = true;
+          console.log("Got expected RLS error when trying to update a standard unit:", updateError.message);
         }
       } catch (error: any) {
         hasExpectedError = true;
+        console.log("Got expected error when trying to update a standard unit:", error.message);
       }
       
       if (!hasExpectedError) {
         throw new Error("RLS policies test failed: Could modify a global unit");
       }
       
-      // 3. Verify we can access our custom units but not others
-      // This part is challenging to test properly without having multiple users,
-      // so we'll simplify by creating a custom unit and verifying we can access it
-      
-      // Create a test custom unit first
-      const { data: baseUnit } = await supabase
+      // 3. Verify we can access our custom units
+      // Get a base unit first with fixed query
+      const { data: baseUnits, error: baseUnitError } = await supabase
         .from("units")
         .select("*")
-        .eq("base_unit", true)
-        .eq("unit_type", "volume")
-        .single();
+        .eq("unit_type", "volume");
       
+      if (baseUnitError) throw baseUnitError;
+      
+      if (!baseUnits || baseUnits.length === 0) {
+        throw new Error("Could not find any volume units");
+      }
+      
+      // Find a base unit
+      const baseUnit = baseUnits.find(u => u.base_unit === true) || baseUnits[0];
+      
+      if (!baseUnit) {
+        throw new Error("Could not find a suitable base unit");
+      }
+      
+      console.log("Using base unit for RLS test:", baseUnit);
+      
+      // Create a test custom unit
       const testUnit = {
         space_id: activeSpaceId,
         name: `RLS Test Unit ${Date.now()}`,
@@ -77,7 +94,16 @@ export const useRLSPoliciesTest = (updateResult: (result: any) => void, index: n
         .insert(testUnit)
         .select();
       
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Error inserting custom unit:", insertError);
+        throw insertError;
+      }
+      
+      if (!insertedUnit || insertedUnit.length === 0) {
+        throw new Error("Failed to insert custom unit, no data returned");
+      }
+      
+      console.log("Created test unit for RLS test:", insertedUnit[0]);
       
       // Verify we can fetch it
       const { data: customUnits, error: fetchError } = await supabase
@@ -85,7 +111,12 @@ export const useRLSPoliciesTest = (updateResult: (result: any) => void, index: n
         .select("*")
         .eq("id", insertedUnit[0].id);
       
-      if (fetchError || !customUnits || customUnits.length === 0) {
+      if (fetchError) {
+        console.error("Error fetching custom unit:", fetchError);
+        throw fetchError;
+      }
+      
+      if (!customUnits || customUnits.length === 0) {
         throw new Error("Could not access our own custom unit");
       }
       
@@ -96,6 +127,7 @@ export const useRLSPoliciesTest = (updateResult: (result: any) => void, index: n
       });
       return true;
     } catch (error: any) {
+      console.error("RLS policy test error:", error);
       updateResult({
         status: "error",
         message: error.message || "Failed to test RLS policies"

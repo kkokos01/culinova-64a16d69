@@ -19,19 +19,21 @@ export const useCustomUnitsTest = (updateResult: (result: any) => void, index: n
     updateResult({ status: "running" });
     
     try {
-      // First, get a base unit to reference
-      const { data: baseUnit, error: baseUnitError } = await supabase
+      // First, get a base unit to reference - fixing query syntax
+      const { data: baseUnits, error: baseUnitError } = await supabase
         .from("units")
         .select("*")
-        .eq("base_unit", true)
         .eq("unit_type", "volume")
-        .single();
+        .eq("base_unit", true);
       
       if (baseUnitError) throw baseUnitError;
       
-      if (!baseUnit) {
-        throw new Error("No base unit found for reference");
+      if (!baseUnits || baseUnits.length === 0) {
+        throw new Error("No base volume unit found for reference");
       }
+      
+      const baseUnit = baseUnits[0];
+      console.log("Found base unit:", baseUnit);
       
       // Create a test custom unit
       const testUnit = {
@@ -69,6 +71,12 @@ export const useCustomUnitsTest = (updateResult: (result: any) => void, index: n
       
       if (insertError) throw insertError;
       
+      if (!insertData || insertData.length === 0) {
+        throw new Error("Failed to create custom unit, no data returned");
+      }
+      
+      console.log("Created custom unit:", insertData[0]);
+      
       // Verify we can fetch it back
       const { data: customUnits, error: fetchError } = await supabase
         .from("custom_units")
@@ -81,13 +89,14 @@ export const useCustomUnitsTest = (updateResult: (result: any) => void, index: n
         updateResult({
           status: "success",
           message: `Successfully created and fetched custom unit`,
-          data: insertData
+          data: insertData[0]
         });
         return true;
       } else {
         throw new Error("Failed to retrieve the created custom unit");
       }
     } catch (error: any) {
+      console.error("Custom unit test error:", error);
       updateResult({
         status: "error",
         message: error.message || "Failed to test custom units"

@@ -132,24 +132,130 @@ export interface Database {
           created_at?: string
         }
       }
+      custom_units: {
+        Row: {
+          id: string
+          space_id: string
+          name: string
+          plural_name: string
+          abbreviation: string
+          unit_type: string
+          base_unit_id: string
+          conversion_to_base: number
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          space_id: string
+          name: string
+          plural_name: string
+          abbreviation: string
+          unit_type: string
+          base_unit_id: string
+          conversion_to_base: number
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          space_id?: string
+          name?: string
+          plural_name?: string
+          abbreviation?: string
+          unit_type?: string
+          base_unit_id?: string
+          conversion_to_base?: number
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
       units: {
         Row: {
           id: string
           name: string
           abbreviation: string
           created_at: string
+          unit_type: string
+          measurement_system: string
+          plural_name: string
+          base_unit: boolean
+          conversion_to_base?: number
+          display_order: number
+          formatting_template: string
+          common_name?: string
+          alternative_names?: string[]
+          updated_at: string
         }
         Insert: {
           id?: string
           name: string
           abbreviation: string
           created_at?: string
+          unit_type: string
+          measurement_system: string
+          plural_name: string
+          base_unit?: boolean
+          conversion_to_base?: number
+          display_order?: number
+          formatting_template?: string
+          common_name?: string
+          alternative_names?: string[]
+          updated_at?: string
         }
         Update: {
           id?: string
           name?: string
           abbreviation?: string
           created_at?: string
+          unit_type?: string
+          measurement_system?: string
+          plural_name?: string
+          base_unit?: boolean
+          conversion_to_base?: number
+          display_order?: number
+          formatting_template?: string
+          common_name?: string
+          alternative_names?: string[]
+          updated_at?: string
+        }
+      }
+      unit_conversions: {
+        Row: {
+          id: string
+          from_unit_id: string
+          to_unit_id: string
+          from_amount: number
+          to_amount: number
+          food_id?: string
+          bidirectional: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          from_unit_id: string
+          to_unit_id: string
+          from_amount: number
+          to_amount: number
+          food_id?: string
+          bidirectional?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          from_unit_id?: string
+          to_unit_id?: string
+          from_amount?: number
+          to_amount?: number
+          food_id?: string
+          bidirectional?: boolean
+          created_at?: string
+          updated_at?: string
         }
       }
       user_profiles: {
@@ -202,6 +308,7 @@ export interface Database {
           max_users: number
           is_active: boolean
           created_at: string
+          is_default: boolean
         }
         Insert: {
           id?: string
@@ -211,6 +318,7 @@ export interface Database {
           max_users?: number
           is_active?: boolean
           created_at?: string
+          is_default?: boolean
         }
         Update: {
           id?: string
@@ -220,6 +328,7 @@ export interface Database {
           max_users?: number
           is_active?: boolean
           created_at?: string
+          is_default?: boolean
         }
       }
       user_spaces: {
@@ -248,36 +357,20 @@ export interface Database {
           created_at?: string
         }
       }
-      schema_migrations: {
-        Row: {
-          version: string
-          description: string
-          applied_at?: string | null
-          success?: boolean | null
-          rollback_script?: string | null
-        }
-        Insert: {
-          version: string
-          description: string
-          applied_at?: string | null
-          success?: boolean | null
-          rollback_script?: string | null
-        }
-        Update: {
-          version?: string
-          description?: string
-          applied_at?: string | null
-          success?: boolean | null
-          rollback_script?: string | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      convert_units: {
+        Args: {
+          value: number
+          from_unit_id: string
+          to_unit_id: string
+          food_id?: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
