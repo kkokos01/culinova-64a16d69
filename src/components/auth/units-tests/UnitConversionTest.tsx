@@ -65,20 +65,18 @@ export const useUnitConversionTest = (updateResult: (result: any) => void, index
       
       // Test direct conversion between units
       try {
-        // Use named parameters to avoid ambiguity in the SQL function
-        // This is the key fix - use p_value, p_from_unit_id, etc. in the API call
-        const conversionParams = {
-          p_value: 100,
-          p_from_unit_id: gramUnit.id,
-          p_to_unit_id: ounceUnit.id,
-          p_food_id: null
-        };
-        
-        console.log("Calling convert_units with params:", conversionParams);
-        
+        // IMPORTANT: The function signature expects these exact parameter names.
+        // Looking at the function definition:
+        // CREATE OR REPLACE FUNCTION public.convert_units(value numeric, from_unit_id uuid, to_unit_id uuid, food_id uuid DEFAULT NULL::uuid)
+        // We need to match these parameter names exactly:
         const { data: conversionResult, error: conversionError } = await supabase.rpc(
           "convert_units",
-          conversionParams
+          {
+            value: 100,
+            from_unit_id: gramUnit.id,
+            to_unit_id: ounceUnit.id,
+            food_id: null
+          }
         );
         
         if (conversionError) {
