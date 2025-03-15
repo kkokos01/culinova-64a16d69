@@ -65,18 +65,20 @@ export const useUnitConversionTest = (updateResult: (result: any) => void, index
       
       // Test direct conversion between units
       try {
-        // IMPORTANT: The function signature expects these exact parameter names.
-        // Looking at the function definition:
+        // Match the exact parameter names from the function signature:
         // CREATE OR REPLACE FUNCTION public.convert_units(value numeric, from_unit_id uuid, to_unit_id uuid, food_id uuid DEFAULT NULL::uuid)
-        // We need to match these parameter names exactly:
+        const conversionParams = {
+          value: 100,
+          from_unit_id: gramUnit.id,
+          to_unit_id: ounceUnit.id,
+          food_id: null
+        };
+        
+        console.log("Calling convert_units with params:", conversionParams);
+        
         const { data: conversionResult, error: conversionError } = await supabase.rpc(
           "convert_units",
-          {
-            value: 100,
-            from_unit_id: gramUnit.id,
-            to_unit_id: ounceUnit.id,
-            food_id: null
-          }
+          conversionParams
         );
         
         if (conversionError) {
