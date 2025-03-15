@@ -100,8 +100,15 @@ const DatabaseTester = () => {
       setUserSpaces(data as UserSpace[]);
       
       if (data.length === 0) return false;
+      
       // Check if user is admin of their default space
-      return data.some(membership => membership.role === 'admin');
+      const isAdmin = data.some(membership => membership.role === 'admin');
+      
+      if (!isAdmin) {
+        console.log("User has membership but not admin role:", data);
+      }
+      
+      return isAdmin;
     } catch (error: any) {
       console.error("Error testing space membership:", error);
       setErrorMessages(prev => ({ ...prev, spaceMembership: error.message }));
@@ -140,15 +147,34 @@ const DatabaseTester = () => {
     setLoading(true);
     setErrorMessages({});
     
+    // Run tests in sequence to ensure dependencies are met
+    const profileResult = await testUserProfile();
+    const spacesResult = await testUserSpaces();
+    
+    // Only test membership if spaces test passed
+    const membershipResult = spacesResult ? await testSpaceMembership() : false;
+    const rlsPoliciesResult = await testRLSPolicies();
+    
     const results = {
-      userProfile: await testUserProfile(),
-      userSpaces: await testUserSpaces(),
-      spaceMembership: await testSpaceMembership(),
-      rlsPolicies: await testRLSPolicies()
+      userProfile: profileResult,
+      userSpaces: spacesResult,
+      spaceMembership: membershipResult,
+      rlsPolicies: rlsPoliciesResult
     };
     
     setTestResults(results);
     setLoading(false);
+    
+    // If tests reveal issues, log details for debugging
+    if (!membershipResult && spacesResult) {
+      console.error("Space membership test failed despite having spaces");
+      // Fetch raw data for debugging
+      const { data: rawMemberships } = await supabase
+        .from("user_spaces")
+        .select("*")
+        .eq("user_id", user.id);
+      console.log("Raw memberships:", rawMemberships);
+    }
   };
 
   // Function to create a default space for the user
@@ -161,41 +187,19 @@ const DatabaseTester = () => {
     try {
       console.log("Creating default space for user:", user.id);
       
-      // Create a space
-      const { data: space, error: spaceError } = await supabase
-        .from("spaces")
-        .insert({
-          name: 'My Recipes',
-          created_by: user.id,
-          max_recipes: 100,
-          max_users: 5,
-          is_active: true,
-          is_default: true
-        })
-        .select()
-        .single();
-        
-      if (spaceError) {
-        console.error("Space creation error:", spaceError);
-        throw spaceError;
+      // Call the Supabase function to create a default space
+      const { data, error } = await supabase.rpc(
+        'create_space_for_existing_user',
+        { user_id_param: user.id }
+      );
+      
+      if (error) throw error;
+      
+      if (!data) {
+        throw new Error("Failed to create default space - no space ID returned");
       }
       
-      console.log("Space created successfully, space_id:", space.id);
-      
-      // Create membership
-      const { error: membershipError } = await supabase
-        .from("user_spaces")
-        .insert({
-          user_id: user.id,
-          space_id: space.id,
-          role: 'admin',
-          is_active: true
-        });
-        
-      if (membershipError) {
-        console.error("Membership creation error:", membershipError);
-        throw membershipError;
-      }
+      console.log("Default space created successfully, space_id:", data);
       
       toast({
         title: "Space created",
