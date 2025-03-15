@@ -5,7 +5,6 @@ import { useSpace } from "@/context/SpaceContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
@@ -21,7 +20,6 @@ import { useRLSPoliciesTest } from "./units-tests/RLSPoliciesTest";
 const UnitsTester = () => {
   const { user } = useAuth();
   const { currentSpace, spaces, createSpace } = useSpace();
-  const { toast } = useToast();
   const [creatingSpace, setCreatingSpace] = useState(false);
   const [spaceId, setSpaceId] = useState<string | null>(null);
 
@@ -74,17 +72,9 @@ const UnitsTester = () => {
       const space = await createSpace("Test Space");
       if (space) {
         setSpaceId(space.id);
-        toast({
-          title: "Test Space Created",
-          description: "A test space has been created for unit testing.",
-        });
       }
     } catch (error: any) {
-      toast({
-        title: "Error Creating Space",
-        description: error.message || "Could not create a test space",
-        variant: "destructive"
-      });
+      console.error("Error creating test space:", error.message);
     } finally {
       setCreatingSpace(false);
     }

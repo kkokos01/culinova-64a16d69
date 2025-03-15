@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { TestResult } from "./UnitTestResult";
 import { Space } from "@/types";
 
@@ -10,7 +9,6 @@ export interface TestHookResult {
 }
 
 export const useUnitTestRunner = (userId: string | undefined) => {
-  const { toast } = useToast();
   const [results, setResults] = useState<TestResult[]>([
     { name: "Fetch standard units", status: "idle" },
     { name: "Create and fetch custom unit", status: "idle" },
@@ -38,11 +36,7 @@ export const useUnitTestRunner = (userId: string | undefined) => {
     runTest5: () => Promise<boolean>
   ) => {
     if (!userId) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to run unit system tests",
-        variant: "destructive"
-      });
+      console.error("Authentication required to run tests");
       return;
     }
     
@@ -82,20 +76,8 @@ export const useUnitTestRunner = (userId: string | undefined) => {
         console.error("Error in test 5:", error);
       }
       
-      const successCount = results.filter(r => r.status === "success").length;
-      
-      toast({
-        title: `Testing Complete`,
-        description: `${successCount} of ${results.length} tests passed successfully.`,
-        variant: successCount === results.length ? "default" : "destructive"
-      });
     } catch (error: any) {
       console.error("Error running units tests:", error);
-      toast({
-        title: "Testing Error",
-        description: error.message || "An error occurred while running tests",
-        variant: "destructive"
-      });
     } finally {
       setLoading(false);
     }
