@@ -78,12 +78,13 @@ export const useRLSPoliciesTest = (updateResult: (result: any) => void, index: n
       
       console.log("Using base unit for RLS test:", baseUnit);
       
-      // Create a test custom unit
+      // Create a test custom unit with a timestamp in both name and abbreviation to ensure uniqueness
+      const timestamp = Date.now();
       const testUnit = {
         space_id: activeSpaceId,
-        name: `RLS Test Unit ${Date.now()}`,
+        name: `RLS Test Unit ${timestamp}`,
         plural_name: "RLS Test Units",
-        abbreviation: "rtu",
+        abbreviation: `rtu${timestamp}`, // Adding timestamp to abbreviation to ensure uniqueness
         unit_type: "volume",
         base_unit_id: baseUnit.id,
         conversion_to_base: 500

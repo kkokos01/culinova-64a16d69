@@ -13,6 +13,7 @@ export const useMembershipTest = (userId: string | undefined, spaces: Space[]) =
     try {
       // Find the default space
       const defaultSpace = spaces.find(space => space.is_default) || spaces[0];
+      console.log("Testing membership for space:", defaultSpace.id);
       
       const { data, error } = await supabase
         .from("user_spaces")
@@ -22,13 +23,18 @@ export const useMembershipTest = (userId: string | undefined, spaces: Space[]) =
         .eq("is_active", true);
       
       if (error) {
+        console.error("Error fetching user spaces:", error);
         setErrorMessage(error.message);
         throw error;
       }
       
+      console.log("Found memberships:", data);
       setUserSpaces(data as UserSpace[]);
       
-      if (data.length === 0) return false;
+      if (!data || data.length === 0) {
+        console.log("No memberships found for user", userId, "in space", defaultSpace.id);
+        return false;
+      }
       
       // Check if user is admin of their default space
       const isAdmin = data.some(membership => membership.role === 'admin');
@@ -49,11 +55,13 @@ export const useMembershipTest = (userId: string | undefined, spaces: Space[]) =
     if (!userId) return null;
     
     try {
+      console.log("Fetching raw memberships for user:", userId);
       const { data } = await supabase
         .from("user_spaces")
         .select("*")
         .eq("user_id", userId);
-        
+      
+      console.log("Raw memberships result:", data);    
       return data;
     } catch (error) {
       console.error("Error fetching raw memberships:", error);
