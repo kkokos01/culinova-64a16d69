@@ -7,3 +7,7 @@ export interface RPCSearchFoods {
 export interface RPCGetFoodDescendants {
   food_path: string;
 }
+
+export interface RPCGetFoodAncestors {
+  food_path: string;
+}
