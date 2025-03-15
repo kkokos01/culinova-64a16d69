@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Recipe, Food, Unit, Ingredient, Step } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -64,8 +63,6 @@ const mockUnits: Record<string, Unit> = {
     abbreviation: "cup",
     plural_name: "cups",
     measurement_system: "imperial",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
     unit_type: "volume",
     base_unit: true,
     display_order: 1,
@@ -77,8 +74,6 @@ const mockUnits: Record<string, Unit> = {
     abbreviation: "tbsp",
     plural_name: "tablespoons",
     measurement_system: "imperial",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
     unit_type: "volume",
     base_unit: false,
     conversion_to_base: 0.0625,
@@ -91,8 +86,6 @@ const mockUnits: Record<string, Unit> = {
     abbreviation: "tsp",
     plural_name: "teaspoons",
     measurement_system: "imperial",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
     unit_type: "volume",
     base_unit: false,
     conversion_to_base: 0.0208333,
@@ -105,8 +98,6 @@ const mockUnits: Record<string, Unit> = {
     abbreviation: "",
     plural_name: "",
     measurement_system: "universal",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
     unit_type: "count",
     base_unit: true,
     display_order: 4,
@@ -177,7 +168,6 @@ export const mockRecipe: Recipe = {
       order_number: 1,
       instruction: "Preheat the oven to 350°F (175°C) and grease a 9-inch cake pan.",
       duration_minutes: 5,
-      created_at: new Date().toISOString()
     },
     {
       id: "q7r8s9t0-u1v2-w3x4-y5z6-a7b8c9d0e1f2",
@@ -185,7 +175,6 @@ export const mockRecipe: Recipe = {
       order_number: 2,
       instruction: "In a large bowl, cream together the butter and sugar until light and fluffy.",
       duration_minutes: 5,
-      created_at: new Date().toISOString()
     },
     {
       id: "r8s9t0u1-v2w3-x4y5-z6a7-b8c9d0e1f2g3",
@@ -193,7 +182,6 @@ export const mockRecipe: Recipe = {
       order_number: 3,
       instruction: "Beat in the eggs one at a time, then stir in the vanilla extract.",
       duration_minutes: 3,
-      created_at: new Date().toISOString()
     },
     {
       id: "s9t0u1v2-w3x4-y5z6-a7b8-c9d0e1f2g3h4",
@@ -201,7 +189,6 @@ export const mockRecipe: Recipe = {
       order_number: 4,
       instruction: "Gradually add in the flour, mixing until just incorporated.",
       duration_minutes: 3,
-      created_at: new Date().toISOString()
     },
     {
       id: "t0u1v2w3-x4y5-z6a7-b8c9-d0e1f2g3h4i5",
@@ -209,7 +196,6 @@ export const mockRecipe: Recipe = {
       order_number: 5,
       instruction: "Pour the batter into the prepared pan and smooth the top.",
       duration_minutes: 2,
-      created_at: new Date().toISOString()
     },
     {
       id: "u1v2w3x4-y5z6-a7b8-c9d0-e1f2g3h4i5j6",
@@ -217,7 +203,6 @@ export const mockRecipe: Recipe = {
       order_number: 6,
       instruction: "Bake for 30-35 minutes or until a toothpick inserted into the center comes out clean.",
       duration_minutes: 35,
-      created_at: new Date().toISOString()
     },
     {
       id: "v2w3x4y5-z6a7-b8c9-d0e1-f2g3h4i5j6k7",
@@ -225,7 +210,6 @@ export const mockRecipe: Recipe = {
       order_number: 7,
       instruction: "Allow to cool in the pan for 10 minutes, then remove to a wire rack to cool completely.",
       duration_minutes: 10,
-      created_at: new Date().toISOString()
     }
   ]
 };

@@ -20,3 +20,8 @@ export const useMediaQuery = (query: string): boolean => {
 
   return matches;
 };
+
+// Add the useIsMobile hook that's imported in sidebar.tsx
+export const useIsMobile = (): boolean => {
+  return useMediaQuery("(max-width: 768px)");
+};
