@@ -1,9 +1,9 @@
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useFoodCatalogTest } from "@/hooks/useFoodCatalogTest";
+import { useFoodCatalogTest } from "@/hooks/food-catalog/useFoodCatalogTest";
 
 import TestResultsDisplay from "./food-catalog-tests/TestResultsDisplay";
 import FoodDetailsDisplay from "./food-catalog-tests/FoodDetailsDisplay";
@@ -12,6 +12,8 @@ import HierarchyResultsDisplay from "./food-catalog-tests/HierarchyResultsDispla
 
 const FoodCatalogTester = () => {
   const { user } = useAuth();
+  const [hasRun, setHasRun] = useState(false);
+  
   const { 
     isLoading,
     testResults,
@@ -23,11 +25,19 @@ const FoodCatalogTester = () => {
   } = useFoodCatalogTest();
 
   useEffect(() => {
-    if (user) {
-      // Run tests automatically when component mounts and user is available
+    // Only run the tests once when the component mounts and user is available
+    if (user && !hasRun && !isLoading) {
+      console.log("Running tests on initial mount");
       runAllTests();
+      setHasRun(true);
     }
-  }, [user, runAllTests]);
+  }, [user, hasRun, isLoading, runAllTests]);
+
+  // Handler for manual test runs
+  const handleManualTestRun = () => {
+    runAllTests();
+    setHasRun(true);
+  };
 
   return (
     <Card className="w-full">
@@ -45,7 +55,7 @@ const FoodCatalogTester = () => {
               testResults={testResults}
               errorMessages={errorMessages}
               isLoading={isLoading}
-              onRunTests={runAllTests}
+              onRunTests={handleManualTestRun}
             />
             
             <Separator />
