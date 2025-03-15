@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Space, UserSpace } from "@/types";
 import { useAuth } from "@/context/AuthContext";
@@ -244,89 +243,16 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
   const inviteToSpace = async (email: string, role: 'admin' | 'editor' | 'viewer', spaceId: string): Promise<boolean> => {
     if (!user?.id || !currentSpace || !canManageSpace) return false;
     
-    try {
-      setIsLoading(true);
-      
-      // 1. First, find the user by email
-      const { data: userData, error: userError } = await supabase
-        .from("auth")
-        .select("id")
-        .eq("email", email)
-        .single();
-      
-      if (userError) {
-        // Handle case where user is not found
-        if (userError.code === 'PGRST116') {
-          toast({
-            title: "User not found",
-            description: `No user with email ${email} was found.`,
-            variant: "destructive",
-          });
-          return false;
-        }
-        throw userError;
-      }
-      
-      if (!userData?.id) {
-        toast({
-          title: "User not found",
-          description: `No user with email ${email} was found.`,
-          variant: "destructive",
-        });
-        return false;
-      }
-      
-      // 2. Check if user is already a member of this space
-      const { data: existingMembership, error: membershipCheckError } = await supabase
-        .from("user_spaces")
-        .select("*")
-        .eq("user_id", userData.id)
-        .eq("space_id", spaceId)
-        .eq("is_active", true);
-        
-      if (membershipCheckError) throw membershipCheckError;
-      
-      if (existingMembership && existingMembership.length > 0) {
-        toast({
-          title: "User already invited",
-          description: `${email} is already a member of this space.`,
-          variant: "destructive",
-        });
-        return false;
-      }
-      
-      // 3. Create the membership
-      const { error: createError } = await supabase
-        .from("user_spaces")
-        .insert({
-          user_id: userData.id,
-          space_id: spaceId,
-          role,
-          is_active: true
-        });
-        
-      if (createError) throw createError;
-      
-      toast({
-        title: "Invitation sent",
-        description: `${email} has been added to your space as a ${role}.`,
-      });
-      
-      return true;
-    } catch (error: any) {
-      console.error("Error inviting user to space:", error);
-      toast({
-        title: "Error inviting user",
-        description: error.message || "Could not invite the user. Please try again.",
-        variant: "destructive",
-      });
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
+    // For now, we'll just show a toast since we need to implement user lookup by email
+    // and proper invitation flow in later changes
+    toast({
+      title: "Invitation feature coming soon",
+      description: `This would invite ${email} as a ${role} to your space.`,
+    });
+    
+    return true;
   };
 
-  // Fetch spaces when the user changes
   useEffect(() => {
     if (user?.id) {
       fetchSpaces();
