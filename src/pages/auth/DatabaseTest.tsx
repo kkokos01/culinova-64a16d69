@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useSpace } from "@/context/SpaceContext";
 import DatabaseTester from "@/components/auth/DatabaseTester";
 import UnitsTester from "@/components/auth/UnitsTester";
+import FoodCatalogTester from "@/components/auth/FoodCatalogTester";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -23,7 +24,7 @@ const DatabaseTest = () => {
           <h1 className="text-3xl font-display font-semibold text-slate-800">Database Configuration Tester</h1>
         </div>
 
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           {user && spaces.length === 0 && (
             <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />
@@ -43,9 +44,10 @@ const DatabaseTest = () => {
           )}
           
           <Tabs defaultValue="database">
-            <TabsList className="grid grid-cols-2 mb-6">
+            <TabsList className="grid grid-cols-3 mb-6">
               <TabsTrigger value="database">Database & Authentication</TabsTrigger>
               <TabsTrigger value="units">Units System</TabsTrigger>
+              <TabsTrigger value="food-catalog">Food Catalog</TabsTrigger>
             </TabsList>
             
             <TabsContent value="database">
@@ -54,6 +56,10 @@ const DatabaseTest = () => {
             
             <TabsContent value="units">
               <UnitsTester />
+            </TabsContent>
+            
+            <TabsContent value="food-catalog">
+              <FoodCatalogTester />
             </TabsContent>
           </Tabs>
         </div>
