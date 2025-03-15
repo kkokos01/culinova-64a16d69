@@ -66,7 +66,7 @@ export const useUnitConversionTest = (updateResult: (result: any) => void, index
       // Test direct conversion between units
       try {
         // Use named parameters to avoid ambiguity in the SQL function
-        // This is the key fix - use p_from_unit_id instead of from_unit_id to avoid ambiguity
+        // This is the key fix - use p_value, p_from_unit_id, etc. in the API call
         const conversionParams = {
           p_value: 100,
           p_from_unit_id: gramUnit.id,
