@@ -2,10 +2,11 @@
 import { TestStatus } from "@/components/auth/test-utils/TestStatus";
 import ErrorDisplay from "@/components/auth/test-utils/ErrorDisplay";
 import { Button } from "@/components/ui/button";
+import { TestResults, ErrorMessages } from "@/hooks/food-catalog/types";
 
 interface TestResultsDisplayProps {
-  testResults: Record<string, boolean | string>;
-  errorMessages: Record<string, string>;
+  testResults: TestResults;
+  errorMessages: ErrorMessages;
   isLoading: boolean;
   onRunTests: () => void;
 }
@@ -48,7 +49,7 @@ const TestResultsDisplay = ({
         </div>
       </div>
       
-      <ErrorDisplay errors={errorMessages} />
+      <ErrorDisplay errors={errorMessages as Record<string, string>} />
       
       <Button 
         onClick={onRunTests} 

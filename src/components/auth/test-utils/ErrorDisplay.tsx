@@ -1,6 +1,8 @@
 
+import { ErrorMessages } from "@/hooks/food-catalog/types";
+
 type ErrorDisplayProps = {
-  errors: {[key: string]: string};
+  errors: ErrorMessages | Record<string, string>;
 };
 
 export const ErrorDisplay = ({ errors }: ErrorDisplayProps) => {

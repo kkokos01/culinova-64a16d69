@@ -28,6 +28,7 @@ export interface TestResults {
   ltreeHierarchy?: boolean | string;
   foodProperties?: boolean | string;
   foodSearch?: boolean | string;
+  [key: string]: boolean | string | undefined;  // Add index signature
 }
 
 export interface ErrorMessages {
@@ -37,6 +38,7 @@ export interface ErrorMessages {
   ltreeHierarchy?: string;
   foodProperties?: string;
   foodSearch?: string;
+  [key: string]: string | undefined;  // Add index signature
 }
 
 export interface HierarchyResults {
