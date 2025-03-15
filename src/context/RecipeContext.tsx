@@ -8,12 +8,17 @@ type RecipeContextType = {
   isModified: boolean;
   isProcessingAI: boolean;
   selectedIngredient: Ingredient | null;
+  selectedIngredients: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
+  customInstructions: string;
   setRecipe: (recipe: Recipe | null) => void;
   setOriginalRecipe: (recipe: Recipe | null) => void;
   setIsModified: (isModified: boolean) => void;
   setIsProcessingAI: (isProcessing: boolean) => void;
   setSelectedIngredient: (ingredient: Ingredient | null) => void;
   resetToOriginal: () => void;
+  selectIngredientForModification: (ingredient: Ingredient, action: "increase" | "decrease" | "remove") => void;
+  removeIngredientSelection: (id: string) => void;
+  setCustomInstructions: (instructions: string) => void;
   // Added new function to support AI modifications
   applyAIModification: (modifiedRecipe: Recipe) => void;
 };
@@ -26,6 +31,10 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isModified, setIsModified] = useState(false);
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
+  const [selectedIngredients, setSelectedIngredients] = useState<
+    Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>
+  >(new Map());
+  const [customInstructions, setCustomInstructions] = useState("");
 
   const resetToOriginal = () => {
     if (originalRecipe) {
@@ -40,6 +49,22 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setIsProcessingAI(false);
   };
 
+  const selectIngredientForModification = (ingredient: Ingredient, action: "increase" | "decrease" | "remove") => {
+    setSelectedIngredients(prev => {
+      const newMap = new Map(prev);
+      newMap.set(ingredient.id, { ingredient, action });
+      return newMap;
+    });
+  };
+
+  const removeIngredientSelection = (id: string) => {
+    setSelectedIngredients(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(id);
+      return newMap;
+    });
+  };
+
   return (
     <RecipeContext.Provider
       value={{
@@ -48,6 +73,8 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isModified,
         isProcessingAI,
         selectedIngredient,
+        selectedIngredients,
+        customInstructions,
         setRecipe,
         setOriginalRecipe,
         setIsModified,
@@ -55,6 +82,9 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setSelectedIngredient,
         resetToOriginal,
         applyAIModification,
+        selectIngredientForModification,
+        removeIngredientSelection,
+        setCustomInstructions,
       }}
     >
       {children}

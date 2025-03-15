@@ -5,13 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Info, Settings, Clock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Recipe } from "@/types";
+import { Recipe, Ingredient } from "@/types";
+import SelectedIngredientsPanel from "./SelectedIngredientsPanel";
 
 interface AIModificationPanelProps {
   recipe: Recipe | null;
   isOpen: boolean;
   onClose: () => void;
   onStartModification: (modificationType: string) => void;
+  selectedIngredients: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
+  onRemoveIngredientSelection: (id: string) => void;
+  customInstructions: string;
+  onCustomInstructionsChange: (instructions: string) => void;
 }
 
 const modificationTypes = [
@@ -39,7 +44,11 @@ const AIModificationPanel: React.FC<AIModificationPanelProps> = ({
   recipe, 
   isOpen, 
   onClose, 
-  onStartModification 
+  onStartModification,
+  selectedIngredients,
+  onRemoveIngredientSelection,
+  customInstructions,
+  onCustomInstructionsChange
 }) => {
   const [selectedModification, setSelectedModification] = React.useState("");
   
@@ -87,6 +96,10 @@ const AIModificationPanel: React.FC<AIModificationPanelProps> = ({
                 </CardHeader>
                 {selectedModification === type.id && (
                   <CardContent className="p-4 pt-0">
+                    <SelectedIngredientsPanel 
+                      selectedIngredients={selectedIngredients}
+                      onRemoveSelection={onRemoveIngredientSelection}
+                    />
                     <div className="pt-2">
                       <Button 
                         className="w-full mt-2 text-sm"
@@ -115,8 +128,19 @@ const AIModificationPanel: React.FC<AIModificationPanelProps> = ({
                 <textarea 
                   className="w-full h-24 sm:h-32 p-3 border rounded-md text-sm" 
                   placeholder="Example: Make this recipe keto-friendly and reduce the cooking time by 15 minutes"
+                  value={customInstructions}
+                  onChange={(e) => onCustomInstructionsChange(e.target.value)}
                 />
-                <Button className="w-full text-sm">
+                
+                <SelectedIngredientsPanel 
+                  selectedIngredients={selectedIngredients}
+                  onRemoveSelection={onRemoveIngredientSelection}
+                />
+                
+                <Button 
+                  className="w-full text-sm"
+                  onClick={() => onStartModification("custom")}
+                >
                   Generate Modification
                 </Button>
               </div>

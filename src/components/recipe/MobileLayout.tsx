@@ -1,13 +1,13 @@
 
 import React from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Recipe, Ingredient } from "@/types";
-import RecipeHeader from "@/components/recipe/RecipeHeader";
-import RecipeContent from "@/components/recipe/RecipeContent";
-import AIModificationPanel from "@/components/recipe/AIModificationPanel";
-import ComparisonPanel from "@/components/recipe/ComparisonPanel";
+import RecipeHeader from "./RecipeHeader";
+import RecipeContent from "./RecipeContent";
+import ComparisonPanel from "./ComparisonPanel";
+import AIModificationPanel from "./AIModificationPanel";
+import { Button } from "@/components/ui/button";
+import { X, ChevronLeft } from "lucide-react";
+import { useRecipe } from "@/context/RecipeContext";
 
 interface MobileLayoutProps {
   recipe: Recipe | null;
@@ -36,74 +36,128 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   handleModifyWithAI,
   handleStartModification,
   handleAcceptChanges,
-  setSelectedIngredient
+  setSelectedIngredient,
 }) => {
-  if (!recipe) return null;
+  const { 
+    originalRecipe, 
+    selectedIngredients, 
+    customInstructions,
+    selectIngredientForModification, 
+    removeIngredientSelection,
+    setCustomInstructions 
+  } = useRecipe();
+  
+  const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove") => {
+    setSelectedIngredient(ingredient);
+    selectIngredientForModification(ingredient, action);
+  };
+
+  // Render the slide-out left panel (AI Modification)
+  const renderLeftPanel = () => {
+    if (!leftPanelOpen) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-white z-50 overflow-auto">
+        <div className="sticky top-0 bg-white border-b z-10 px-4 py-3 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setLeftPanelOpen(false)}
+            className="text-gray-500"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+          <h2 className="text-lg font-semibold">Modify Recipe</h2>
+          <div className="w-8"></div> {/* Spacer for alignment */}
+        </div>
+        <div className="p-4">
+          <AIModificationPanel
+            recipe={recipe}
+            isOpen={true}
+            onClose={() => setLeftPanelOpen(false)}
+            onStartModification={handleStartModification}
+            selectedIngredients={selectedIngredients}
+            onRemoveIngredientSelection={removeIngredientSelection}
+            customInstructions={customInstructions}
+            onCustomInstructionsChange={setCustomInstructions}
+          />
+        </div>
+      </div>
+    );
+  };
+  
+  // Render the slide-out right panel (Comparison)
+  const renderRightPanel = () => {
+    if (!rightPanelOpen) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-white z-50 overflow-auto">
+        <div className="sticky top-0 bg-white border-b z-10 px-4 py-3 flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setRightPanelOpen(false)}
+            className="text-gray-500 mr-2"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <h2 className="text-lg font-semibold">Recipe Details</h2>
+        </div>
+        <div className="p-4">
+          <ComparisonPanel
+            recipe={recipe}
+            originalRecipe={originalRecipe}
+            selectedIngredient={selectedIngredient}
+            isModified={isModified}
+            onResetToOriginal={resetToOriginal}
+            onAcceptChanges={handleAcceptChanges}
+          />
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="container mx-auto px-4 py-16">
-      {/* Left Panel Sheet - AI Modification Panel */}
-      <Sheet open={leftPanelOpen} onOpenChange={setLeftPanelOpen}>
-        <SheetTrigger asChild>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="fixed left-4 top-1/2 -translate-y-1/2 z-20 rounded-full shadow-md"
-            onClick={() => setLeftPanelOpen(true)}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-[85vw] max-w-[400px] overflow-y-auto">
-          <div className="pt-6 pb-16">
-            <AIModificationPanel 
+    <>
+      <div className="container mx-auto py-3 px-4">
+        {recipe && (
+          <>
+            <RecipeHeader
               recipe={recipe}
-              isOpen={leftPanelOpen}
-              onClose={() => setLeftPanelOpen(false)}
-              onStartModification={handleStartModification}
+              isModified={isModified}
+              onModifyWithAI={handleModifyWithAI}
             />
-          </div>
-        </SheetContent>
-      </Sheet>
-      
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto">
-        <RecipeHeader 
-          recipe={recipe}
-          onModifyWithAI={handleModifyWithAI}
-        />
-        <RecipeContent 
-          recipe={recipe}
-          onSelectIngredient={setSelectedIngredient}
-        />
+            <div className="mt-6">
+              <RecipeContent 
+                recipe={recipe} 
+                selectedIngredients={selectedIngredients}
+                onSelectIngredient={handleSelectIngredient} 
+              />
+            </div>
+          </>
+        )}
       </div>
       
-      {/* Right Panel Sheet - Comparison Panel */}
-      <Sheet open={rightPanelOpen} onOpenChange={setRightPanelOpen}>
-        <SheetTrigger asChild>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="fixed right-4 top-1/2 -translate-y-1/2 z-20 rounded-full shadow-md"
-            onClick={() => setRightPanelOpen(true)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="right" className="w-[85vw] max-w-[400px] overflow-y-auto">
-          <div className="pt-6 pb-16">
-            <ComparisonPanel 
-              recipe={recipe}
-              originalRecipe={recipe}
-              selectedIngredient={selectedIngredient}
-              isModified={isModified}
-              onResetToOriginal={resetToOriginal}
-              onAcceptChanges={handleAcceptChanges}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
-    </div>
+      {renderLeftPanel()}
+      {renderRightPanel()}
+      
+      {/* Fixed bottom buttons */}
+      <div className="fixed bottom-0 inset-x-0 p-3 flex gap-3 bg-white border-t">
+        <Button 
+          variant="outline" 
+          className="flex-1"
+          onClick={() => setLeftPanelOpen(true)}
+        >
+          Modify
+        </Button>
+        <Button 
+          className="flex-1"
+          onClick={() => setRightPanelOpen(true)}
+        >
+          Details
+        </Button>
+      </div>
+    </>
   );
 };
 

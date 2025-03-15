@@ -1,33 +1,69 @@
 
 import React from "react";
 import { Recipe, Ingredient } from "@/types";
+import { Plus, Minus, X } from "lucide-react";
 
 interface RecipeContentProps {
   recipe: Recipe;
-  onSelectIngredient: (ingredient: Ingredient) => void;
+  selectedIngredients: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
+  onSelectIngredient: (ingredient: Ingredient, action: "increase" | "decrease" | "remove") => void;
 }
 
-const RecipeContent: React.FC<RecipeContentProps> = ({ recipe, onSelectIngredient }) => {
+const RecipeContent: React.FC<RecipeContentProps> = ({ 
+  recipe, 
+  selectedIngredients, 
+  onSelectIngredient 
+}) => {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Ingredients */}
       <div className="mb-8">
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
         <ul className="space-y-2 grid sm:grid-cols-2 gap-2">
-          {recipe.ingredients?.map((ingredient) => (
-            <li 
-              key={ingredient.id} 
-              className="flex items-center p-2.5 rounded-md hover:bg-gray-100 cursor-pointer transition-colors border border-gray-100"
-              onClick={() => onSelectIngredient(ingredient)}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline flex-wrap gap-x-2">
-                  <span className="font-medium whitespace-nowrap">{ingredient.amount} {ingredient.unit?.abbreviation}</span>
-                  <span className="truncate">{ingredient.food?.name}</span>
+          {recipe.ingredients?.map((ingredient) => {
+            const isSelected = selectedIngredients.has(ingredient.id);
+            
+            return (
+              <li 
+                key={ingredient.id} 
+                className={`flex items-center p-2.5 rounded-md border transition-colors ${
+                  isSelected ? 'border-primary bg-primary/5' : 'border-gray-100 hover:bg-gray-100'
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline flex-wrap gap-x-2">
+                    <span className="font-medium whitespace-nowrap">
+                      {ingredient.amount} {ingredient.unit?.abbreviation}
+                    </span>
+                    <span className="truncate">{ingredient.food?.name}</span>
+                  </div>
                 </div>
-              </div>
-            </li>
-          ))}
+                <div className="flex items-center gap-1 ml-2">
+                  <button
+                    onClick={() => onSelectIngredient(ingredient, "increase")}
+                    className="p-1 rounded-full hover:bg-gray-200 text-green-600"
+                    aria-label="Increase ingredient"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => onSelectIngredient(ingredient, "decrease")}
+                    className="p-1 rounded-full hover:bg-gray-200 text-amber-600"
+                    aria-label="Decrease ingredient"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => onSelectIngredient(ingredient, "remove")}
+                    className="p-1 rounded-full hover:bg-gray-200 text-red-600"
+                    aria-label="Remove ingredient"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </div>
       

@@ -28,7 +28,8 @@ const RecipeDetailContainer = () => {
     setSelectedIngredient,
     isModified,
     setIsModified,
-    resetToOriginal
+    resetToOriginal,
+    selectedIngredients
   } = useRecipe();
   
   // Use our mock recipe hook instead of react-query
@@ -64,9 +65,17 @@ const RecipeDetailContainer = () => {
   const handleStartModification = (modificationType: string) => {
     // Here we would normally call an AI API
     // For now, we'll just simulate a modification
+    const ingredientActions = Array.from(selectedIngredients.entries())
+      .map(([_, { ingredient, action }]) => `${action} ${ingredient.food?.name}`)
+      .join(", ");
+    
+    const modificationMessage = ingredientActions 
+      ? `Starting ${modificationType} modification with changes: ${ingredientActions}`
+      : `Starting ${modificationType} modification...`;
+    
     toast({
       title: "AI Modification Started",
-      description: `Starting ${modificationType} modification...`,
+      description: modificationMessage,
     });
     
     // Toggle modified status on (we would normally wait for the API response)
