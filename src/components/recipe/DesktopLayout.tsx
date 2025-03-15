@@ -33,49 +33,55 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   return (
     <ResizablePanelGroup 
       direction="horizontal" 
-      className="h-[calc(100vh-64px)] pt-24"
+      className="h-[calc(100vh-64px)]"
     >
       {/* Left Panel - AI Modification Panel */}
-      <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="bg-gray-50">
-        <div className="p-6 h-full overflow-y-auto">
-          <AIModificationPanel 
-            recipe={recipe}
-            isOpen={true}
-            onClose={() => {}}
-            onStartModification={handleStartModification}
-          />
+      <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className="bg-gray-50">
+        <div className="p-6 h-full overflow-y-auto flex flex-col">
+          <div className="pt-16 pb-6 flex-1 overflow-y-auto">
+            <AIModificationPanel 
+              recipe={recipe}
+              isOpen={true}
+              onClose={() => {}}
+              onStartModification={handleStartModification}
+            />
+          </div>
         </div>
       </ResizablePanel>
       
-      <ResizableHandle withHandle />
+      <ResizableHandle withHandle className="transition-colors hover:bg-primary/20" />
       
       {/* Main Content */}
-      <ResizablePanel defaultSize={60} minSize={40}>
-        <div className="h-full overflow-y-auto bg-white p-6">
-          <RecipeHeader 
-            recipe={recipe}
-            onModifyWithAI={handleModifyWithAI}
-          />
-          <RecipeContent 
-            recipe={recipe}
-            onSelectIngredient={setSelectedIngredient}
-          />
+      <ResizablePanel defaultSize={50} minSize={40}>
+        <div className="h-full overflow-y-auto bg-white">
+          <div className="px-8 py-16 max-w-4xl mx-auto">
+            <RecipeHeader 
+              recipe={recipe}
+              onModifyWithAI={handleModifyWithAI}
+            />
+            <RecipeContent 
+              recipe={recipe}
+              onSelectIngredient={setSelectedIngredient}
+            />
+          </div>
         </div>
       </ResizablePanel>
       
-      <ResizableHandle withHandle />
+      <ResizableHandle withHandle className="transition-colors hover:bg-primary/20" />
       
       {/* Right Panel - Comparison Panel */}
-      <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="bg-gray-50">
-        <div className="p-6 h-full overflow-y-auto">
-          <ComparisonPanel 
-            recipe={recipe}
-            originalRecipe={recipe}
-            selectedIngredient={selectedIngredient}
-            isModified={isModified}
-            onResetToOriginal={resetToOriginal}
-            onAcceptChanges={handleAcceptChanges}
-          />
+      <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className="bg-gray-50">
+        <div className="p-6 h-full overflow-y-auto flex flex-col">
+          <div className="pt-16 pb-6 flex-1 overflow-y-auto">
+            <ComparisonPanel 
+              recipe={recipe}
+              originalRecipe={recipe}
+              selectedIngredient={selectedIngredient}
+              isModified={isModified}
+              onResetToOriginal={resetToOriginal}
+              onAcceptChanges={handleAcceptChanges}
+            />
+          </div>
         </div>
       </ResizablePanel>
     </ResizablePanelGroup>

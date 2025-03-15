@@ -19,19 +19,19 @@ const modificationTypes = [
     id: "dietary",
     title: "Dietary Restrictions",
     description: "Modify for vegetarian, vegan, gluten-free, etc.",
-    icon: <Info className="h-8 w-8 text-green-500" />
+    icon: <Info className="h-6 w-6 text-green-500" />
   },
   {
     id: "scaling",
     title: "Scale Recipe",
     description: "Adjust ingredients for different servings",
-    icon: <Settings className="h-8 w-8 text-blue-500" />
+    icon: <Settings className="h-6 w-6 text-blue-500" />
   },
   {
     id: "time",
     title: "Quick & Easy",
     description: "Simplify and speed up preparation",
-    icon: <Clock className="h-8 w-8 text-amber-500" />
+    icon: <Clock className="h-6 w-6 text-amber-500" />
   }
 ];
 
@@ -45,15 +45,15 @@ const AIModificationPanel: React.FC<AIModificationPanelProps> = ({
   
   return (
     <div className="h-full overflow-y-auto">
-      <h2 className="text-2xl font-bold mb-2">Recipe Modification</h2>
-      <p className="text-gray-600 mb-6">
+      <h2 className="text-xl sm:text-2xl font-bold mb-2">Recipe Modification</h2>
+      <p className="text-sm sm:text-base text-gray-600 mb-6">
         Select how you'd like to modify this recipe using AI
       </p>
       
       <Tabs defaultValue="options" className="w-full">
         <TabsList className="w-full mb-4 grid grid-cols-2">
-          <TabsTrigger value="options" className="text-sm">Modification Options</TabsTrigger>
-          <TabsTrigger value="custom" className="text-sm">Custom Instructions</TabsTrigger>
+          <TabsTrigger value="options" className="text-xs sm:text-sm">Modification Options</TabsTrigger>
+          <TabsTrigger value="custom" className="text-xs sm:text-sm">Custom Instructions</TabsTrigger>
         </TabsList>
         
         <TabsContent value="options">
@@ -66,20 +66,20 @@ const AIModificationPanel: React.FC<AIModificationPanelProps> = ({
                 }`}
                 onClick={() => setSelectedModification(type.id)}
               >
-                <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                  <div className="flex-shrink-0">
+                <CardHeader className="flex flex-row items-start gap-3 pb-2 p-4">
+                  <div className="flex-shrink-0 mt-0.5">
                     {type.icon}
                   </div>
-                  <div>
-                    <CardTitle>{type.title}</CardTitle>
-                    <CardDescription>{type.description}</CardDescription>
+                  <div className="min-w-0">
+                    <CardTitle className="text-base">{type.title}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm line-clamp-2">{type.description}</CardDescription>
                   </div>
                 </CardHeader>
                 {selectedModification === type.id && (
-                  <CardContent>
+                  <CardContent className="p-4 pt-0">
                     <div className="pt-2">
                       <Button 
-                        className="w-full mt-2"
+                        className="w-full mt-2 text-sm"
                         onClick={() => onStartModification(type.id)}
                       >
                         Continue with {type.title}
@@ -94,19 +94,19 @@ const AIModificationPanel: React.FC<AIModificationPanelProps> = ({
         
         <TabsContent value="custom">
           <Card>
-            <CardHeader>
-              <CardTitle>Custom AI Instructions</CardTitle>
-              <CardDescription>
+            <CardHeader className="p-4">
+              <CardTitle className="text-base">Custom AI Instructions</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 Tell the AI exactly how you want to modify this recipe
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 pt-0">
               <div className="space-y-4">
                 <textarea 
-                  className="w-full h-32 p-3 border rounded-md" 
+                  className="w-full h-24 sm:h-32 p-3 border rounded-md text-sm" 
                   placeholder="Example: Make this recipe keto-friendly and reduce the cooking time by 15 minutes"
                 />
-                <Button className="w-full">
+                <Button className="w-full text-sm">
                   Generate Modification
                 </Button>
               </div>
