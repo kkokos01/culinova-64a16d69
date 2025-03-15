@@ -311,6 +311,10 @@ export type Database = {
         }
         Returns: string
       }
+      fix_default_spaces: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       is_member_of_space: {
         Args: {
           _user_id: string
