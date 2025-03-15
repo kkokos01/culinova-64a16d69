@@ -6,15 +6,19 @@ import { Wand2 } from "lucide-react";
 
 interface RecipeHeaderProps {
   recipe: Recipe;
+  isModified: boolean;
   onModifyWithAI: () => void;
 }
 
-const RecipeHeader: React.FC<RecipeHeaderProps> = ({ recipe, onModifyWithAI }) => {
+const RecipeHeader: React.FC<RecipeHeaderProps> = ({ recipe, isModified, onModifyWithAI }) => {
   return (
     <div className="mb-8">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{recipe.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+            {recipe.title}
+            {isModified && <span className="ml-2 text-sm font-normal text-primary">(Modified)</span>}
+          </h1>
           <p className="text-gray-600 mb-4 text-sm sm:text-base">{recipe.description}</p>
         </div>
         <Button 
