@@ -1,4 +1,5 @@
 
+
 export interface User {
   id: string;
   email: string;
@@ -41,16 +42,88 @@ export interface UserSpace {
   space?: Space;
 }
 
-export interface Food {
+export interface FoodCategory {
   id: string;
   name: string;
-  category?: string;
+  description?: string;
+  icon_url?: string;
+  group_name?: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  custom_name?: string; // From space_category_settings
+  custom_icon_url?: string; // From space_category_settings
+  custom_order?: number; // From space_category_settings
+  is_enabled?: boolean; // From space_category_settings
+}
+
+export interface Food {
+  id: string;
+  space_id: string;
+  name: string;
+  description?: string;
+  parent_id?: string;
+  category_id?: string;
+  path?: string; // LTREE represented as string in the frontend
+  properties?: Record<string, any>;
+  inheritable_properties?: Record<string, any>;
+  tags?: string[];
+  default_unit_id?: string;
+  is_active: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  category?: FoodCategory;
+  parent?: Food;
+  children?: Food[];
+  properties_list?: FoodProperty[];
+  default_unit?: Unit;
+}
+
+export type PropertyType = 
+  | 'calories'
+  | 'protein'
+  | 'fat'
+  | 'carbohydrates'
+  | 'fiber'
+  | 'sugar'
+  | 'sodium'
+  | 'vitamin_a'
+  | 'vitamin_c'
+  | 'calcium'
+  | 'iron';
+
+export interface FoodProperty {
+  id: string;
+  food_id: string;
+  property_type: PropertyType;
+  value: number;
+  unit_id?: string;
+  unit?: Unit;
+  per_amount: number;
+  per_unit_id?: string;
+  per_unit?: Unit;
+  source?: string;
+  confidence_score?: number;
+  is_verified: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Unit {
   id: string;
   name: string;
   abbreviation: string;
+  unit_type: string;
+  measurement_system: string;
+  plural_name: string;
+  base_unit: boolean;
+  conversion_to_base?: number;
+  display_order: number;
+  formatting_template: string;
+  common_name?: string;
+  alternative_names?: string[];
 }
 
 export interface Ingredient {
@@ -130,3 +203,4 @@ export interface Meal {
   servings: number;
   recipe?: Recipe;
 }
+

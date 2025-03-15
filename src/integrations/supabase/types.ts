@@ -66,6 +66,198 @@ export type Database = {
           },
         ]
       }
+      food_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          group_name: string | null
+          icon_url: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          group_name?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          group_name?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      food_properties: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          food_id: string | null
+          id: string
+          is_verified: boolean | null
+          per_amount: number | null
+          per_unit_id: string | null
+          property_type: Database["public"]["Enums"]["property_type"]
+          source: string | null
+          unit_id: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          food_id?: string | null
+          id?: string
+          is_verified?: boolean | null
+          per_amount?: number | null
+          per_unit_id?: string | null
+          property_type: Database["public"]["Enums"]["property_type"]
+          source?: string | null
+          unit_id?: string | null
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          food_id?: string | null
+          id?: string
+          is_verified?: boolean | null
+          per_amount?: number | null
+          per_unit_id?: string | null
+          property_type?: Database["public"]["Enums"]["property_type"]
+          source?: string | null
+          unit_id?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_properties_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_properties_per_unit_id_fkey"
+            columns: ["per_unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_properties_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foods: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          created_by: string
+          default_unit_id: string | null
+          description: string | null
+          id: string
+          inheritable_properties: Json | null
+          is_active: boolean | null
+          name: string
+          parent_id: string | null
+          path: unknown | null
+          properties: Json | null
+          search_vector_en: unknown | null
+          search_vector_es: unknown | null
+          space_id: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          created_by: string
+          default_unit_id?: string | null
+          description?: string | null
+          id?: string
+          inheritable_properties?: Json | null
+          is_active?: boolean | null
+          name: string
+          parent_id?: string | null
+          path?: unknown | null
+          properties?: Json | null
+          search_vector_en?: unknown | null
+          search_vector_es?: unknown | null
+          space_id?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          created_by?: string
+          default_unit_id?: string | null
+          description?: string | null
+          id?: string
+          inheritable_properties?: Json | null
+          is_active?: boolean | null
+          name?: string
+          parent_id?: string | null
+          path?: unknown | null
+          properties?: Json | null
+          search_vector_en?: unknown | null
+          search_vector_es?: unknown | null
+          space_id?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foods_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "food_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foods_default_unit_id_fkey"
+            columns: ["default_unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foods_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foods_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schema_migrations: {
         Row: {
           applied_at: string | null
@@ -89,6 +281,57 @@ export type Database = {
           version?: string
         }
         Relationships: []
+      }
+      space_category_settings: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          custom_icon_url: string | null
+          custom_name: string | null
+          custom_order: number | null
+          id: string
+          is_enabled: boolean | null
+          space_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          custom_icon_url?: string | null
+          custom_name?: string | null
+          custom_order?: number | null
+          id?: string
+          is_enabled?: boolean | null
+          space_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          custom_icon_url?: string | null
+          custom_name?: string | null
+          custom_order?: number | null
+          id?: string
+          is_enabled?: boolean | null
+          space_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_category_settings_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "food_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "space_category_settings_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       spaces: {
         Row: {
@@ -126,33 +369,45 @@ export type Database = {
       unit_conversions: {
         Row: {
           bidirectional: boolean
+          confidence_score: number | null
           created_at: string
           food_id: string | null
           from_amount: number
           from_unit_id: string
           id: string
+          is_verified: boolean | null
+          notes: string | null
+          source: string | null
           to_amount: number
           to_unit_id: string
           updated_at: string
         }
         Insert: {
           bidirectional?: boolean
+          confidence_score?: number | null
           created_at?: string
           food_id?: string | null
           from_amount: number
           from_unit_id: string
           id?: string
+          is_verified?: boolean | null
+          notes?: string | null
+          source?: string | null
           to_amount: number
           to_unit_id: string
           updated_at?: string
         }
         Update: {
           bidirectional?: boolean
+          confidence_score?: number | null
           created_at?: string
           food_id?: string | null
           from_amount?: number
           from_unit_id?: string
           id?: string
+          is_verified?: boolean | null
+          notes?: string | null
+          source?: string | null
           to_amount?: number
           to_unit_id?: string
           updated_at?: string
@@ -292,6 +547,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _ltree_compress: {
+        Args: {
+          "": unknown
+        }
+        Returns: unknown
+      }
+      _ltree_gist_options: {
+        Args: {
+          "": unknown
+        }
+        Returns: undefined
+      }
       convert_units: {
         Args: {
           input_value: number
@@ -329,13 +596,151 @@ export type Database = {
         }
         Returns: boolean
       }
+      lca: {
+        Args: {
+          "": unknown[]
+        }
+        Returns: unknown
+      }
+      lquery_in: {
+        Args: {
+          "": unknown
+        }
+        Returns: unknown
+      }
+      lquery_out: {
+        Args: {
+          "": unknown
+        }
+        Returns: unknown
+      }
+      lquery_recv: {
+        Args: {
+          "": unknown
+        }
+        Returns: unknown
+      }
+      lquery_send: {
+        Args: {
+          "": unknown
+        }
+        Returns: string
+      }
+      ltree_compress: {
+        Args: {
+          "": unknown
+        }
+        Returns: unknown
+      }
+      ltree_decompress: {
+        Args: {
+          "": unknown
+        }
+        Returns: unknown
+      }
+      ltree_gist_in: {
+        Args: {
+          "": unknown
+        }
+        Returns: unknown
+      }
+      ltree_gist_options: {
+        Args: {
+          "": unknown
+        }
+        Returns: undefined
+      }
+      ltree_gist_out: {
+        Args: {
+          "": unknown
+        }
+        Returns: unknown
+      }
+      ltree_in: {
+        Args: {
+          "": unknown
+        }
+        Returns: unknown
+      }
+      ltree_out: {
+        Args: {
+          "": unknown
+        }
+        Returns: unknown
+      }
+      ltree_recv: {
+        Args: {
+          "": unknown
+        }
+        Returns: unknown
+      }
+      ltree_send: {
+        Args: {
+          "": unknown
+        }
+        Returns: string
+      }
+      ltree2text: {
+        Args: {
+          "": unknown
+        }
+        Returns: string
+      }
+      ltxtq_in: {
+        Args: {
+          "": unknown
+        }
+        Returns: unknown
+      }
+      ltxtq_out: {
+        Args: {
+          "": unknown
+        }
+        Returns: unknown
+      }
+      ltxtq_recv: {
+        Args: {
+          "": unknown
+        }
+        Returns: unknown
+      }
+      ltxtq_send: {
+        Args: {
+          "": unknown
+        }
+        Returns: string
+      }
+      nlevel: {
+        Args: {
+          "": unknown
+        }
+        Returns: number
+      }
       repair_missing_memberships: {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      text2ltree: {
+        Args: {
+          "": string
+        }
+        Returns: unknown
+      }
     }
     Enums: {
       measurement_system: "metric" | "imperial" | "universal"
+      property_type:
+        | "calories"
+        | "protein"
+        | "fat"
+        | "carbohydrates"
+        | "fiber"
+        | "sugar"
+        | "sodium"
+        | "vitamin_a"
+        | "vitamin_c"
+        | "calcium"
+        | "iron"
       unit_type: "mass" | "volume" | "count" | "temperature" | "length" | "area"
     }
     CompositeTypes: {

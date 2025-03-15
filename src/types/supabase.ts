@@ -115,21 +115,174 @@ export interface Database {
       foods: {
         Row: {
           id: string
+          space_id: string
           name: string
-          category?: string
+          description?: string
+          parent_id?: string
+          category_id?: string
+          path?: unknown
+          properties: Json
+          inheritable_properties: Json
+          tags?: string[]
+          search_vector_en?: unknown
+          search_vector_es?: unknown
+          default_unit_id?: string
+          is_active: boolean
+          created_by: string
           created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          space_id: string
+          name: string
+          description?: string
+          parent_id?: string
+          category_id?: string
+          path?: unknown
+          properties?: Json
+          inheritable_properties?: Json
+          tags?: string[]
+          search_vector_en?: unknown
+          search_vector_es?: unknown
+          default_unit_id?: string
+          is_active?: boolean
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          space_id?: string
+          name?: string
+          description?: string
+          parent_id?: string
+          category_id?: string
+          path?: unknown
+          properties?: Json
+          inheritable_properties?: Json
+          tags?: string[]
+          search_vector_en?: unknown
+          search_vector_es?: unknown
+          default_unit_id?: string
+          is_active?: boolean
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      food_categories: {
+        Row: {
+          id: string
+          name: string
+          description?: string
+          icon_url?: string
+          group_name?: string
+          display_order: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
           name: string
-          category?: string
+          description?: string
+          icon_url?: string
+          group_name?: string
+          display_order?: number
+          is_active?: boolean
           created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
           name?: string
-          category?: string
+          description?: string
+          icon_url?: string
+          group_name?: string
+          display_order?: number
+          is_active?: boolean
           created_at?: string
+          updated_at?: string
+        }
+      }
+      space_category_settings: {
+        Row: {
+          id: string
+          space_id: string
+          category_id: string
+          custom_name?: string
+          custom_icon_url?: string
+          custom_order: number
+          is_enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          space_id: string
+          category_id: string
+          custom_name?: string
+          custom_icon_url?: string
+          custom_order?: number
+          is_enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          space_id?: string
+          category_id?: string
+          custom_name?: string
+          custom_icon_url?: string
+          custom_order?: number
+          is_enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      food_properties: {
+        Row: {
+          id: string
+          food_id: string
+          property_type: string
+          value: number
+          unit_id?: string
+          per_amount: number
+          per_unit_id?: string
+          source?: string
+          confidence_score?: number
+          is_verified: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          food_id: string
+          property_type: string
+          value: number
+          unit_id?: string
+          per_amount?: number
+          per_unit_id?: string
+          source?: string
+          confidence_score?: number
+          is_verified?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          food_id?: string
+          property_type?: string
+          value?: number
+          unit_id?: string
+          per_amount?: number
+          per_unit_id?: string
+          source?: string
+          confidence_score?: number
+          is_verified?: boolean
+          created_at?: string
+          updated_at?: string
         }
       }
       custom_units: {
@@ -234,6 +387,10 @@ export interface Database {
           bidirectional: boolean
           created_at: string
           updated_at: string
+          confidence_score?: number
+          source?: string
+          is_verified?: boolean
+          notes?: string
         }
         Insert: {
           id?: string
@@ -245,6 +402,10 @@ export interface Database {
           bidirectional?: boolean
           created_at?: string
           updated_at?: string
+          confidence_score?: number
+          source?: string
+          is_verified?: boolean
+          notes?: string
         }
         Update: {
           id?: string
@@ -256,6 +417,10 @@ export interface Database {
           bidirectional?: boolean
           created_at?: string
           updated_at?: string
+          confidence_score?: number
+          source?: string
+          is_verified?: boolean
+          notes?: string
         }
       }
       user_profiles: {
@@ -373,7 +538,7 @@ export interface Database {
       }
     }
     Enums: {
-      [_ in never]: never
+      property_type: 'calories' | 'protein' | 'fat' | 'carbohydrates' | 'fiber' | 'sugar' | 'sodium' | 'vitamin_a' | 'vitamin_c' | 'calcium' | 'iron'
     }
   }
 }
