@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -10,20 +9,38 @@ import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { Recipe, Ingredient, Step, Food, Unit } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { RecipeProvider, useRecipe } from "@/context/RecipeContext";
 
-const RecipeDetail = () => {
+// Import our new components
+import RecipeHeader from "@/components/recipe/RecipeHeader";
+import RecipeContent from "@/components/recipe/RecipeContent";
+import AIModificationPanel from "@/components/recipe/AIModificationPanel";
+import ComparisonPanel from "@/components/recipe/ComparisonPanel";
+
+// Main container component
+const RecipeDetailContainer = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
   
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
-  const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
+  
+  // Use the Recipe Context
+  const { 
+    setRecipe, 
+    setOriginalRecipe, 
+    selectedIngredient, 
+    setSelectedIngredient,
+    isModified,
+    setIsModified,
+    resetToOriginal
+  } = useRecipe();
   
   // Fetch recipe data
-  const { data: recipe, isLoading, error } = useQuery({
+  const { data: recipeData, isLoading, error } = useQuery({
     queryKey: ['recipe', id],
     queryFn: async () => {
       if (!id) throw new Error("Recipe ID is required");
@@ -82,7 +99,7 @@ const RecipeDetail = () => {
     },
     staleTime: 5 * 60 * 1000 // 5 minutes
   });
-
+  
   // Handle errors
   useEffect(() => {
     if (error) {
@@ -93,6 +110,48 @@ const RecipeDetail = () => {
       });
     }
   }, [error, toast]);
+  
+  // Set recipe in context when data is loaded
+  useEffect(() => {
+    if (recipeData) {
+      setRecipe(recipeData);
+      setOriginalRecipe(recipeData);
+    }
+  }, [recipeData, setRecipe, setOriginalRecipe]);
+  
+  const handleModifyWithAI = () => {
+    // Open the AI modification panel
+    if (isMobile) {
+      setLeftPanelOpen(true);
+    }
+    // For desktop, the panel is already visible in the left panel
+  };
+  
+  const handleStartModification = (modificationType: string) => {
+    // Here we would normally call an AI API
+    // For now, we'll just simulate a modification
+    toast({
+      title: "AI Modification Started",
+      description: `Starting ${modificationType} modification...`,
+    });
+    
+    // Toggle modified status on (we would normally wait for the API response)
+    setTimeout(() => {
+      setIsModified(true);
+      if (isMobile) {
+        setLeftPanelOpen(false);
+        setRightPanelOpen(true);
+      }
+    }, 1500);
+  };
+  
+  const handleAcceptChanges = () => {
+    toast({
+      title: "Changes Accepted",
+      description: "The recipe has been updated with AI modifications.",
+    });
+    setIsModified(false);
+  };
 
   if (isLoading) return <RecipeDetailSkeleton />;
 
@@ -103,7 +162,7 @@ const RecipeDetail = () => {
       {isMobile ? (
         // Mobile layout with sliding sheets
         <div className="container mx-auto px-4 py-24">
-          {/* Left Panel Sheet */}
+          {/* Left Panel Sheet - AI Modification Panel */}
           <Sheet open={leftPanelOpen} onOpenChange={setLeftPanelOpen}>
             <SheetTrigger asChild>
               <Button 
@@ -116,14 +175,32 @@ const RecipeDetail = () => {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-              <LeftPanel recipe={recipe} selectedIngredient={selectedIngredient} />
+              <AIModificationPanel 
+                recipe={recipeData}
+                isOpen={leftPanelOpen}
+                onClose={() => setLeftPanelOpen(false)}
+                onStartModification={handleStartModification}
+              />
             </SheetContent>
           </Sheet>
           
           {/* Main Content */}
-          <MainContent recipe={recipe} onSelectIngredient={setSelectedIngredient} />
+          <div className="max-w-4xl mx-auto">
+            {recipeData && (
+              <>
+                <RecipeHeader 
+                  recipe={recipeData}
+                  onModifyWithAI={handleModifyWithAI}
+                />
+                <RecipeContent 
+                  recipe={recipeData}
+                  onSelectIngredient={setSelectedIngredient}
+                />
+              </>
+            )}
+          </div>
           
-          {/* Right Panel Sheet */}
+          {/* Right Panel Sheet - Comparison Panel */}
           <Sheet open={rightPanelOpen} onOpenChange={setRightPanelOpen}>
             <SheetTrigger asChild>
               <Button 
@@ -136,7 +213,14 @@ const RecipeDetail = () => {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <RightPanel recipe={recipe} selectedIngredient={selectedIngredient} />
+              <ComparisonPanel 
+                recipe={recipeData}
+                originalRecipe={recipeData}
+                selectedIngredient={selectedIngredient}
+                isModified={isModified}
+                onResetToOriginal={resetToOriginal}
+                onAcceptChanges={handleAcceptChanges}
+              />
             </SheetContent>
           </Sheet>
         </div>
@@ -146,10 +230,15 @@ const RecipeDetail = () => {
           direction="horizontal" 
           className="h-[calc(100vh-64px)] pt-24"
         >
-          {/* Left Panel */}
+          {/* Left Panel - AI Modification Panel */}
           <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="bg-gray-50">
             <div className="p-6 h-full overflow-y-auto">
-              <LeftPanel recipe={recipe} selectedIngredient={selectedIngredient} />
+              <AIModificationPanel 
+                recipe={recipeData}
+                isOpen={true}
+                onClose={() => {}}
+                onStartModification={handleStartModification}
+              />
             </div>
           </ResizablePanel>
           
@@ -158,16 +247,34 @@ const RecipeDetail = () => {
           {/* Main Content */}
           <ResizablePanel defaultSize={60} minSize={40}>
             <div className="h-full overflow-y-auto bg-white p-6">
-              <MainContent recipe={recipe} onSelectIngredient={setSelectedIngredient} />
+              {recipeData && (
+                <>
+                  <RecipeHeader 
+                    recipe={recipeData}
+                    onModifyWithAI={handleModifyWithAI}
+                  />
+                  <RecipeContent 
+                    recipe={recipeData}
+                    onSelectIngredient={setSelectedIngredient}
+                  />
+                </>
+              )}
             </div>
           </ResizablePanel>
           
           <ResizableHandle withHandle />
           
-          {/* Right Panel */}
+          {/* Right Panel - Comparison Panel */}
           <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="bg-gray-50">
             <div className="p-6 h-full overflow-y-auto">
-              <RightPanel recipe={recipe} selectedIngredient={selectedIngredient} />
+              <ComparisonPanel 
+                recipe={recipeData}
+                originalRecipe={recipeData}
+                selectedIngredient={selectedIngredient}
+                isModified={isModified}
+                onResetToOriginal={resetToOriginal}
+                onAcceptChanges={handleAcceptChanges}
+              />
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
@@ -176,180 +283,12 @@ const RecipeDetail = () => {
   );
 };
 
-// MainContent component to display recipe details
-const MainContent = ({ 
-  recipe, 
-  onSelectIngredient 
-}: { 
-  recipe: Recipe, 
-  onSelectIngredient: (ingredient: Ingredient) => void 
-}) => {
-  if (!recipe) return null;
-  
-  return (
-    <div className="max-w-4xl mx-auto">
-      {/* Recipe Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{recipe.title}</h1>
-        <p className="text-gray-600 mb-4">{recipe.description}</p>
-        
-        <div className="flex flex-wrap gap-4 mb-4">
-          <div className="flex items-center">
-            <span className="font-medium">Prep:</span>
-            <span className="ml-2">{recipe.prep_time_minutes} min</span>
-          </div>
-          <div className="flex items-center">
-            <span className="font-medium">Cook:</span>
-            <span className="ml-2">{recipe.cook_time_minutes} min</span>
-          </div>
-          <div className="flex items-center">
-            <span className="font-medium">Servings:</span>
-            <span className="ml-2">{recipe.servings}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="font-medium">Difficulty:</span>
-            <span className="ml-2 capitalize">{recipe.difficulty}</span>
-          </div>
-        </div>
-        
-        {recipe.image_url && (
-          <div className="aspect-video rounded-lg overflow-hidden">
-            <img 
-              src={recipe.image_url} 
-              alt={recipe.title} 
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
-      </div>
-      
-      {/* Ingredients */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
-        <ul className="space-y-2">
-          {recipe.ingredients?.map((ingredient) => (
-            <li 
-              key={ingredient.id} 
-              className="flex items-center p-2 rounded-md hover:bg-gray-100 cursor-pointer"
-              onClick={() => onSelectIngredient(ingredient)}
-            >
-              <span className="font-medium">{ingredient.amount} {ingredient.unit?.abbreviation}</span>
-              <span className="ml-2">{ingredient.food?.name}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      
-      {/* Steps */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Instructions</h2>
-        <ol className="space-y-6">
-          {recipe.steps?.map((step) => (
-            <li key={step.id} className="flex">
-              <div className="flex-shrink-0 mr-4">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-lg font-bold">
-                  {step.order_number}
-                </div>
-              </div>
-              <div>
-                <p className="text-gray-700">{step.instruction}</p>
-                {step.duration_minutes && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    Approximately {step.duration_minutes} minutes
-                  </p>
-                )}
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </div>
-  );
-};
-
-// Left panel component (for AI controls, future implementation)
-const LeftPanel = ({ 
-  recipe, 
-  selectedIngredient 
-}: { 
-  recipe: Recipe, 
-  selectedIngredient: Ingredient | null 
-}) => {
-  return (
-    <div>
-      <h2 className="text-xl font-bold mb-4">Recipe Assistant</h2>
-      <p className="text-gray-600 mb-4">
-        This panel will contain AI modification controls in future updates.
-      </p>
-      
-      {/* Placeholder for AI controls */}
-      <div className="p-4 border border-dashed border-gray-300 rounded-md bg-gray-50 mb-4">
-        <div className="flex items-center justify-center h-32 text-gray-500">
-          <div className="text-center">
-            <Info className="mx-auto h-8 w-8 mb-2" />
-            <p>AI modification controls coming soon</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Right panel component (for comparison view, future implementation)
-const RightPanel = ({ 
-  recipe, 
-  selectedIngredient 
-}: { 
-  recipe: Recipe, 
-  selectedIngredient: Ingredient | null 
-}) => {
-  return (
-    <div>
-      <h2 className="text-xl font-bold mb-4">Selected Ingredient</h2>
-      
-      {selectedIngredient ? (
-        <div className="p-4 border border-gray-200 rounded-md bg-white">
-          <h3 className="font-medium mb-2">{selectedIngredient.food?.name}</h3>
-          <p className="text-sm text-gray-600 mb-2">{selectedIngredient.food?.description || "No description available."}</p>
-          <div className="flex items-center text-sm text-gray-700">
-            <span className="font-medium">Amount:</span>
-            <span className="ml-2">{selectedIngredient.amount} {selectedIngredient.unit?.abbreviation}</span>
-          </div>
-          
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <p className="text-xs text-gray-500 mb-2">Food ID: {selectedIngredient.food_id}</p>
-            <Button variant="outline" size="sm" className="w-full">
-              Send to LLM (Coming Soon)
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="p-4 border border-dashed border-gray-300 rounded-md bg-gray-50">
-          <p className="text-gray-500 text-center">
-            Select an ingredient to view details
-          </p>
-        </div>
-      )}
-      
-      <div className="mt-6">
-        <h2 className="text-xl font-bold mb-4">Comparison View</h2>
-        <p className="text-gray-600 mb-4">
-          This section will show recipe modifications in future updates.
-        </p>
-        
-        {/* Placeholder for comparison view */}
-        <div className="p-4 border border-dashed border-gray-300 rounded-md bg-gray-50">
-          <div className="flex items-center justify-center h-32 text-gray-500">
-            <div className="text-center">
-              <Info className="mx-auto h-8 w-8 mb-2" />
-              <p>Recipe comparison view coming soon</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+// Main exported component wrapped with the RecipeProvider
+const RecipeDetail = () => (
+  <RecipeProvider>
+    <RecipeDetailContainer />
+  </RecipeProvider>
+);
 
 // Loading skeleton component
 const RecipeDetailSkeleton = () => {
