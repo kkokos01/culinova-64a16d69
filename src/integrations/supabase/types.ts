@@ -294,10 +294,10 @@ export type Database = {
     Functions: {
       convert_units: {
         Args: {
-          value: number
-          from_unit_id: string
-          to_unit_id: string
-          food_id?: string
+          input_value: number
+          input_from_unit_id: string
+          input_to_unit_id: string
+          input_food_id?: string
         }
         Returns: number
       }
