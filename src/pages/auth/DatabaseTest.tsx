@@ -1,12 +1,16 @@
 
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
+import { useSpace } from "@/context/SpaceContext";
 import DatabaseTester from "@/components/auth/DatabaseTester";
 import UnitsTester from "@/components/auth/UnitsTester";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const DatabaseTest = () => {
   const { user } = useAuth();
+  const { currentSpace, spaces } = useSpace();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -17,6 +21,15 @@ const DatabaseTest = () => {
         </div>
 
         <div className="max-w-3xl mx-auto">
+          {user && spaces.length === 0 && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                You don't have any spaces yet. Some tests require an active space.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <Tabs defaultValue="database">
             <TabsList className="grid grid-cols-2 mb-6">
               <TabsTrigger value="database">Database & Authentication</TabsTrigger>
