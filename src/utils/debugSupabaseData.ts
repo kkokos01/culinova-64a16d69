@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -197,133 +198,10 @@ export const useDebugSupabaseData = () => {
     }
   };
 
-  // Perform a comprehensive database analysis
-  const analyzeDatabaseComprehensive = async () => {
-    try {
-      console.log("Starting comprehensive database analysis...");
-      
-      // Table counts
-      const tableCounts = await getTableCounts();
-      console.log("Table record counts:", tableCounts);
-      
-      // Recipe details
-      const { data: recipes, error: recipesError } = await supabase
-        .from('recipes')
-        .select(`
-          id, 
-          title, 
-          description, 
-          cook_time_minutes, 
-          prep_time_minutes, 
-          servings, 
-          difficulty,
-          created_at
-        `)
-        .order('created_at', { ascending: false });
-      
-      if (recipesError) throw new Error(`Recipe fetch error: ${recipesError.message}`);
-      console.log(`Found ${recipes.length} recipes`);
-      
-      // Get a sample recipe with all related data
-      let sampleRecipeData = null;
-      if (recipes.length > 0) {
-        const sampleRecipeId = recipes[0].id;
-        sampleRecipeData = await inspectRecipe(sampleRecipeId);
-        console.log(`Sample recipe analysis complete for: ${recipes[0].title}`);
-      }
-      
-      // Food categories analysis
-      const { data: categories, error: categoriesError } = await supabase
-        .from('food_categories')
-        .select('*')
-        .order('display_order');
-        
-      if (categoriesError) throw new Error(`Categories error: ${categoriesError.message}`);
-      console.log(`Found ${categories.length} food categories`);
-      
-      // Units analysis
-      const { data: units, error: unitsError } = await supabase
-        .from('units')
-        .select('*')
-        .order('display_order');
-        
-      if (unitsError) throw new Error(`Units error: ${unitsError.message}`);
-      console.log(`Found ${units.length} measurement units`);
-      
-      // Ingredients analysis
-      const { data: ingredientStats, error: ingredientStatsError } = await supabase
-        .from('ingredients')
-        .select(`
-          recipe_id,
-          count(*) 
-        `, { count: 'exact' })
-        .group('recipe_id');
-      
-      if (ingredientStatsError) throw new Error(`Ingredient stats error: ${ingredientStatsError.message}`);
-      
-      // Steps analysis - check for duration_minutes usage
-      const { data: stepsWithDuration, error: stepsError } = await supabase
-        .from('steps')
-        .select('*')
-        .not('duration_minutes', 'is', null)
-        .limit(10);
-        
-      if (stepsError) throw new Error(`Steps error: ${stepsError.message}`);
-      
-      const hasDurationMinutes = stepsWithDuration.length > 0;
-      console.log(`Duration minutes usage in steps: ${hasDurationMinutes ? 'YES' : 'NO'}`);
-      
-      return {
-        tableCounts,
-        recipes: recipes.slice(0, 5), // First 5 recipes
-        categories,
-        units,
-        ingredientStats,
-        stepsWithDuration: stepsWithDuration.slice(0, 3), // Sample of steps with duration
-        hasDurationMinutes,
-        sampleRecipeData
-      };
-    } catch (err) {
-      console.error("Error in comprehensive database analysis:", err);
-      toast({
-        title: "Database Analysis Error",
-        description: err instanceof Error ? err.message : "Failed to analyze database",
-        variant: "destructive"
-      });
-      return null;
-    }
-  };
-  
-  // Helper function to get record counts for all relevant tables
-  const getTableCounts = async () => {
-    const tables = [
-      'recipes', 'ingredients', 'steps', 'foods', 
-      'units', 'food_categories', 'recipe_versions'
-    ];
-    
-    const counts: Record<string, number> = {};
-    
-    for (const table of tables) {
-      const { count, error } = await supabase
-        .from(table)
-        .select('*', { count: 'exact', head: true });
-        
-      if (error) {
-        console.warn(`Error getting count for ${table}: ${error.message}`);
-        counts[table] = -1; // Mark as error
-      } else {
-        counts[table] = count || 0;
-      }
-    }
-    
-    return counts;
-  };
-
   return { 
     inspectRecipe,
     getAllFoods,
     getAllUnits,
-    analyzeRecipeStructure,
-    analyzeDatabaseComprehensive
+    analyzeRecipeStructure
   };
 };
