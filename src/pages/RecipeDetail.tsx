@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useMediaQuery } from "@/hooks/use-mobile";
@@ -26,6 +25,7 @@ const RecipeDetailContainer = () => {
     setOriginalRecipe, 
     selectedIngredient, 
     setSelectedIngredient,
+    selectIngredientForModification,
     isModified,
     setIsModified,
     resetToOriginal,
@@ -111,6 +111,11 @@ const RecipeDetailContainer = () => {
     setIsModified(false);
   };
 
+  const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
+    // Using the context function to update selected ingredients
+    selectIngredientForModification(ingredient, action);
+  };
+
   if (isLoading) return <RecipeDetailSkeleton />;
 
   return (
@@ -131,6 +136,7 @@ const RecipeDetailContainer = () => {
             handleStartModification={handleStartModification}
             handleAcceptChanges={handleAcceptChanges}
             setSelectedIngredient={setSelectedIngredient}
+            onSelectIngredient={handleSelectIngredient}
           />
         ) : (
           <DesktopLayout 
@@ -142,6 +148,7 @@ const RecipeDetailContainer = () => {
             handleStartModification={handleStartModification}
             handleAcceptChanges={handleAcceptChanges}
             setSelectedIngredient={setSelectedIngredient}
+            onSelectIngredient={handleSelectIngredient}
           />
         )}
       </div>

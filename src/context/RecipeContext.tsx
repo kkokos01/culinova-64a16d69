@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from "react";
 import { Recipe, Ingredient } from "@/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -20,7 +19,7 @@ interface RecipeContextType {
   selectedIngredient: Ingredient | null;
   setSelectedIngredient: (ingredient: Ingredient | null) => void;
   selectedIngredients: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
-  selectIngredientForModification: (ingredient: Ingredient, action: "increase" | "decrease" | "remove") => void;
+  selectIngredientForModification: (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => void;
   removeIngredientSelection: (id: string) => void;
   customInstructions: string;
   setCustomInstructions: (instructions: string) => void;
@@ -79,11 +78,19 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Calculate active version ID from the versions array
   const activeVersionId = recipeVersions.find(v => v.isActive)?.id || "";
 
-  // Select an ingredient for modification
-  const selectIngredientForModification = (ingredient: Ingredient, action: "increase" | "decrease" | "remove") => {
+  // Select an ingredient for modification - updated to handle null action
+  const selectIngredientForModification = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
     setSelectedIngredients(prev => {
       const newMap = new Map(prev);
-      newMap.set(ingredient.id, { ingredient, action });
+      
+      // If action is null, deselect the ingredient
+      if (action === null) {
+        newMap.delete(ingredient.id);
+      } else {
+        // Otherwise, set the action
+        newMap.set(ingredient.id, { ingredient, action });
+      }
+      
       return newMap;
     });
   };

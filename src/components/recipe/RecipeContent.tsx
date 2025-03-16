@@ -6,7 +6,7 @@ import { Plus, Minus, X } from "lucide-react";
 interface RecipeContentProps {
   recipe: Recipe;
   selectedIngredients: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
-  onSelectIngredient: (ingredient: Ingredient, action: "increase" | "decrease" | "remove") => void;
+  onSelectIngredient: (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => void;
 }
 
 const RecipeContent: React.FC<RecipeContentProps> = ({ 
@@ -49,6 +49,17 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
     }
   };
 
+  // Handle click on the main ingredient area (not buttons) to deselect
+  const handleIngredientClick = (ingredient: Ingredient, e: React.MouseEvent) => {
+    // Only process if clicking on the main area (not the buttons)
+    if ((e.target as HTMLElement).closest('.action-buttons') === null) {
+      // If this ingredient is already selected, deselect it
+      if (selectedIngredients.has(ingredient.id)) {
+        onSelectIngredient(ingredient, null);
+      }
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Ingredients */}
@@ -61,7 +72,8 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
             return (
               <li 
                 key={ingredient.id} 
-                className={`flex items-center p-2.5 rounded-md border transition-colors ${styles.container}`}
+                className={`flex items-center p-2.5 rounded-md border transition-colors ${styles.container} cursor-pointer`}
+                onClick={(e) => handleIngredientClick(ingredient, e)}
               >
                 <div className="flex-1 min-w-0">
                   <div className={`flex items-baseline flex-wrap gap-x-2 ${styles.text}`}>
@@ -71,7 +83,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
                     <span className="truncate">{ingredient.food?.name}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 ml-2">
+                <div className="flex items-center gap-1 ml-2 action-buttons">
                   <button
                     onClick={() => onSelectIngredient(ingredient, "increase")}
                     className={`p-1 rounded-full ${
