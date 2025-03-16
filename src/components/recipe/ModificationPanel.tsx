@@ -33,13 +33,13 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
   } = useRecipe();
 
   return (
-    <div className={`h-full flex flex-col overflow-hidden ${isMobile ? "bg-sage-500" : ""}`}>
-      <div className={`sticky top-0 ${isMobile ? "bg-sage-600 border-b border-white/10" : "bg-sage-500"} z-10 px-4 py-3 flex items-center justify-between`}>
+    <div className={`h-full flex flex-col overflow-hidden ${isMobile ? "bg-sage-400" : ""}`}>
+      <div className={`sticky top-0 ${isMobile ? "bg-sage-500 border-b border-white/10" : "bg-sage-400"} z-10 px-4 py-3 flex items-center justify-between`}>
         <Button
           variant="ghost"
           size="icon"
           onClick={closePanel}
-          className="text-white hover:text-white hover:bg-sage-700/60"
+          className="text-white hover:text-white hover:bg-sage-500/60"
         >
           <X className="h-5 w-5" />
         </Button>
@@ -62,7 +62,7 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
             <Button 
               variant="outline"
               onClick={resetToOriginal}
-              className="w-full border-white/30 text-white hover:bg-sage-600 hover:text-white"
+              className="w-full border-white/30 text-white hover:bg-sage-500 hover:text-white"
             >
               Reset to Original
             </Button>

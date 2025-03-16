@@ -88,8 +88,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             }}
             className={`p-4 relative transition-all duration-300 ${
               leftPanelCollapsed 
-                ? "bg-sage-500 text-white" 
-                : "bg-sage-500 text-white shadow-lg"
+                ? "bg-sage-400 text-white" 
+                : "bg-sage-400 text-white shadow-lg"
             }`}
           >
             {leftPanelCollapsed ? (
@@ -98,7 +98,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                   variant="ghost" 
                   size="icon" 
                   onClick={handleToggleModifyPanel}
-                  className="absolute top-4 right-2 text-white hover:text-white hover:bg-sage-600/60"
+                  className="absolute top-4 right-2 text-white hover:text-white hover:bg-sage-500/60"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -115,7 +115,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                     variant="ghost" 
                     size="icon" 
                     onClick={handleToggleModifyPanel}
-                    className="self-start text-white hover:text-white hover:bg-sage-600/60"
+                    className="self-start text-white hover:text-white hover:bg-sage-500/60"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -136,7 +136,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                     <Button 
                       variant="outline"
                       onClick={resetToOriginal}
-                      className="w-full border-white/30 text-white hover:bg-sage-600/60 hover:text-white"
+                      className="w-full border-white/30 text-white hover:bg-sage-500 hover:text-white"
                     >
                       Reset to Original
                     </Button>

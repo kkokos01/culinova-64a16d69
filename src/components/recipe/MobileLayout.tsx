@@ -59,7 +59,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     if (!modificationPanel.isOpen) return null;
     
     return (
-      <div className="fixed inset-0 bg-sage-500 text-white z-50 overflow-hidden">
+      <div className="fixed inset-0 bg-sage-400 text-white z-50 overflow-hidden">
         <ModificationPanel
           recipe={recipe}
           isModified={isModified}
