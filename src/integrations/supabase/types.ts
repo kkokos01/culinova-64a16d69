@@ -846,6 +846,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      add_tikka_masala_recipe: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       convert_units: {
         Args: {
           input_value: number

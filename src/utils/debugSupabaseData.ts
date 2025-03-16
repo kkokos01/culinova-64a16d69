@@ -198,10 +198,53 @@ export const useDebugSupabaseData = () => {
     }
   };
 
+  // Find the new Tikka Masala recipe in the database
+  const findTikkaMasalaRecipe = async () => {
+    try {
+      // Find recipes with "Tikka Masala" in the title
+      const { data: recipes, error } = await supabase
+        .from('recipes')
+        .select('*')
+        .ilike('title', '%Tikka Masala%')
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        throw new Error(`Failed to search for Tikka Masala recipes: ${error.message}`);
+      }
+      
+      console.log("Found Tikka Masala recipes:", recipes);
+      
+      if (recipes && recipes.length > 0) {
+        // Inspect the most recently created matching recipe
+        const mostRecent = recipes[0];
+        console.log("Most recent Tikka Masala recipe:", mostRecent);
+        
+        // Get the full details
+        const details = await inspectRecipe(mostRecent.id);
+        return { 
+          recipe: mostRecent,
+          details
+        };
+      } else {
+        console.log("No Tikka Masala recipes found");
+        return null;
+      }
+    } catch (err) {
+      console.error("Error finding Tikka Masala recipe:", err);
+      toast({
+        title: "Error finding recipe",
+        description: err instanceof Error ? err.message : "Failed to find Tikka Masala recipe",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
   return { 
     inspectRecipe,
     getAllFoods,
     getAllUnits,
-    analyzeRecipeStructure
+    analyzeRecipeStructure,
+    findTikkaMasalaRecipe
   };
 };

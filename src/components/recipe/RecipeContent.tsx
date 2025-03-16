@@ -2,6 +2,7 @@
 import React, { useEffect } from "react";
 import { Recipe, Ingredient } from "@/types";
 import { Plus, Minus, X, AlertTriangle } from "lucide-react";
+import RecipeDatabaseDiagnostic from "./RecipeDatabaseDiagnostic";
 
 interface RecipeContentProps {
   recipe: Recipe;
@@ -77,6 +78,9 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Database Diagnostic Tool */}
+      <RecipeDatabaseDiagnostic />
+      
       {/* Ingredients */}
       <div className="mb-6">
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">

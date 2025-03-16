@@ -15,6 +15,13 @@ export const useSupabaseRecipe = (recipeId: string) => {
       try {
         setLoading(true);
         
+        if (!recipeId) {
+          console.warn("No recipe ID provided to useSupabaseRecipe");
+          setRecipe(null);
+          setLoading(false);
+          return;
+        }
+        
         // Fetch recipe data from Supabase
         console.log("Fetching recipe from Supabase:", recipeId);
         
@@ -27,6 +34,65 @@ export const useSupabaseRecipe = (recipeId: string) => {
         }
         
         console.log("Raw recipe data from Supabase:", rawData);
+        
+        // If we didn't get any data back, try a direct query approach
+        if (!rawData || rawData.length === 0) {
+          console.warn("No data from RPC function, trying direct query approach");
+          
+          // Fetch basic recipe data
+          const { data: recipeData, error: recipeError } = await supabase
+            .from('recipes')
+            .select('*')
+            .eq('id', recipeId)
+            .single();
+            
+          if (recipeError) {
+            throw new Error(`Failed to fetch recipe: ${recipeError.message}`);
+          }
+          
+          if (!recipeData) {
+            console.log("No recipe found with ID:", recipeId);
+            setRecipe(null);
+            setLoading(false);
+            return;
+          }
+          
+          // Fetch ingredients with related data
+          const { data: ingredients, error: ingredientsError } = await supabase
+            .from('ingredients')
+            .select(`
+              *,
+              food:food_id(id, name, description, category_id, properties),
+              unit:unit_id(id, name, abbreviation, plural_name)
+            `)
+            .eq('recipe_id', recipeId);
+            
+          if (ingredientsError) {
+            throw new Error(`Failed to fetch ingredients: ${ingredientsError.message}`);
+          }
+          
+          // Fetch steps
+          const { data: steps, error: stepsError } = await supabase
+            .from('steps')
+            .select('*')
+            .eq('recipe_id', recipeId)
+            .order('order_number');
+            
+          if (stepsError) {
+            throw new Error(`Failed to fetch steps: ${stepsError.message}`);
+          }
+          
+          // Combine into recipe object
+          const completeRecipe: Recipe = {
+            ...recipeData,
+            ingredients: ingredients || [],
+            steps: steps || []
+          };
+          
+          setRecipe(completeRecipe);
+          setLoading(false);
+          return;
+        }
         
         // Execute the actual query we need
         const { data, error } = await supabase
@@ -166,6 +232,7 @@ export const useSupabaseRecipe = (recipeId: string) => {
             food_id: row.ingredient_food_id,
             unit_id: row.ingredient_unit_id,
             amount: row.ingredient_amount,
+            recipe_id: row.id,
             food: {
               id: row.ingredient_food_id,
               name: row.food_name,
