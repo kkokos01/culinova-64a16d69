@@ -142,7 +142,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       
       <div className="fixed bottom-0 inset-x-0 p-3 bg-white border-t">
         <Button 
-          className="w-full bg-sage-700 hover:bg-sage-800 text-white font-medium shadow-md"
+          className="w-full bg-sage-500 hover:bg-sage-600 text-white font-medium shadow-md"
           onClick={() => setLeftPanelOpen(true)}
         >
           Modify Recipe
