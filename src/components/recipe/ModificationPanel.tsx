@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import UnifiedModificationPanel from "./UnifiedModificationPanel";
 import { Recipe, Ingredient } from "@/types";
 import { useRecipe } from "@/context/recipe";
+import { Card, CardHeader } from "@/components/ui/card";
 
 interface ModificationPanelProps {
   recipe: Recipe | null;
@@ -34,18 +35,20 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
 
   return (
     <div className={`h-full flex flex-col overflow-hidden ${isMobile ? "bg-sage-400" : ""}`}>
-      <div className={`sticky top-0 ${isMobile ? "bg-sage-500 border-b border-white/10" : "bg-sage-400"} z-10 px-4 py-3 flex items-center justify-between`}>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={closePanel}
-          className="text-white hover:text-white hover:bg-sage-500/60"
-        >
-          <X className="h-5 w-5" />
-        </Button>
-        <h2 className="text-lg font-semibold text-black">Modify Recipe</h2>
-        <div className="w-8"></div>
-      </div>
+      <Card className="bg-white rounded-none border-x-0 border-t-0 border-b border-white/20 shadow-none">
+        <CardHeader className="p-3 flex flex-row items-center justify-between">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={closePanel}
+            className="text-sage-700 hover:text-sage-700 hover:bg-sage-100"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+          <h2 className="text-lg font-semibold text-sage-700">Modify Recipe</h2>
+          <div className="w-8"></div>
+        </CardHeader>
+      </Card>
       
       <div className="p-4 flex-1 overflow-y-auto">
         <p className="text-black mb-6">Customize this recipe with AI assistance</p>

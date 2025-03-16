@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
@@ -9,6 +8,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { ChevronLeft, ChevronRight, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import UnifiedModificationPanel from "./UnifiedModificationPanel";
+import { Card, CardHeader } from "@/components/ui/card";
 
 interface DesktopLayoutProps {
   recipe: Recipe | null;
@@ -86,7 +86,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             onExpand={() => {
               setLeftPanelCollapsed(false);
             }}
-            className={`p-4 relative transition-all duration-300 ${
+            className={`relative transition-all duration-300 ${
               leftPanelCollapsed 
                 ? "bg-sage-400 text-white" 
                 : "bg-sage-400 text-white shadow-lg"
@@ -109,45 +109,50 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               </div>
             ) : (
               <div className="overflow-y-auto h-full">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-black">Modify Recipe</h2>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={handleToggleModifyPanel}
-                    className="self-start text-white hover:text-white hover:bg-sage-500/60"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
+                <Card className="rounded-none border-x-0 border-t-0 border-b border-white/20 shadow-none">
+                  <CardHeader className="p-3 flex flex-row items-center justify-between">
+                    <h2 className="text-lg font-semibold text-sage-700">Modify Recipe</h2>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={handleToggleModifyPanel}
+                      className="text-sage-700 hover:text-sage-700 hover:bg-sage-100"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  </CardHeader>
+                </Card>
+                
+                <div className="p-4">
+                  <p className="text-black mb-6">Customize this recipe with AI assistance</p>
+                  
+                  <UnifiedModificationPanel
+                    recipe={recipe}
+                    selectedIngredients={selectedIngredients}
+                    onRemoveIngredientSelection={removeIngredientSelection}
+                    customInstructions={customInstructions}
+                    onCustomInstructionsChange={setCustomInstructions}
+                    onStartModification={startUnifiedModification}
+                  />
+                  
+                  {isModified && (
+                    <div className="mt-6 flex flex-col gap-2">
+                      <Button 
+                        variant="outline"
+                        onClick={resetToOriginal}
+                        className="w-full border-white/30 text-white hover:bg-sage-500 hover:text-white"
+                      >
+                        Reset to Original
+                      </Button>
+                      <Button 
+                        onClick={handleAcceptModification}
+                        className="w-full bg-white text-sage-700 hover:bg-white/90 font-medium"
+                      >
+                        Save as New Version
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                <p className="text-black mb-6">Customize this recipe with AI assistance</p>
-                
-                <UnifiedModificationPanel
-                  recipe={recipe}
-                  selectedIngredients={selectedIngredients}
-                  onRemoveIngredientSelection={removeIngredientSelection}
-                  customInstructions={customInstructions}
-                  onCustomInstructionsChange={setCustomInstructions}
-                  onStartModification={startUnifiedModification}
-                />
-                
-                {isModified && (
-                  <div className="mt-6 flex flex-col gap-2">
-                    <Button 
-                      variant="outline"
-                      onClick={resetToOriginal}
-                      className="w-full border-white/30 text-white hover:bg-sage-500 hover:text-white"
-                    >
-                      Reset to Original
-                    </Button>
-                    <Button 
-                      onClick={handleAcceptModification}
-                      className="w-full bg-white text-sage-700 hover:bg-white/90 font-medium"
-                    >
-                      Save as New Version
-                    </Button>
-                  </div>
-                )}
               </div>
             )}
           </ResizablePanel>
