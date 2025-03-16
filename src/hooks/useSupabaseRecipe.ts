@@ -44,7 +44,7 @@ export const useSupabaseRecipe = (recipeId: string) => {
         }
         
         // Fetch ingredients with related data, ensuring we get food details
-        const { data: ingredientsWithFood, error: ingredientsError } = await supabase
+        const { data: ingredientsData, error: ingredientsError } = await supabase
           .from('ingredients')
           .select(`
             id, 
@@ -63,7 +63,7 @@ export const useSupabaseRecipe = (recipeId: string) => {
         }
         
         // Transform ingredients to ensure proper structure for our Recipe type
-        const ingredients = ingredientsWithFood?.map(ingredient => {
+        const ingredients = ingredientsData?.map(ingredient => {
           // Transform the joined foods data to be in the expected "food" property
           // Foods and units are objects from the join, not arrays
           return {
@@ -73,8 +73,8 @@ export const useSupabaseRecipe = (recipeId: string) => {
             unit_id: ingredient.unit_id,
             amount: ingredient.amount,
             order_index: ingredient.order_index,
-            food: ingredient.foods || null,
-            unit: ingredient.units || null
+            food: ingredient.foods, // This is an object, not an array
+            unit: ingredient.units  // This is an object, not an array
           };
         }) || [];
         
@@ -82,9 +82,9 @@ export const useSupabaseRecipe = (recipeId: string) => {
         console.log("Processed ingredients:", ingredients.map(i => ({
           id: i.id,
           food: i.food,
-          food_name: i.food?.name || 'Unknown food',
+          food_name: i.food?.name || 'Unknown food', // food is an object with a name property
           unit: i.unit,
-          unit_abbr: i.unit?.abbreviation || '',
+          unit_abbr: i.unit?.abbreviation || '', // unit is an object with an abbreviation property
           amount: i.amount
         })));
         
@@ -111,9 +111,9 @@ export const useSupabaseRecipe = (recipeId: string) => {
           title: completeRecipe.title,
           ingredients: completeRecipe.ingredients?.map(i => ({
             id: i.id,
-            food_name: i.food?.name || 'Unknown',
+            food_name: i.food?.name || 'Unknown', // food is an object with a name property
             amount: i.amount,
-            unit: i.unit?.abbreviation || ''
+            unit: i.unit?.abbreviation || '' // unit is an object with an abbreviation property
           }))
         });
         
