@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Recipe } from "@/types";
 import { RecipeVersion } from "@/context/recipe/types";
@@ -101,10 +100,10 @@ async function constructVersionObject(dbVersion: any, recipeData: any): Promise<
     // Create recipe object for this version - using original recipe data as the base
     const versionRecipe: Recipe = {
       ...recipeData,
-      ingredients: ingredients?.map(ing => {
-        // Handle food and unit as objects with proper type checking
-        const food = typeof ing.food === 'object' ? ing.food : null;
-        const unit = typeof ing.unit === 'object' ? ing.unit : null;
+      ingredients: ingredients ? ingredients.map(ing => {
+        // Fix: Handle food and unit as individual objects, not arrays
+        const food = ing.food || null;
+        const unit = ing.unit || null;
         
         return {
           id: ing.id,
@@ -114,7 +113,7 @@ async function constructVersionObject(dbVersion: any, recipeData: any): Promise<
           food: food || undefined,
           unit: unit || undefined
         };
-      }) || [],
+      }) : [],
       steps: steps || []
     };
     

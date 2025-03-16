@@ -10,7 +10,7 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
   const [isLoadingVersions, setIsLoadingVersions] = useState(false);
   const [hasInitializedVersions, setHasInitializedVersions] = useState(false);
 
-  const fetchVersionsFromDb = async (recipeId: string) => {
+  const fetchVersionsFromDb = async (recipeId: string): Promise<RecipeVersion[]> => {
     setIsLoadingVersions(true);
     try {
       console.log("Fetching versions from DB for recipe:", recipeId);
@@ -34,7 +34,7 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
     }
   };
 
-  const addRecipeVersion = async (name: string, recipe: Recipe) => {
+  const addRecipeVersion = async (name: string, recipe: Recipe): Promise<RecipeVersion> => {
     try {
       console.log("Creating new recipe version:", name);
       const userId = recipe.user_id;

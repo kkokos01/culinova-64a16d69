@@ -1,6 +1,13 @@
 
-import { useToast as useToastShadcn, toast as toastShadcn } from "@/components/ui/sonner";
+// Import directly from sonner since @/components/ui/sonner doesn't export useToast and toast
+import { toast } from "sonner";
+import { useToast as useToastHook } from "@/components/ui/use-toast";
 
-// Re-export the hook and toast function so that it can be consistently imported
-export const useToast = useToastShadcn;
-export const toast = toastShadcn;
+// Create our own hook that matches the expected signature
+export const useToast = () => {
+  const { toast: toastHook } = useToastHook();
+  return { toast: toastHook };
+};
+
+// Re-export toast directly from sonner
+export { toast };

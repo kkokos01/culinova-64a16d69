@@ -28,8 +28,9 @@ export interface RecipeContextType {
   recipeVersions: RecipeVersion[];
   activeVersionId: string;
   isLoadingVersions: boolean;
-  fetchVersionsFromDb: (recipeId: string) => Promise<void>;
-  addRecipeVersion: (name: string, recipe: Recipe) => Promise<void>;
+  // Fix: Change return type to match implementation in useRecipeVersions
+  fetchVersionsFromDb: (recipeId: string) => Promise<RecipeVersion[]>;
+  addRecipeVersion: (name: string, recipe: Recipe) => Promise<RecipeVersion>;
   setActiveVersion: (versionId: string) => Promise<void>;
   renameVersion: (versionId: string, newName: string) => Promise<void>;
   deleteVersion: (versionId: string) => Promise<void>;

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useMediaQuery } from "@/hooks/use-mobile";
@@ -59,7 +58,7 @@ const RecipeDetailContainer = () => {
           const versions = await fetchVersionsFromDb(recipeData.id);
           
           // If no versions exist yet, create the Original version
-          if (!versions || versions.length === 0) {
+          if (versions.length === 0) {
             console.log("No versions found, creating Original version for recipe", recipeData.id);
             await addRecipeVersion("Original", recipeData);
           } else {
