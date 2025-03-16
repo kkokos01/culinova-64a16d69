@@ -71,15 +71,21 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
           // Create recipe object for this version - using original recipe data as the base
           const versionRecipe: Recipe = {
             ...recipeData,
-            ingredients: ingredients?.map(ing => ({
-              id: ing.id,
-              // Fix: The food and unit are individual objects, not arrays
-              food_id: ing.food ? ing.food.id : '',
-              unit_id: ing.unit ? ing.unit.id : '',
-              amount: ing.amount,
-              food: ing.food || undefined,
-              unit: ing.unit || undefined
-            })) || [],
+            ingredients: ingredients?.map(ing => {
+              // Handle food and unit as objects with proper type checking
+              // The actual structure is { food: {...}, unit: {...} } not arrays
+              const food = ing.food as unknown as { id: string, name: string, description: string, category_id: string, properties: any } | null;
+              const unit = ing.unit as unknown as { id: string, name: string, abbreviation: string, plural_name: string } | null;
+              
+              return {
+                id: ing.id,
+                food_id: food?.id || '',
+                unit_id: unit?.id || '',
+                amount: ing.amount,
+                food: food || undefined,
+                unit: unit || undefined
+              };
+            }) || [],
             steps: steps || []
           };
           
@@ -162,9 +168,9 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
       if (recipe.ingredients && recipe.ingredients.length > 0) {
         const versionIngredients = recipe.ingredients.map((ing, index) => ({
           version_id: newDbVersion.id,
-          // Fix: Properly handle potentially undefined food and unit objects
-          food_id: ing.food?.id || ing.food_id,
-          unit_id: ing.unit?.id || ing.unit_id,
+          // Handle potentially undefined food and unit objects safely
+          food_id: ing.food?.id || ing.food_id || '',
+          unit_id: ing.unit?.id || ing.unit_id || '',
           amount: ing.amount,
           order_index: index
         }));
