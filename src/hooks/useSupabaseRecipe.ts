@@ -73,8 +73,8 @@ export const useSupabaseRecipe = (recipeId: string) => {
             unit_id: ingredient.unit_id,
             amount: ingredient.amount,
             order_index: ingredient.order_index,
-            food: ingredient.foods || null, // Ensure this is an object, not an array
-            unit: ingredient.units || null  // Ensure this is an object, not an array
+            food: ingredient.foods || null, // Here foods is an object, not an array
+            unit: ingredient.units || null  // Here units is an object, not an array
           };
         }) || [];
         
