@@ -30,7 +30,7 @@ const RecipeDetailContainer = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="pt-12 md:pt-16">
+      <div className="pt-10 md:pt-12"> {/* Reduced padding from pt-12 md:pt-16 */}
         {isMobile ? (
           <MobileLayout 
             recipe={recipeData}

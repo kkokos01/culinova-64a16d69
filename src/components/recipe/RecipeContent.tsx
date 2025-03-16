@@ -67,10 +67,12 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
   return (
     <div className="max-w-4xl mx-auto">
       {/* Ingredients */}
-      <div className="mb-8">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
+      <div className="mb-6"> {/* Reduced mb-8 to mb-6 */}
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3"> {/* Reduced text size and spacing */}
+          Ingredients
+        </h2>
         {ingredients.length > 0 ? (
-          <div className="grid sm:grid-cols-2 gap-2">
+          <div className="grid sm:grid-cols-2 gap-2"> {/* Reduced gap */}
             {ingredients.map((ingredient) => {
               if (!ingredient || !ingredient.id) return null;
               
@@ -80,50 +82,50 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
               return (
                 <div 
                   key={ingredient.id} 
-                  className={`flex items-center p-2.5 rounded-md border transition-colors ${styles.container} cursor-pointer h-full`}
+                  className={`flex items-center p-2 rounded-md border transition-colors ${styles.container} cursor-pointer h-full`} {/* Reduced padding */}
                   onClick={(e) => handleIngredientClick(ingredient, e)}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className={`flex items-baseline gap-x-2 ${styles.text}`}>
+                    <div className={`flex items-baseline gap-x-1.5 text-sm ${styles.text}`}> {/* Added text-sm and reduced gap */}
                       <span className="font-medium whitespace-nowrap">
                         {ingredient.amount} {ingredient.unit?.abbreviation || ''}
                       </span>
                       <span className="truncate">{foodName}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 ml-2 action-buttons shrink-0">
+                  <div className="flex items-center gap-0.5 ml-1.5 action-buttons shrink-0"> {/* Reduced gap and margin */}
                     <button
                       onClick={() => onSelectIngredient(ingredient, "increase")}
-                      className={`p-1 rounded-full ${
+                      className={`p-0.5 rounded-full ${
                         selectedIngredients.get(ingredient.id)?.action === "increase" 
                           ? "bg-green-100 text-green-700" 
                           : "hover:bg-gray-200 text-green-600"
-                      }`}
+                      }`} {/* Reduced padding */}
                       aria-label="Increase ingredient"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-3.5 w-3.5" /> {/* Reduced icon size */}
                     </button>
                     <button
                       onClick={() => onSelectIngredient(ingredient, "decrease")}
-                      className={`p-1 rounded-full ${
+                      className={`p-0.5 rounded-full ${
                         selectedIngredients.get(ingredient.id)?.action === "decrease" 
                           ? "bg-amber-100 text-amber-700" 
                           : "hover:bg-gray-200 text-amber-600"
                       }`}
                       aria-label="Decrease ingredient"
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => onSelectIngredient(ingredient, "remove")}
-                      className={`p-1 rounded-full ${
+                      className={`p-0.5 rounded-full ${
                         selectedIngredients.get(ingredient.id)?.action === "remove" 
                           ? "bg-red-100 text-red-700" 
                           : "hover:bg-gray-200 text-red-600"
                       }`}
                       aria-label="Remove ingredient"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
@@ -136,21 +138,23 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
       </div>
       
       {/* Steps */}
-      <div className="mb-8">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Instructions</h2>
+      <div className="mb-6"> {/* Reduced mb-8 to mb-6 */}
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3"> {/* Reduced text size and spacing */}
+          Instructions
+        </h2>
         {steps.length > 0 ? (
-          <ol className="space-y-6">
+          <ol className="space-y-4"> {/* Reduced space-y-6 to space-y-4 */}
             {steps.map((step) => (
               <li key={step.id} className="flex">
-                <div className="flex-shrink-0 mr-4">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                <div className="flex-shrink-0 mr-3"> {/* Reduced mr-4 to mr-3 */}
+                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold"> {/* Reduced size and font */}
                     {step.order_number}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-700 text-sm sm:text-base">{step.instruction}</p>
+                  <p className="text-gray-700 text-sm">{step.instruction}</p> {/* Made text consistently sm */}
                   {step.duration_minutes && (
-                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-0.5"> {/* Reduced size and spacing */}
                       Approximately {step.duration_minutes} minutes
                     </p>
                   )}
