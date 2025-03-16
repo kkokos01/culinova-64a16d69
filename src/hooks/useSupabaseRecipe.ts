@@ -17,6 +17,18 @@ export const useSupabaseRecipe = (recipeId: string) => {
         
         // Fetch recipe data from Supabase
         console.log("Fetching recipe from Supabase:", recipeId);
+        
+        // First, let's examine the raw response to understand the data structure
+        const { data: rawData, error: rawError } = await supabase
+          .rpc('get_recipe_with_details', { recipe_id_param: recipeId });
+        
+        if (rawError) {
+          throw new Error(`Failed to fetch recipe raw data: ${rawError.message}`);
+        }
+        
+        console.log("Raw recipe data from Supabase:", rawData);
+        
+        // Execute the actual query we need
         const { data, error } = await supabase
           .rpc('get_recipe_with_details', { recipe_id_param: recipeId })
           .select();
@@ -32,10 +44,68 @@ export const useSupabaseRecipe = (recipeId: string) => {
           return;
         }
         
+        // Log more details about the returned data
+        console.log(`Found ${data.length} rows for recipe ${recipeId}`);
+        console.log("First row sample:", data[0]);
+        
+        // Check if we have ingredient data
+        const hasIngredientData = data.some(row => row.ingredient_id !== null);
+        console.log("Recipe has ingredient data:", hasIngredientData);
+        
+        if (hasIngredientData) {
+          const ingredients = data
+            .filter(row => row.ingredient_id)
+            .map(row => ({
+              id: row.ingredient_id,
+              food_id: row.ingredient_food_id,
+              unit_id: row.ingredient_unit_id,
+              amount: row.ingredient_amount,
+              food: {
+                id: row.ingredient_food_id,
+                name: row.food_name,
+                description: row.food_description,
+                category_id: row.food_category_id,
+                properties: row.food_properties,
+              },
+              unit: {
+                id: row.ingredient_unit_id,
+                name: row.unit_name,
+                abbreviation: row.unit_abbreviation,
+                plural_name: row.unit_plural_name,
+              }
+            }));
+          
+          console.log("Extracted ingredient data:", ingredients);
+          
+          // Check each ingredient for missing fields
+          ingredients.forEach((ing, idx) => {
+            if (!ing.food || !ing.food.name) {
+              console.warn(`Ingredient ${idx} missing food name:`, ing);
+            }
+            if (!ing.unit || !ing.unit.abbreviation) {
+              console.warn(`Ingredient ${idx} missing unit info:`, ing);
+            }
+          });
+        }
+        
         // Process the raw data into our Recipe format
         const processedRecipe = processRecipeData(data);
         console.log("Processed recipe:", processedRecipe);
-        console.log("Processed ingredients:", processedRecipe.ingredients);
+        
+        // More detailed logging of ingredients
+        if (processedRecipe.ingredients && processedRecipe.ingredients.length > 0) {
+          console.log(`Processed ${processedRecipe.ingredients.length} ingredients:`);
+          processedRecipe.ingredients.forEach((ing, idx) => {
+            console.log(`Ingredient ${idx+1}:`, {
+              id: ing.id,
+              name: ing.food?.name,
+              amount: ing.amount,
+              unit: ing.unit?.abbreviation
+            });
+          });
+        } else {
+          console.warn("No ingredients processed for recipe");
+        }
         
         setRecipe(processedRecipe);
         setLoading(false);
@@ -90,6 +160,7 @@ export const useSupabaseRecipe = (recipeId: string) => {
       if (row.ingredient_id) {
         // Check if this is a valid ingredient with food data
         if (row.ingredient_id && row.ingredient_food_id && row.food_name) {
+          console.log(`Processing ingredient: ${row.food_name}, ${row.ingredient_amount} ${row.unit_abbreviation}`);
           ingredientsMap.set(row.ingredient_id, {
             id: row.ingredient_id,
             food_id: row.ingredient_food_id,
@@ -109,12 +180,18 @@ export const useSupabaseRecipe = (recipeId: string) => {
               plural_name: row.unit_plural_name,
             }
           });
+        } else {
+          console.warn("Found incomplete ingredient row:", {
+            id: row.ingredient_id,
+            food_id: row.ingredient_food_id,
+            food_name: row.food_name
+          });
         }
       }
     });
     
     recipeBase.ingredients = Array.from(ingredientsMap.values());
-    console.log("Processed ingredients in detail:", recipeBase.ingredients);
+    console.log("Final processed ingredients:", recipeBase.ingredients);
     
     // Process steps (deduplicate by id)
     const stepsMap = new Map();
