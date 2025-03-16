@@ -52,11 +52,19 @@ export const useSupabaseRecipes = () => {
       
       // Filter out recipes that don't have the necessary details
       const validRecipes = data ? data.filter(recipe => 
-        recipe.id && recipe.title
+        recipe && recipe.id && recipe.title
       ) : [];
 
       console.log("Filtered valid recipes:", validRecipes);
-      setRecipes(validRecipes as Recipe[]);
+      
+      // Make sure each recipe has at least empty arrays for ingredients and steps
+      const processedRecipes = validRecipes.map(recipe => ({
+        ...recipe,
+        ingredients: recipe.ingredients || [],
+        steps: recipe.steps || []
+      }));
+      
+      setRecipes(processedRecipes as Recipe[]);
       
       if (validRecipes.length === 0) {
         console.log("No recipes found. Consider adding some test recipes to the database.");

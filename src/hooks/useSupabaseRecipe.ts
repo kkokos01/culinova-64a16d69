@@ -84,35 +84,41 @@ export const useSupabaseRecipe = (recipeId: string) => {
     
     // Process ingredients (deduplicate by id)
     const ingredientsMap = new Map();
+    
     data.forEach(row => {
-      if (row.ingredient_id && !ingredientsMap.has(row.ingredient_id)) {
-        ingredientsMap.set(row.ingredient_id, {
-          id: row.ingredient_id,
-          food_id: row.ingredient_food_id,
-          unit_id: row.ingredient_unit_id,
-          amount: row.ingredient_amount,
-          food: {
-            id: row.ingredient_food_id,
-            name: row.food_name,
-            description: row.food_description,
-            category_id: row.food_category_id,
-            properties: row.food_properties,
-          },
-          unit: {
-            id: row.ingredient_unit_id,
-            name: row.unit_name,
-            abbreviation: row.unit_abbreviation,
-            plural_name: row.unit_plural_name,
-          }
-        });
+      if (row.ingredient_id) {
+        // Check if this is a valid ingredient with food data
+        if (row.ingredient_id && row.ingredient_food_id && row.food_name) {
+          ingredientsMap.set(row.ingredient_id, {
+            id: row.ingredient_id,
+            food_id: row.ingredient_food_id,
+            unit_id: row.ingredient_unit_id,
+            amount: row.ingredient_amount,
+            food: {
+              id: row.ingredient_food_id,
+              name: row.food_name,
+              description: row.food_description,
+              category_id: row.food_category_id,
+              properties: row.food_properties,
+            },
+            unit: {
+              id: row.ingredient_unit_id,
+              name: row.unit_name,
+              abbreviation: row.unit_abbreviation,
+              plural_name: row.unit_plural_name,
+            }
+          });
+        }
       }
     });
+    
     recipeBase.ingredients = Array.from(ingredientsMap.values());
+    console.log("Processed ingredients:", recipeBase.ingredients);
     
     // Process steps (deduplicate by id)
     const stepsMap = new Map();
     data.forEach(row => {
-      if (row.step_id && !stepsMap.has(row.step_id)) {
+      if (row.step_id && row.step_instruction) {
         stepsMap.set(row.step_id, {
           id: row.step_id,
           recipe_id: recipeBase.id,
