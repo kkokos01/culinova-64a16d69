@@ -16,10 +16,10 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
   onSelectIngredient 
 }) => {
   useEffect(() => {
-    // Debug log on component mount
+    // Debug log for recipe ingredients
     console.log("RecipeContent rendering with ingredients:", recipe.ingredients);
     
-    // Additional debugging to check food property on each ingredient
+    // Validate ingredient data structure
     if (recipe.ingredients) {
       recipe.ingredients.forEach((ingredient, index) => {
         console.log(`Ingredient ${index + 1}:`, {
@@ -28,7 +28,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
           food: ingredient.food,
           foodName: ingredient.food?.name || 'No food name',
           amount: ingredient.amount,
-          unit: ingredient.unit?.abbreviation
+          unit: ingredient.unit?.abbreviation || 'No unit'
         });
       });
     }

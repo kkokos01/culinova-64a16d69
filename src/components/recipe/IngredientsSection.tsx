@@ -15,7 +15,7 @@ const IngredientsSection: React.FC<IngredientsSectionProps> = ({
   selectedIngredients,
   onSelectIngredient
 }) => {
-  // Are we using test data?
+  // Check for test data
   const hasTestData = ingredients.some(i => 
     i?.food?.name?.includes('Test Food') || 
     i?.food?.name?.includes('Parent Food')
@@ -24,10 +24,20 @@ const IngredientsSection: React.FC<IngredientsSectionProps> = ({
   // Check if we have ingredients without food details
   const hasIncompleteData = ingredients.some(i => !i.food || !i.food.name);
 
+  // Count valid ingredients (with both food and unit information)
+  const validIngredientCount = ingredients.filter(i => 
+    i?.food?.name && i?.unit?.abbreviation
+  ).length;
+
   return (
     <div className="mb-6">
       <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
         Ingredients
+        {validIngredientCount > 0 && 
+          <span className="text-sm font-normal ml-2 text-gray-500">
+            ({validIngredientCount})
+          </span>
+        }
       </h2>
       
       {hasTestData && (
@@ -43,7 +53,7 @@ const IngredientsSection: React.FC<IngredientsSectionProps> = ({
         <div className="flex items-center mb-3 p-2 bg-red-50 border border-red-200 rounded-md">
           <AlertTriangle className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
           <p className="text-red-700 text-sm">
-            Some ingredients are missing food information. This may indicate a database connectivity issue.
+            Some ingredients are missing food information. This may indicate a database connectivity issue or improper food references.
           </p>
         </div>
       )}

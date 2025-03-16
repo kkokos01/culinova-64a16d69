@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { RecipeProvider } from "@/context/recipe"; 
 import RecipeDetailContainer from "@/components/recipe/RecipeDetailContainer";
@@ -79,8 +78,7 @@ const RecipeDetail = () => {
           foodData
         });
         
-        // Fix: Access first ingredient's food and unit correctly
-        // Handle the case where the ingredients array might be empty
+        // Access first ingredient's food and unit correctly
         let firstIngredientInfo = "None";
         if (ingredientsData.length > 0) {
           const firstIng = ingredientsData[0];

@@ -25,9 +25,6 @@ export const useSupabaseRecipe = (recipeId: string) => {
         // Fetch recipe data from Supabase
         console.log("Fetching recipe from Supabase:", recipeId);
         
-        // Approach 1: Direct query with joins
-        console.log("Using direct query approach with explicit joins");
-          
         // Fetch basic recipe data
         const { data: recipeData, error: recipeError } = await supabase
           .from('recipes')
@@ -47,7 +44,6 @@ export const useSupabaseRecipe = (recipeId: string) => {
         }
         
         // Fetch ingredients with related data, ensuring we get food details
-        // This query first gets ingredients for the recipe, then joins with foods and units tables
         const { data: ingredientsWithFood, error: ingredientsError } = await supabase
           .from('ingredients')
           .select(`
@@ -68,6 +64,8 @@ export const useSupabaseRecipe = (recipeId: string) => {
         
         // Transform ingredients to ensure proper structure for our Recipe type
         const ingredients = ingredientsWithFood?.map(ingredient => {
+          // Transform the joined foods data to be in the expected "food" property
+          // Important: foods and units from the join are objects, not arrays
           return {
             id: ingredient.id,
             recipe_id: ingredient.recipe_id,
@@ -75,10 +73,8 @@ export const useSupabaseRecipe = (recipeId: string) => {
             unit_id: ingredient.unit_id,
             amount: ingredient.amount,
             order_index: ingredient.order_index,
-            // Transform the joined foods data to be in the expected "food" property
-            food: ingredient.foods,
-            // Transform the joined units data to be in the expected "unit" property
-            unit: ingredient.units
+            food: ingredient.foods || null, // Ensure this is an object, not an array
+            unit: ingredient.units || null  // Ensure this is an object, not an array
           };
         }) || [];
         
@@ -86,7 +82,9 @@ export const useSupabaseRecipe = (recipeId: string) => {
         console.log("Processed ingredients:", ingredients.map(i => ({
           id: i.id,
           food: i.food,
+          food_name: i.food?.name || 'Unknown food',
           unit: i.unit,
+          unit_abbr: i.unit?.abbreviation || '',
           amount: i.amount
         })));
         
@@ -113,9 +111,9 @@ export const useSupabaseRecipe = (recipeId: string) => {
           title: completeRecipe.title,
           ingredients: completeRecipe.ingredients?.map(i => ({
             id: i.id,
-            food_name: i.food?.name,
+            food_name: i.food?.name || 'Unknown',
             amount: i.amount,
-            unit: i.unit?.abbreviation
+            unit: i.unit?.abbreviation || ''
           }))
         });
         
