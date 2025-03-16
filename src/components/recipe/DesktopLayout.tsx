@@ -84,7 +84,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-130px)] rounded-lg border">
           {/* Left Panel - AI Modification */}
           <ResizablePanel 
-            defaultSize={leftPanelSize}
+            defaultSize={4}
             size={leftPanelSize}
             minSize={leftPanelCollapsed ? 4 : 25} 
             maxSize={leftPanelCollapsed ? 4 : 40}
@@ -166,6 +166,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                 recipe={recipe}
                 isModified={isModified}
                 onModifyWithAI={handleToggleModifyPanel}
+                showModifyButton={leftPanelCollapsed} // Only show the button when the panel is collapsed
               />
 
               <RecipeVersionTabs />

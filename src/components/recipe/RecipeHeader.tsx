@@ -8,9 +8,15 @@ interface RecipeHeaderProps {
   recipe: Recipe;
   isModified: boolean;
   onModifyWithAI: () => void;
+  showModifyButton?: boolean; // New prop to control button visibility
 }
 
-const RecipeHeader: React.FC<RecipeHeaderProps> = ({ recipe, isModified, onModifyWithAI }) => {
+const RecipeHeader: React.FC<RecipeHeaderProps> = ({ 
+  recipe, 
+  isModified, 
+  onModifyWithAI,
+  showModifyButton = true // Default to showing the button
+}) => {
   return (
     <div className="mb-8">
       <div className="flex flex-col lg:flex-row gap-6">
@@ -52,15 +58,17 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({ recipe, isModified, onModif
               alt={recipe.title} 
               className="w-full h-auto object-cover"
             />
-            <div className="absolute bottom-4 right-4">
-              <Button 
-                onClick={onModifyWithAI} 
-                className="bg-primary/90 hover:bg-primary shadow-md backdrop-blur-sm"
-              >
-                <Wand2 className="mr-2 h-4 w-4" />
-                Modify with AI
-              </Button>
-            </div>
+            {showModifyButton && (
+              <div className="absolute bottom-4 right-4">
+                <Button 
+                  onClick={onModifyWithAI} 
+                  className="bg-primary/90 hover:bg-primary shadow-md backdrop-blur-sm"
+                >
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Modify with AI
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
