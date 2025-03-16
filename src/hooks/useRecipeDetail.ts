@@ -34,7 +34,7 @@ export const useRecipeDetail = () => {
   
   // Redirect if recipe not found (after loading is complete)
   useEffect(() => {
-    if (!isLoading && !recipeData) {
+    if (!isLoading && !recipeData && !error) {
       toast({
         title: "Recipe not found",
         description: "The recipe you're looking for couldn't be found. Redirecting to recipes page.",
@@ -48,7 +48,7 @@ export const useRecipeDetail = () => {
       
       return () => clearTimeout(timeout);
     }
-  }, [recipeData, isLoading, navigate, toast]);
+  }, [recipeData, isLoading, navigate, toast, error]);
   
   // Set recipe in context when data is loaded
   useEffect(() => {
@@ -92,17 +92,6 @@ export const useRecipeDetail = () => {
     
     initializeVersions();
   }, [recipeData, hasInitializedVersions, addRecipeVersion, setHasInitializedVersions, fetchVersionsFromDb, toast]);
-  
-  // Handle errors
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Error loading recipe",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  }, [error, toast]);
 
   // Function to handle ingredient selection
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
@@ -163,6 +152,7 @@ export const useRecipeDetail = () => {
   return {
     recipeData,
     isLoading,
+    error,
     selectedIngredient,
     isModified,
     resetToOriginal,
