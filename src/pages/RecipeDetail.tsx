@@ -29,7 +29,8 @@ const RecipeDetailContainer = () => {
     isModified,
     setIsModified,
     resetToOriginal,
-    selectedIngredients
+    selectedIngredients,
+    addRecipeVersion
   } = useRecipe();
   
   // Use our mock recipe hook instead of react-query
@@ -40,8 +41,11 @@ const RecipeDetailContainer = () => {
     if (recipeData) {
       setRecipe(recipeData);
       setOriginalRecipe(recipeData);
+      
+      // Initialize the original version
+      addRecipeVersion("Original", recipeData);
     }
-  }, [recipeData, setRecipe, setOriginalRecipe]);
+  }, [recipeData, setRecipe, setOriginalRecipe, addRecipeVersion]);
   
   // Handle errors
   useEffect(() => {
@@ -83,7 +87,6 @@ const RecipeDetailContainer = () => {
       setIsModified(true);
       if (isMobile) {
         setLeftPanelOpen(false);
-        setRightPanelOpen(true);
       }
     }, 1500);
   };
@@ -91,7 +94,7 @@ const RecipeDetailContainer = () => {
   const handleAcceptChanges = () => {
     toast({
       title: "Changes Accepted",
-      description: "The recipe has been updated with AI modifications.",
+      description: "The recipe version has been saved.",
     });
     setIsModified(false);
   };

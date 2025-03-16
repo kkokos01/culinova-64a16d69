@@ -3,8 +3,8 @@ import React from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
 import RecipeContent from "./RecipeContent";
-import ComparisonPanel from "./ComparisonPanel";
 import AIModificationPanel from "./AIModificationPanel";
+import RecipeVersionTabs from "./RecipeVersionTabs";
 import { Button } from "@/components/ui/button";
 import { X, ChevronLeft } from "lucide-react";
 import { useRecipe } from "@/context/RecipeContext";
@@ -39,9 +39,9 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   setSelectedIngredient,
 }) => {
   const { 
-    originalRecipe, 
     selectedIngredients, 
     customInstructions,
+    addRecipeVersion,
     selectIngredientForModification, 
     removeIngredientSelection,
     setCustomInstructions 
@@ -50,6 +50,16 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove") => {
     setSelectedIngredient(ingredient);
     selectIngredientForModification(ingredient, action);
+  };
+
+  // Handle AI modification acceptance
+  const handleAcceptModification = () => {
+    if (recipe) {
+      // Create a new version
+      addRecipeVersion("Modified", recipe);
+      handleAcceptChanges();
+      setLeftPanelOpen(false);
+    }
   };
 
   // Render the slide-out left panel (AI Modification)
@@ -81,37 +91,24 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
             customInstructions={customInstructions}
             onCustomInstructionsChange={setCustomInstructions}
           />
-        </div>
-      </div>
-    );
-  };
-  
-  // Render the slide-out right panel (Comparison)
-  const renderRightPanel = () => {
-    if (!rightPanelOpen) return null;
-    
-    return (
-      <div className="fixed inset-0 bg-white z-50 overflow-auto">
-        <div className="sticky top-0 bg-white border-b z-10 px-4 py-3 flex items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setRightPanelOpen(false)}
-            className="text-gray-500 mr-2"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <h2 className="text-lg font-semibold">Recipe Details</h2>
-        </div>
-        <div className="p-4">
-          <ComparisonPanel
-            recipe={recipe}
-            originalRecipe={originalRecipe}
-            selectedIngredient={selectedIngredient}
-            isModified={isModified}
-            onResetToOriginal={resetToOriginal}
-            onAcceptChanges={handleAcceptChanges}
-          />
+          
+          {isModified && (
+            <div className="mt-6 flex flex-col gap-2">
+              <Button 
+                variant="outline"
+                onClick={resetToOriginal}
+                className="w-full"
+              >
+                Reset to Original
+              </Button>
+              <Button 
+                onClick={handleAcceptModification}
+                className="w-full"
+              >
+                Save as New Version
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -119,7 +116,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 
   return (
     <>
-      <div className="container mx-auto py-3 px-4">
+      <div className="container mx-auto py-3 px-4 pb-20">
         {recipe && (
           <>
             <RecipeHeader
@@ -127,7 +124,8 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
               isModified={isModified}
               onModifyWithAI={handleModifyWithAI}
             />
-            <div className="mt-6">
+            <RecipeVersionTabs />
+            <div className="mt-4">
               <RecipeContent 
                 recipe={recipe} 
                 selectedIngredients={selectedIngredients}
@@ -139,22 +137,14 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       </div>
       
       {renderLeftPanel()}
-      {renderRightPanel()}
       
-      {/* Fixed bottom buttons */}
-      <div className="fixed bottom-0 inset-x-0 p-3 flex gap-3 bg-white border-t">
+      {/* Fixed bottom button */}
+      <div className="fixed bottom-0 inset-x-0 p-3 bg-white border-t">
         <Button 
-          variant="outline" 
-          className="flex-1"
+          className="w-full"
           onClick={() => setLeftPanelOpen(true)}
         >
-          Modify
-        </Button>
-        <Button 
-          className="flex-1"
-          onClick={() => setRightPanelOpen(true)}
-        >
-          Details
+          Modify Recipe
         </Button>
       </div>
     </>

@@ -1,10 +1,10 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
 import RecipeContent from "./RecipeContent";
-import ComparisonPanel from "./ComparisonPanel";
 import AIModificationPanel from "./AIModificationPanel";
+import RecipeVersionTabs from "./RecipeVersionTabs";
 import { useRecipe } from "@/context/RecipeContext";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -35,18 +35,35 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     originalRecipe, 
     selectedIngredients, 
     customInstructions,
+    recipeVersions,
     selectIngredientForModification, 
     removeIngredientSelection,
-    setCustomInstructions
+    setCustomInstructions,
+    addRecipeVersion
   } = useRecipe();
   
   // State for panel visibility
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
-  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
+
+  // Effect to initialize the original recipe version when it's first loaded
+  useEffect(() => {
+    if (originalRecipe && recipeVersions.length === 0) {
+      addRecipeVersion("Original", originalRecipe);
+    }
+  }, [originalRecipe, recipeVersions.length, addRecipeVersion]);
 
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove") => {
     setSelectedIngredient(ingredient);
     selectIngredientForModification(ingredient, action);
+  };
+
+  // Handle AI modification acceptance
+  const handleAcceptModification = () => {
+    if (recipe) {
+      // Create a new version
+      addRecipeVersion("Modified", recipe);
+      handleAcceptChanges();
+    }
   };
 
   return (
@@ -105,68 +122,38 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                     customInstructions={customInstructions}
                     onCustomInstructionsChange={setCustomInstructions}
                   />
+                  
+                  {isModified && (
+                    <div className="mt-6 flex flex-col gap-2">
+                      <Button 
+                        variant="outline"
+                        onClick={resetToOriginal}
+                        className="w-full"
+                      >
+                        Reset to Original
+                      </Button>
+                      <Button 
+                        onClick={handleAcceptModification}
+                        className="w-full"
+                      >
+                        Save as New Version
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </ResizablePanel>
 
             <ResizableHandle withHandle />
 
-            {/* Main Content - Recipe */}
-            <ResizablePanel defaultSize={60} className="bg-white p-4 overflow-y-auto">
+            {/* Main Content - Recipe with Tabs */}
+            <ResizablePanel defaultSize={80} className="bg-white p-4 overflow-y-auto">
+              <RecipeVersionTabs />
               <RecipeContent 
                 recipe={recipe} 
                 selectedIngredients={selectedIngredients}
                 onSelectIngredient={handleSelectIngredient} 
               />
-            </ResizablePanel>
-
-            <ResizableHandle withHandle />
-
-            {/* Right Panel - Comparison */}
-            <ResizablePanel 
-              defaultSize={20} 
-              minSize={rightPanelCollapsed ? 4 : 15} 
-              maxSize={rightPanelCollapsed ? 4 : 30}
-              collapsible
-              collapsedSize={4}
-              onCollapse={() => setRightPanelCollapsed(true)}
-              onExpand={() => setRightPanelCollapsed(false)}
-              className="bg-white p-4 relative"
-            >
-              {rightPanelCollapsed ? (
-                <div className="h-full flex flex-col items-center justify-center">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => setRightPanelCollapsed(false)}
-                    className="absolute top-4 left-2"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <div className="rotate-90 whitespace-nowrap text-sm font-medium text-gray-500">
-                    Recipe Details
-                  </div>
-                </div>
-              ) : (
-                <div className="overflow-y-auto h-full">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => setRightPanelCollapsed(true)}
-                    className="absolute top-4 left-2"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                  <ComparisonPanel
-                    recipe={recipe}
-                    originalRecipe={originalRecipe}
-                    selectedIngredient={selectedIngredient}
-                    isModified={isModified}
-                    onResetToOriginal={resetToOriginal}
-                    onAcceptChanges={handleAcceptChanges}
-                  />
-                </div>
-              )}
             </ResizablePanel>
           </ResizablePanelGroup>
         </>
