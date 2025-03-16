@@ -73,12 +73,12 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
             ...recipeData,
             ingredients: ingredients?.map(ing => ({
               id: ing.id,
-              // Fix: Handle food and unit as objects, not arrays
+              // Fix: The food and unit are individual objects, not arrays
               food_id: ing.food ? ing.food.id : '',
               unit_id: ing.unit ? ing.unit.id : '',
               amount: ing.amount,
-              food: ing.food ? ing.food : undefined,
-              unit: ing.unit ? ing.unit : undefined
+              food: ing.food || undefined,
+              unit: ing.unit || undefined
             })) || [],
             steps: steps || []
           };
