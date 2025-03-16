@@ -42,6 +42,7 @@ const RecipeDetailContainer = () => {
   // Set recipe in context when data is loaded
   useEffect(() => {
     if (recipeData) {
+      console.log("Setting recipe in context:", recipeData);
       setRecipe(recipeData);
       setOriginalRecipe(recipeData);
     }
@@ -51,13 +52,17 @@ const RecipeDetailContainer = () => {
   useEffect(() => {
     const initializeVersions = async () => {
       if (recipeData && !hasInitializedVersions) {
+        console.log("Initializing versions for recipe", recipeData.id);
+        
         // Fetch versions from the database
         await fetchVersionsFromDb(recipeData.id);
         
         // If no versions exist yet, create the Original version
         if (recipeVersions.length === 0) {
-          console.log("Creating Original version for recipe", recipeData.id);
+          console.log("No versions found, creating Original version for recipe", recipeData.id);
           await addRecipeVersion("Original", recipeData);
+        } else {
+          console.log("Found existing versions:", recipeVersions.length);
         }
         
         // Mark that we've initialized versions to prevent re-initialization

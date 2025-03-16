@@ -401,6 +401,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          display_name: string
           id: string
           is_current: boolean
           modification_parameters: Json | null
@@ -412,6 +413,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          display_name: string
           id?: string
           is_current?: boolean
           modification_parameters?: Json | null
@@ -423,6 +425,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          display_name?: string
           id?: string
           is_current?: boolean
           modification_parameters?: Json | null
