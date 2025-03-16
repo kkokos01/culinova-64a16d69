@@ -15,6 +15,7 @@ const RecipeDetail = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [databaseStatus, setDatabaseStatus] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   // Function to directly check the database
   const checkTikkaMasalaInDatabase = async () => {
@@ -33,11 +34,15 @@ const RecipeDetail = () => {
           throw new Error(`Error fetching recipe: ${recipeError.message}`);
         }
         
-        // Get ingredients
+        // Get ingredients with detailed food and unit information
         const { data: ingredientsData, error: ingredientsError } = await supabase
           .from('ingredients')
           .select(`
-            *,
+            id,
+            recipe_id,
+            food_id,
+            unit_id,
+            amount,
             food:food_id(id, name, description),
             unit:unit_id(id, name, abbreviation)
           `)
@@ -46,6 +51,33 @@ const RecipeDetail = () => {
         if (ingredientsError) {
           throw new Error(`Error fetching ingredients: ${ingredientsError.message}`);
         }
+        
+        // Additional diagnostics for food data
+        const foodIds = ingredientsData
+          .filter(ing => ing.food_id)
+          .map(ing => ing.food_id);
+          
+        let foodData = [];
+        
+        if (foodIds.length > 0) {
+          const { data: foods, error: foodsError } = await supabase
+            .from('foods')
+            .select('*')
+            .in('id', foodIds);
+            
+          if (foodsError) {
+            throw new Error(`Error fetching foods: ${foodsError.message}`);
+          }
+          
+          foodData = foods;
+        }
+        
+        // Set comprehensive debug info
+        setDebugInfo({
+          recipe: recipeData,
+          ingredients: ingredientsData,
+          foodData
+        });
         
         setDatabaseStatus(`Recipe in DB: ${recipeData.title}. Found ${ingredientsData.length} ingredients. 
         First ingredient: ${ingredientsData[0]?.food?.name || 'None'} - ${ingredientsData[0]?.amount || 0} ${ingredientsData[0]?.unit?.abbreviation || ''}`);
@@ -123,6 +155,26 @@ const RecipeDetail = () => {
           <h3 className="font-bold text-amber-800">Database Diagnostic</h3>
           <p className="text-amber-700">{databaseStatus}</p>
           {loading && <p className="text-amber-700">Loading...</p>}
+          {debugInfo && (
+            <div className="mt-2">
+              <details>
+                <summary className="cursor-pointer text-amber-800 font-medium">Show Raw Data</summary>
+                <div className="mt-2 max-h-60 overflow-auto bg-white/50 p-2 rounded text-xs">
+                  <p><strong>Recipe:</strong> {debugInfo.recipe.title}</p>
+                  <p><strong>Ingredients Count:</strong> {debugInfo.ingredients.length}</p>
+                  <p><strong>Foods Count:</strong> {debugInfo.foodData.length}</p>
+                  <div className="mt-1">
+                    <strong>Food IDs:</strong> 
+                    <ul className="pl-4">
+                      {debugInfo.foodData.map((food: any) => (
+                        <li key={food.id}>{food.id.substring(0, 8)}... - {food.name}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </details>
+            </div>
+          )}
         </div>
       )}
       <RecipeDetailContainer />

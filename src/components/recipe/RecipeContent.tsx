@@ -17,6 +17,20 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
   useEffect(() => {
     // Debug log on component mount
     console.log("RecipeContent rendering with ingredients:", recipe.ingredients);
+    
+    // Additional debugging to check food property on each ingredient
+    if (recipe.ingredients) {
+      recipe.ingredients.forEach((ingredient, index) => {
+        console.log(`Ingredient ${index + 1}:`, {
+          id: ingredient.id,
+          food_id: ingredient.food_id,
+          food: ingredient.food,
+          foodName: ingredient.food?.name || 'No food name',
+          amount: ingredient.amount,
+          unit: ingredient.unit?.abbreviation
+        });
+      });
+    }
   }, [recipe.ingredients]);
 
   // Helper function to get the appropriate styling based on action
@@ -75,6 +89,9 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
     i?.food?.name?.includes('Parent Food')
   );
 
+  // Check if we have ingredients without food details
+  const hasIncompleteData = ingredients.some(i => !i.food || !i.food.name);
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Ingredients */}
@@ -92,12 +109,22 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
           </div>
         )}
         
+        {hasIncompleteData && (
+          <div className="flex items-center mb-3 p-2 bg-red-50 border border-red-200 rounded-md">
+            <AlertTriangle className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+            <p className="text-red-700 text-sm">
+              Some ingredients are missing food information. This may indicate a database connectivity issue.
+            </p>
+          </div>
+        )}
+        
         {ingredients.length > 0 ? (
           <div className="grid sm:grid-cols-2 gap-2">
             {ingredients.map((ingredient) => {
               if (!ingredient || !ingredient.id) return null;
               
               const styles = getIngredientStyles(ingredient);
+              // Handle cases where food info is missing
               const foodName = ingredient.food?.name || "Unknown ingredient";
               
               return (
