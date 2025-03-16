@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
@@ -68,17 +69,17 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     if (!leftPanelOpen) return null;
     
     return (
-      <div className="fixed inset-0 bg-white z-50 overflow-auto">
-        <div className="sticky top-0 bg-gradient-to-r from-sage-50 to-sage-100 border-b border-sage-200 z-10 px-4 py-3 flex items-center justify-between">
+      <div className="fixed inset-0 bg-sage-500 text-white z-50 overflow-auto">
+        <div className="sticky top-0 bg-sage-600 border-b border-white/10 z-10 px-4 py-3 flex items-center justify-between">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setLeftPanelOpen(false)}
-            className="text-sage-500 hover:text-sage-700 hover:bg-sage-100/80"
+            className="text-white hover:text-white hover:bg-sage-700/60"
           >
             <X className="h-5 w-5" />
           </Button>
-          <h2 className="text-lg font-semibold text-sage-800">Modify Recipe</h2>
+          <h2 className="text-lg font-semibold text-white">Modify Recipe</h2>
           <div className="w-8"></div>
         </div>
         <div className="p-4">
@@ -96,13 +97,13 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
               <Button 
                 variant="outline"
                 onClick={resetToOriginal}
-                className="w-full border-sage-300 hover:bg-sage-50"
+                className="w-full border-white/30 text-white hover:bg-sage-600 hover:text-white"
               >
                 Reset to Original
               </Button>
               <Button 
                 onClick={handleAcceptModification}
-                className="w-full bg-sage-700 hover:bg-sage-800 text-white font-medium"
+                className="w-full bg-white text-sage-700 hover:bg-white/90 font-medium"
               >
                 Save as New Version
               </Button>
