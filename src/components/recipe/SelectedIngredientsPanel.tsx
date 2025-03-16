@@ -31,14 +31,22 @@ const SelectedIngredientsPanel: React.FC<SelectedIngredientsPanelProps> = ({
     }
   };
   
-  // Helper function to get text styling based on action
-  const getTextStyles = (action: "increase" | "decrease" | "remove") => {
-    return action === "remove" ? "line-through opacity-75" : "";
+  // Helper function to get text description based on action
+  const getActionText = (action: "increase" | "decrease" | "remove") => {
+    switch (action) {
+      case "increase":
+        return "Add";
+      case "decrease":
+        return "Reduce";
+      case "remove":
+        return "Remove";
+      default:
+        return "";
+    }
   };
   
   return (
-    <div className="mt-4 border border-dashed border-gray-200 rounded-md p-3 bg-gray-50">
-      <h3 className="text-sm font-medium mb-2">Selected Ingredients</h3>
+    <div className="border border-gray-200 rounded-md p-3 bg-gray-50">
       <div className="space-y-2">
         {Array.from(selectedIngredients.entries()).map(([id, { ingredient, action }]) => (
           <div key={id} className="flex items-center justify-between bg-white p-2 rounded border border-gray-100 text-sm">
@@ -48,8 +56,8 @@ const SelectedIngredientsPanel: React.FC<SelectedIngredientsPanelProps> = ({
                  action === "decrease" ? <Minus className="h-3 w-3" /> : 
                  <X className="h-3 w-3" />}
               </Badge>
-              <span className={`truncate ${getTextStyles(action)}`}>
-                {ingredient.amount} {ingredient.unit?.abbreviation} {ingredient.food?.name}
+              <span className="truncate">
+                <span className="font-medium">{getActionText(action)}</span> {ingredient.food?.name}
               </span>
             </div>
             <button 

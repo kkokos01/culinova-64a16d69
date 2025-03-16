@@ -3,10 +3,10 @@ import React from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
 import RecipeContent from "./RecipeContent";
-import AIModificationPanel from "./AIModificationPanel";
+import UnifiedModificationPanel from "./UnifiedModificationPanel";
 import RecipeVersionTabs from "./RecipeVersionTabs";
 import { Button } from "@/components/ui/button";
-import { X, ChevronLeft } from "lucide-react";
+import { X } from "lucide-react";
 import { useRecipe } from "@/context/recipe";
 
 interface MobileLayoutProps {
@@ -64,6 +64,11 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     }
   };
 
+  // Start modification with any type - our new panel doesn't distinguish by type
+  const startUnifiedModification = () => {
+    handleStartModification("unified");
+  };
+
   // Render the slide-out left panel (AI Modification)
   const renderLeftPanel = () => {
     if (!leftPanelOpen) return null;
@@ -83,15 +88,13 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
           <div className="w-8"></div> {/* Spacer for alignment */}
         </div>
         <div className="p-4">
-          <AIModificationPanel
+          <UnifiedModificationPanel
             recipe={recipe}
-            isOpen={true}
-            onClose={() => setLeftPanelOpen(false)}
-            onStartModification={handleStartModification}
             selectedIngredients={selectedIngredients}
             onRemoveIngredientSelection={removeIngredientSelection}
             customInstructions={customInstructions}
             onCustomInstructionsChange={setCustomInstructions}
+            onStartModification={startUnifiedModification}
           />
           
           {isModified && (

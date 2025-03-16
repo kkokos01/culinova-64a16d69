@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
 import RecipeContent from "./RecipeContent";
-import AIModificationPanel from "./AIModificationPanel";
+import UnifiedModificationPanel from "./UnifiedModificationPanel";
 import RecipeVersionTabs from "./RecipeVersionTabs";
 import { useRecipe } from "@/context/recipe";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -60,6 +60,11 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     }
   };
 
+  // Start modification with our unified approach
+  const startUnifiedModification = () => {
+    handleStartModification("unified");
+  };
+
   return (
     <div className="container mx-auto py-6 px-4">
       {recipe && (
@@ -73,8 +78,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           <ResizablePanelGroup direction="horizontal" className="min-h-[600px] rounded-lg border mt-6">
             {/* Left Panel - AI Modification */}
             <ResizablePanel 
-              defaultSize={25} 
-              minSize={leftPanelCollapsed ? 4 : 20} 
+              defaultSize={30} 
+              minSize={leftPanelCollapsed ? 4 : 25} 
               maxSize={leftPanelCollapsed ? 4 : 40}
               collapsible
               collapsedSize={4}
@@ -106,15 +111,14 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <AIModificationPanel
+                  
+                  <UnifiedModificationPanel
                     recipe={recipe}
-                    isOpen={true}
-                    onClose={() => {}}
-                    onStartModification={handleStartModification}
                     selectedIngredients={selectedIngredients}
                     onRemoveIngredientSelection={removeIngredientSelection}
                     customInstructions={customInstructions}
                     onCustomInstructionsChange={setCustomInstructions}
+                    onStartModification={startUnifiedModification}
                   />
                   
                   {isModified && (
@@ -141,7 +145,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             <ResizableHandle withHandle />
 
             {/* Main Content - Recipe with Tabs */}
-            <ResizablePanel defaultSize={75} className="bg-white p-4 overflow-y-auto">
+            <ResizablePanel defaultSize={70} className="bg-white p-4 overflow-y-auto">
               <div className="px-2">
                 <RecipeVersionTabs />
                 <RecipeContent 
