@@ -84,6 +84,7 @@ const RecipeDetail = () => {
         let firstIngredientInfo = "None";
         if (ingredientsData.length > 0) {
           const firstIng = ingredientsData[0];
+          // Correctly access the foods and units properties which are objects, not arrays
           const foodName = firstIng.foods ? firstIng.foods.name : "None";
           const amount = firstIng.amount || 0;
           const unitAbbr = firstIng.units ? firstIng.units.abbreviation : "";
