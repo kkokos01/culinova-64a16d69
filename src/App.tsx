@@ -13,6 +13,9 @@ import NotFound from "./pages/NotFound";
 import Recipes from "./pages/Recipes";
 import SupabaseRecipes from "./pages/SupabaseRecipes";
 import RecipeDetail from "./pages/RecipeDetail";
+import SignIn from "./pages/auth/SignIn";
+import SignUp from "./pages/auth/SignUp";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 // Temporarily simplified version for debugging
 const queryClient = new QueryClient();
@@ -38,6 +41,9 @@ function App() {
                           <Route path="/recipes" element={<Recipes />} />
                           <Route path="/supabase-recipes" element={<SupabaseRecipes />} />
                           <Route path="/recipes/:id" element={<RecipeDetail />} />
+                          <Route path="/sign-in" element={<SignIn />} />
+                          <Route path="/sign-up" element={<SignUp />} />
+                          <Route path="/reset-password" element={<ResetPassword />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </BrowserRouter>
