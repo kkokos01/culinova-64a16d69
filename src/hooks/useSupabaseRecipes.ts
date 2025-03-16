@@ -15,7 +15,7 @@ export const useSupabaseRecipes = () => {
       try {
         setLoading(true);
         
-        // Fetch recipe data from Supabase
+        // Fetch recipe data from Supabase using the RPC function to get complete recipe details
         console.log("Fetching recipes from Supabase");
         const { data, error } = await supabase
           .from('recipes')
@@ -26,8 +26,13 @@ export const useSupabaseRecipes = () => {
           throw new Error(`Failed to fetch recipes: ${error.message}`);
         }
 
-        console.log("Fetched recipes:", data);
-        setRecipes(data as Recipe[]);
+        // Filter out recipes that don't have the necessary details
+        const validRecipes = data ? data.filter(recipe => 
+          recipe.id && recipe.title
+        ) : [];
+
+        console.log("Fetched recipes:", validRecipes);
+        setRecipes(validRecipes as Recipe[]);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching recipes:", err);
