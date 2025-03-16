@@ -35,6 +35,7 @@ export const useSupabaseRecipe = (recipeId: string) => {
         // Process the raw data into our Recipe format
         const processedRecipe = processRecipeData(data);
         console.log("Processed recipe:", processedRecipe);
+        console.log("Processed ingredients:", processedRecipe.ingredients);
         
         setRecipe(processedRecipe);
         setLoading(false);
@@ -113,7 +114,7 @@ export const useSupabaseRecipe = (recipeId: string) => {
     });
     
     recipeBase.ingredients = Array.from(ingredientsMap.values());
-    console.log("Processed ingredients:", recipeBase.ingredients);
+    console.log("Processed ingredients in detail:", recipeBase.ingredients);
     
     // Process steps (deduplicate by id)
     const stepsMap = new Map();

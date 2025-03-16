@@ -64,11 +64,14 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
   const ingredients = recipe.ingredients || [];
   const steps = recipe.steps || [];
 
+  // Debug statement to check ingredients data
+  console.log("Ingredients data:", ingredients);
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Ingredients */}
       <div className="mb-6">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
           Ingredients
         </h2>
         {ingredients.length > 0 ? (
@@ -86,46 +89,46 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
                   onClick={(e) => handleIngredientClick(ingredient, e)}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className={`flex items-baseline gap-x-1.5 text-sm ${styles.text}`}>
+                    <div className={`flex items-baseline gap-x-1.5 text-base ${styles.text}`}>
                       <span className="font-medium whitespace-nowrap">
                         {ingredient.amount} {ingredient.unit?.abbreviation || ''}
                       </span>
                       <span className="truncate">{foodName}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-0.5 ml-1.5 action-buttons shrink-0">
+                  <div className="flex items-center gap-1 ml-2 action-buttons shrink-0">
                     <button
                       onClick={() => onSelectIngredient(ingredient, "increase")}
-                      className={`p-0.5 rounded-full ${
+                      className={`p-1 rounded-full ${
                         selectedIngredients.get(ingredient.id)?.action === "increase" 
                           ? "bg-green-100 text-green-700" 
                           : "hover:bg-gray-200 text-green-600"
                       }`}
                       aria-label="Increase ingredient"
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      <Plus className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => onSelectIngredient(ingredient, "decrease")}
-                      className={`p-0.5 rounded-full ${
+                      className={`p-1 rounded-full ${
                         selectedIngredients.get(ingredient.id)?.action === "decrease" 
                           ? "bg-amber-100 text-amber-700" 
                           : "hover:bg-gray-200 text-amber-600"
                       }`}
                       aria-label="Decrease ingredient"
                     >
-                      <Minus className="h-3.5 w-3.5" />
+                      <Minus className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => onSelectIngredient(ingredient, "remove")}
-                      className={`p-0.5 rounded-full ${
+                      className={`p-1 rounded-full ${
                         selectedIngredients.get(ingredient.id)?.action === "remove" 
                           ? "bg-red-100 text-red-700" 
                           : "hover:bg-gray-200 text-red-600"
                       }`}
                       aria-label="Remove ingredient"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <X className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
@@ -139,7 +142,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
       
       {/* Steps */}
       <div className="mb-6">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
           Instructions
         </h2>
         {steps.length > 0 ? (
@@ -147,14 +150,14 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
             {steps.map((step) => (
               <li key={step.id} className="flex">
                 <div className="flex-shrink-0 mr-3">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                  <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-sm font-bold">
                     {step.order_number}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-700 text-sm">{step.instruction}</p>
+                  <p className="text-gray-700 text-base">{step.instruction}</p>
                   {step.duration_minutes && (
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-sm text-gray-500 mt-1">
                       Approximately {step.duration_minutes} minutes
                     </p>
                   )}

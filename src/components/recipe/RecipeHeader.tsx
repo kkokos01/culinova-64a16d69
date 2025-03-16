@@ -23,36 +23,36 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
         {/* Recipe details - left side */}
         <div className="flex-grow">
           <div className="mb-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1">
               {recipe.title}
               {isModified && <span className="ml-2 text-sm font-normal text-sage-600">(Modified)</span>}
             </h1>
-            <p className="text-gray-600 mb-2 text-sm">{recipe.description}</p>
+            <p className="text-gray-600 mb-2 text-base">{recipe.description}</p>
           </div>
           
           <div className="flex flex-wrap gap-2 mb-1">
             <div className="flex items-center bg-secondary/50 px-3 py-1 rounded-md">
-              <span className="font-medium text-xs">Prep:</span>
-              <span className="ml-1 text-xs">{recipe.prep_time_minutes} min</span>
+              <span className="font-medium text-sm">Prep:</span>
+              <span className="ml-1 text-sm">{recipe.prep_time_minutes} min</span>
             </div>
             <div className="flex items-center bg-secondary/50 px-3 py-1 rounded-md">
-              <span className="font-medium text-xs">Cook:</span>
-              <span className="ml-1 text-xs">{recipe.cook_time_minutes} min</span>
+              <span className="font-medium text-sm">Cook:</span>
+              <span className="ml-1 text-sm">{recipe.cook_time_minutes} min</span>
             </div>
             <div className="flex items-center bg-secondary/50 px-3 py-1 rounded-md">
-              <span className="font-medium text-xs">Servings:</span>
-              <span className="ml-1 text-xs">{recipe.servings}</span>
+              <span className="font-medium text-sm">Servings:</span>
+              <span className="ml-1 text-sm">{recipe.servings}</span>
             </div>
             <div className="flex items-center bg-secondary/50 px-3 py-1 rounded-md">
-              <span className="font-medium text-xs">Difficulty:</span>
-              <span className="ml-1 text-xs capitalize">{recipe.difficulty}</span>
+              <span className="font-medium text-sm">Difficulty:</span>
+              <span className="ml-1 text-sm capitalize">{recipe.difficulty}</span>
             </div>
           </div>
         </div>
         
         {/* Image - right side with overlay button */}
         {recipe.image_url && (
-          <div className="md:w-1/3 lg:w-1/4 rounded-lg overflow-hidden shadow-md h-40 md:h-40 w-full aspect-square relative">
+          <div className="md:w-1/3 lg:w-1/4 rounded-lg overflow-hidden shadow-md h-48 md:h-48 w-full aspect-square relative">
             <img 
               src={recipe.image_url} 
               alt={recipe.title} 
@@ -62,10 +62,10 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
               <div className="absolute bottom-2 right-2">
                 <Button 
                   onClick={onModifyWithAI} 
-                  className="bg-sage-700 hover:bg-sage-800 shadow-md text-white scale-90"
+                  className="bg-sage-700 hover:bg-sage-800 shadow-md text-white"
                   size="sm"
                 >
-                  <Wand2 className="mr-1 h-3 w-3" />
+                  <Wand2 className="mr-1 h-4 w-4" />
                   Modify with AI
                 </Button>
               </div>
