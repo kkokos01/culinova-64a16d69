@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
@@ -69,9 +70,9 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   };
 
   return (
-    <div className="container mx-auto py-6 px-4">
+    <div className="container mx-auto py-4 px-4"> {/* Reduced py-6 to py-4 */}
       {recipe && (
-        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-130px)] rounded-lg border">
+        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-120px)] rounded-lg border"> {/* Reduced 130px to 120px */}
           <ResizablePanel 
             defaultSize={4}
             size={leftPanelSize}
@@ -154,7 +155,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           <ResizableHandle withHandle />
 
           <ResizablePanel defaultSize={65} className="bg-white overflow-y-auto">
-            <div className="p-6">
+            <div className="p-5"> {/* Reduced p-6 to p-5 */}
               <RecipeHeader
                 recipe={recipe}
                 isModified={isModified}

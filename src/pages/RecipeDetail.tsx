@@ -114,7 +114,7 @@ const RecipeDetailContainer = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="pt-20 md:pt-24"> {/* Added padding to account for fixed navbar */}
+      <div className="pt-12 md:pt-16"> {/* Reduced padding from pt-20/pt-24 to pt-12/pt-16 */}
         {isMobile ? (
           <MobileLayout 
             recipe={recipeData}

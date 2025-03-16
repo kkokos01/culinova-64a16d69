@@ -57,15 +57,15 @@ const Navbar = () => {
     <header 
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        scrolled ? "bg-white/95 backdrop-blur-sm shadow-sm" : "bg-transparent"
+        scrolled ? "bg-slate-800 shadow-md" : "bg-slate-800"
       )}
     >
       <div className="container mx-auto px-4 flex h-16 items-center justify-between">
         <Link 
           to="/" 
-          className="flex items-center space-x-2 font-display font-medium text-xl text-sage-600 transition-opacity hover:opacity-80"
+          className="flex items-center space-x-2 font-display font-medium text-xl text-white transition-opacity hover:opacity-80"
         >
-          <ChefHat className="h-6 w-6 text-sage-500" />
+          <ChefHat className="h-6 w-6 text-sage-400" />
           <span>Culinova</span>
         </Link>
         
@@ -76,10 +76,10 @@ const Navbar = () => {
               key={link.path}
               to={link.path}
               className={cn(
-                "text-sm font-medium transition-colors hover:text-sage-600 focus-ring rounded-md px-2 py-1",
+                "text-sm font-medium transition-colors hover:text-sage-400 focus-ring rounded-md px-2 py-1",
                 isActive(link.path) 
-                  ? "text-sage-600 font-semibold" 
-                  : "text-slate-600"
+                  ? "text-sage-400 font-semibold" 
+                  : "text-white"
               )}
             >
               {link.label}
@@ -92,7 +92,7 @@ const Navbar = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="text-slate-600 hover:text-sage-600 hover:bg-sage-100"
+            className="text-white hover:text-sage-400 hover:bg-slate-700"
             aria-label="Search"
           >
             <Search className="h-5 w-5" />
@@ -100,7 +100,7 @@ const Navbar = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="text-slate-600 hover:text-sage-600 hover:bg-sage-100"
+            className="text-white hover:text-sage-400 hover:bg-slate-700"
             aria-label="Shopping Lists"
           >
             <ShoppingCart className="h-5 w-5" />
@@ -108,7 +108,7 @@ const Navbar = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="text-slate-600 hover:text-sage-600 hover:bg-sage-100"
+            className="text-white hover:text-sage-400 hover:bg-slate-700"
             aria-label="Meal Plans"
           >
             <Calendar className="h-5 w-5" />
@@ -118,7 +118,7 @@ const Navbar = () => {
             <Button 
               variant="ghost"
               size="icon" 
-              className="text-slate-600 hover:text-sage-600 hover:bg-sage-100"
+              className="text-white hover:text-sage-400 hover:bg-slate-700"
               aria-label="Database Test"
               asChild
             >
@@ -185,7 +185,7 @@ const Navbar = () => {
         <Button 
           variant="ghost" 
           size="icon" 
-          className="md:hidden text-slate-700" 
+          className="md:hidden text-white" 
           onClick={() => setIsOpen(!isOpen)}
           aria-label={isOpen ? "Close Menu" : "Open Menu"}
         >
@@ -196,7 +196,7 @@ const Navbar = () => {
       {/* Mobile Menu */}
       <div 
         className={cn(
-          "fixed inset-0 bg-white z-40 flex flex-col pt-16 transition-transform duration-300 ease-in-out md:hidden",
+          "fixed inset-0 bg-slate-800 z-40 flex flex-col pt-16 transition-transform duration-300 ease-in-out md:hidden",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
@@ -206,33 +206,33 @@ const Navbar = () => {
               key={link.path}
               to={link.path}
               className={cn(
-                "text-lg font-medium transition-colors hover:text-sage-600 focus:outline-none focus:text-sage-600",
+                "text-lg font-medium transition-colors hover:text-sage-400 focus:outline-none focus:text-sage-400",
                 isActive(link.path) 
-                  ? "text-sage-600 font-semibold" 
-                  : "text-slate-700"
+                  ? "text-sage-400 font-semibold" 
+                  : "text-white"
               )}
             >
               {link.label}
             </Link>
           ))}
-          <div className="pt-4 border-t border-gray-200 flex flex-col space-y-4">
+          <div className="pt-4 border-t border-slate-700 flex flex-col space-y-4">
             <Link 
               to="/search" 
-              className="flex items-center space-x-2 text-slate-700 hover:text-sage-600"
+              className="flex items-center space-x-2 text-white hover:text-sage-400"
             >
               <Search className="h-5 w-5" />
               <span>Search</span>
             </Link>
             <Link 
               to="/shopping-lists" 
-              className="flex items-center space-x-2 text-slate-700 hover:text-sage-600"
+              className="flex items-center space-x-2 text-white hover:text-sage-400"
             >
               <ShoppingCart className="h-5 w-5" />
               <span>Shopping Lists</span>
             </Link>
             <Link 
               to="/meal-plans" 
-              className="flex items-center space-x-2 text-slate-700 hover:text-sage-600"
+              className="flex items-center space-x-2 text-white hover:text-sage-400"
             >
               <Calendar className="h-5 w-5" />
               <span>Meal Plans</span>
@@ -241,7 +241,7 @@ const Navbar = () => {
             {user && (
               <Link 
                 to="/auth/test" 
-                className="flex items-center space-x-2 text-slate-700 hover:text-sage-600"
+                className="flex items-center space-x-2 text-white hover:text-sage-400"
               >
                 <Database className="h-5 w-5" />
                 <span>Database Test</span>
@@ -252,14 +252,14 @@ const Navbar = () => {
               <>
                 <Link 
                   to="/profile" 
-                  className="flex items-center space-x-2 text-slate-700 hover:text-sage-600"
+                  className="flex items-center space-x-2 text-white hover:text-sage-400"
                 >
                   <User className="h-5 w-5" />
                   <span>Profile</span>
                 </Link>
                 <button 
                   onClick={() => signOut()}
-                  className="flex items-center space-x-2 text-slate-700 hover:text-sage-600"
+                  className="flex items-center space-x-2 text-white hover:text-sage-400"
                 >
                   <LogOut className="h-5 w-5" />
                   <span>Log out</span>
@@ -268,7 +268,7 @@ const Navbar = () => {
             ) : (
               <Link 
                 to="/sign-in" 
-                className="flex items-center space-x-2 text-slate-700 hover:text-sage-600"
+                className="flex items-center space-x-2 text-white hover:text-sage-400"
               >
                 <User className="h-5 w-5" />
                 <span>Sign In</span>

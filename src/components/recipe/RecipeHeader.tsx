@@ -18,19 +18,19 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   showModifyButton = true // Default to showing the button
 }) => {
   return (
-    <div className="mb-8">
-      <div className="flex flex-col lg:flex-row gap-6">
+    <div className="mb-6"> {/* Reduced mb-8 to mb-6 */}
+      <div className="flex flex-col lg:flex-row gap-5"> {/* Reduced gap-6 to gap-5 */}
         {/* Recipe details - left side */}
         <div className="flex flex-col flex-grow">
-          <div className="mb-4">
+          <div className="mb-3"> {/* Reduced mb-4 to mb-3 */}
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
               {recipe.title}
               {isModified && <span className="ml-2 text-sm font-normal text-sage-600">(Modified)</span>}
             </h1>
-            <p className="text-gray-600 mb-4 text-base">{recipe.description}</p>
+            <p className="text-gray-600 mb-3 text-base">{recipe.description}</p> {/* Reduced mb-4 to mb-3 */}
           </div>
           
-          <div className="flex flex-wrap gap-3 mb-3">
+          <div className="flex flex-wrap gap-3 mb-2"> {/* Reduced mb-3 to mb-2 */}
             <div className="flex items-center bg-secondary/50 px-4 py-1.5 rounded-md">
               <span className="font-medium text-sm">Prep:</span>
               <span className="ml-1.5 text-sm">{recipe.prep_time_minutes} min</span>
