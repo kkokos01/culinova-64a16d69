@@ -14,7 +14,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Use our custom hooks to manage different aspects of recipe state
   const recipeState = useRecipeState();
   const ingredientSelection = useIngredientSelection();
-  const versionState = useRecipeVersions();
+  const versionState = useRecipeVersions(recipeState.setRecipe);
 
   // Combine all the state and functions into a single context value
   const value: RecipeContextType = {
