@@ -69,10 +69,15 @@ const RecipeVersionTabs: React.FC = () => {
   // If no versions available yet, show a placeholder
   if (recipeVersions.length === 0) {
     return (
-      <div className="mb-4 border-b pb-1">
-        <Tabs defaultValue="original">
-          <TabsList>
-            <TabsTrigger value="original">Original</TabsTrigger>
+      <div className="mb-4 pb-1">
+        <Tabs defaultValue="original" className="w-full">
+          <TabsList className="w-full mb-2 overflow-x-auto overflow-y-hidden flex-wrap">
+            <TabsTrigger 
+              value="original" 
+              className="border border-gray-200 rounded-md px-4 py-2 m-1"
+            >
+              Original
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -80,15 +85,15 @@ const RecipeVersionTabs: React.FC = () => {
   }
 
   return (
-    <div className="mb-4 border-b pb-1">
-      <Tabs value={recipeVersions.find(v => v.isActive)?.id}>
-        <TabsList>
+    <div className="mb-4 pb-1">
+      <Tabs value={recipeVersions.find(v => v.isActive)?.id} className="w-full">
+        <TabsList className="w-full mb-2 overflow-x-auto overflow-y-hidden flex-wrap bg-transparent p-0">
           {recipeVersions.map((version) => (
             <TabsTrigger 
               key={version.id} 
               value={version.id}
               onClick={() => handleVersionSelect(version.id)}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 border border-gray-200 rounded-md px-4 py-2 m-1 data-[state=active]:bg-sage-100 data-[state=active]:border-sage-300"
             >
               {version.name}
               <DropdownMenu>

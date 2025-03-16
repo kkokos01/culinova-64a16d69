@@ -116,7 +116,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 
   return (
     <>
-      <div className="container mx-auto py-3 px-4 pb-20">
+      <div className="container mx-auto py-6 px-4 pb-20">
         {recipe && (
           <>
             <RecipeHeader
@@ -124,13 +124,15 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
               isModified={isModified}
               onModifyWithAI={handleModifyWithAI}
             />
-            <RecipeVersionTabs />
-            <div className="mt-4">
-              <RecipeContent 
-                recipe={recipe} 
-                selectedIngredients={selectedIngredients}
-                onSelectIngredient={handleSelectIngredient} 
-              />
+            <div className="px-1 mt-6">
+              <RecipeVersionTabs />
+              <div className="mt-4">
+                <RecipeContent 
+                  recipe={recipe} 
+                  selectedIngredients={selectedIngredients}
+                  onSelectIngredient={handleSelectIngredient} 
+                />
+              </div>
             </div>
           </>
         )}

@@ -104,34 +104,35 @@ const RecipeDetailContainer = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
-      {isMobile ? (
-        <MobileLayout 
-          recipe={recipeData}
-          selectedIngredient={selectedIngredient}
-          isModified={isModified}
-          resetToOriginal={resetToOriginal}
-          leftPanelOpen={leftPanelOpen}
-          rightPanelOpen={rightPanelOpen}
-          setLeftPanelOpen={setLeftPanelOpen}
-          setRightPanelOpen={setRightPanelOpen}
-          handleModifyWithAI={handleModifyWithAI}
-          handleStartModification={handleStartModification}
-          handleAcceptChanges={handleAcceptChanges}
-          setSelectedIngredient={setSelectedIngredient}
-        />
-      ) : (
-        <DesktopLayout 
-          recipe={recipeData}
-          selectedIngredient={selectedIngredient}
-          isModified={isModified}
-          resetToOriginal={resetToOriginal}
-          handleModifyWithAI={handleModifyWithAI}
-          handleStartModification={handleStartModification}
-          handleAcceptChanges={handleAcceptChanges}
-          setSelectedIngredient={setSelectedIngredient}
-        />
-      )}
+      <div className="pt-20 md:pt-24"> {/* Added padding to account for fixed navbar */}
+        {isMobile ? (
+          <MobileLayout 
+            recipe={recipeData}
+            selectedIngredient={selectedIngredient}
+            isModified={isModified}
+            resetToOriginal={resetToOriginal}
+            leftPanelOpen={leftPanelOpen}
+            rightPanelOpen={rightPanelOpen}
+            setLeftPanelOpen={setLeftPanelOpen}
+            setRightPanelOpen={setRightPanelOpen}
+            handleModifyWithAI={handleModifyWithAI}
+            handleStartModification={handleStartModification}
+            handleAcceptChanges={handleAcceptChanges}
+            setSelectedIngredient={setSelectedIngredient}
+          />
+        ) : (
+          <DesktopLayout 
+            recipe={recipeData}
+            selectedIngredient={selectedIngredient}
+            isModified={isModified}
+            resetToOriginal={resetToOriginal}
+            handleModifyWithAI={handleModifyWithAI}
+            handleStartModification={handleStartModification}
+            handleAcceptChanges={handleAcceptChanges}
+            setSelectedIngredient={setSelectedIngredient}
+          />
+        )}
+      </div>
     </div>
   );
 };

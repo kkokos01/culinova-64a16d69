@@ -76,12 +76,12 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             onModifyWithAI={handleModifyWithAI}
           />
 
-          <ResizablePanelGroup direction="horizontal" className="min-h-[600px] rounded-lg border">
+          <ResizablePanelGroup direction="horizontal" className="min-h-[600px] rounded-lg border mt-6">
             {/* Left Panel - AI Modification */}
             <ResizablePanel 
-              defaultSize={20} 
-              minSize={leftPanelCollapsed ? 4 : 15} 
-              maxSize={leftPanelCollapsed ? 4 : 30}
+              defaultSize={25} 
+              minSize={leftPanelCollapsed ? 4 : 20} 
+              maxSize={leftPanelCollapsed ? 4 : 40}
               collapsible
               collapsedSize={4}
               onCollapse={() => setLeftPanelCollapsed(true)}
@@ -147,13 +147,15 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             <ResizableHandle withHandle />
 
             {/* Main Content - Recipe with Tabs */}
-            <ResizablePanel defaultSize={80} className="bg-white p-4 overflow-y-auto">
-              <RecipeVersionTabs />
-              <RecipeContent 
-                recipe={recipe} 
-                selectedIngredients={selectedIngredients}
-                onSelectIngredient={handleSelectIngredient} 
-              />
+            <ResizablePanel defaultSize={75} className="bg-white p-4 overflow-y-auto">
+              <div className="px-2">
+                <RecipeVersionTabs />
+                <RecipeContent 
+                  recipe={recipe} 
+                  selectedIngredients={selectedIngredients}
+                  onSelectIngredient={handleSelectIngredient} 
+                />
+              </div>
             </ResizablePanel>
           </ResizablePanelGroup>
         </>
