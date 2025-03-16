@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
 import RecipeContent from "./RecipeContent";
@@ -44,7 +44,22 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   } = useRecipe();
   
   // State for panel visibility
-  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
+  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(true);
+
+  // Toggle the panel when Modify with AI is clicked
+  const handleToggleModifyPanel = () => {
+    setLeftPanelCollapsed(!leftPanelCollapsed);
+  };
+
+  // Effect to connect the handler to the passed-in function
+  useEffect(() => {
+    // Update the external handler to toggle our panel
+    const originalHandler = handleModifyWithAI;
+    handleModifyWithAI = () => {
+      originalHandler(); // Keep the original functionality
+      handleToggleModifyPanel(); // Add our toggle
+    };
+  }, [handleModifyWithAI]);
 
   // Update this function to use the onSelectIngredient prop directly
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
@@ -71,7 +86,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-130px)] rounded-lg border">
           {/* Left Panel - AI Modification */}
           <ResizablePanel 
-            defaultSize={30} 
+            defaultSize={35} 
             minSize={leftPanelCollapsed ? 4 : 25} 
             maxSize={leftPanelCollapsed ? 4 : 40}
             collapsible
@@ -85,7 +100,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={() => setLeftPanelCollapsed(false)}
+                  onClick={handleToggleModifyPanel}
                   className="absolute top-4 right-2"
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -96,14 +111,18 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               </div>
             ) : (
               <div className="overflow-y-auto h-full">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setLeftPanelCollapsed(true)}
-                  className="absolute top-4 right-2"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Modify Recipe</h2>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleToggleModifyPanel}
+                    className="self-start"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-gray-600 mb-6">Customize this recipe with AI assistance</p>
                 
                 <UnifiedModificationPanel
                   recipe={recipe}
@@ -138,12 +157,12 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           <ResizableHandle withHandle />
 
           {/* Main Content - Recipe with Tabs */}
-          <ResizablePanel defaultSize={70} className="bg-white overflow-y-auto">
-            <div className="p-4">
+          <ResizablePanel defaultSize={65} className="bg-white overflow-y-auto">
+            <div className="p-6">
               <RecipeHeader
                 recipe={recipe}
                 isModified={isModified}
-                onModifyWithAI={handleModifyWithAI}
+                onModifyWithAI={handleToggleModifyPanel}
               />
 
               <RecipeVersionTabs />
