@@ -1,33 +1,40 @@
 
 import React, { createContext, useContext } from "react";
-import { RecipeContextType } from "./types";
+import { Recipe, Ingredient } from "@/types";
 import { useRecipeState } from "./useRecipeState";
 import { useIngredientSelection } from "./useIngredientSelection";
 import { useRecipeVersions } from "./useRecipeVersions";
+import { RecipeContextType } from "./types";
 
-// Create context with default empty values
-const RecipeContext = createContext<RecipeContextType>({} as RecipeContextType);
+// Create the context with default values
+const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
 
-// Provider component
+// Provider component that wraps the children
 export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Use our custom hooks
+  // Use our custom hooks to manage different aspects of recipe state
   const recipeState = useRecipeState();
   const ingredientSelection = useIngredientSelection();
-  const recipeVersions = useRecipeVersions(recipeState.setRecipe);
+  const versionState = useRecipeVersions();
 
-  // Combine all the values from our hooks
-  const contextValue: RecipeContextType = {
+  // Combine all the state and functions into a single context value
+  const value: RecipeContextType = {
     ...recipeState,
     ...ingredientSelection,
-    ...recipeVersions
+    ...versionState,
   };
 
   return (
-    <RecipeContext.Provider value={contextValue}>
+    <RecipeContext.Provider value={value}>
       {children}
     </RecipeContext.Provider>
   );
 };
 
-// Hook to use the recipe context
-export const useRecipe = () => useContext(RecipeContext);
+// Custom hook for accessing the recipe context
+export const useRecipe = (): RecipeContextType => {
+  const context = useContext(RecipeContext);
+  if (context === undefined) {
+    throw new Error("useRecipe must be used within a RecipeProvider");
+  }
+  return context;
+};

@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+
+import { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { Ingredient } from "@/types";
@@ -10,11 +11,13 @@ import MobileLayout from "@/components/recipe/MobileLayout";
 import DesktopLayout from "@/components/recipe/DesktopLayout";
 import { Toaster } from "@/components/ui/toaster";
 import { useSupabaseRecipe } from "@/hooks/useSupabaseRecipe";
+import { supabase } from "@/integrations/supabase/client";
 
 // Main container component
 const RecipeDetailContainer = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 768px)");
   
   // Use the Recipe Context
@@ -37,6 +40,24 @@ const RecipeDetailContainer = () => {
   
   // Use our Supabase recipe hook
   const { recipe: recipeData, loading: isLoading, error } = useSupabaseRecipe(id || "");
+  
+  // Redirect if recipe not found (after loading is complete)
+  useEffect(() => {
+    if (!isLoading && !recipeData) {
+      toast({
+        title: "Recipe not found",
+        description: "The recipe you're looking for couldn't be found. Redirecting to recipes page.",
+        variant: "destructive"
+      });
+      
+      // Redirect to recipes page after a short delay
+      const timeout = setTimeout(() => {
+        navigate('/recipes');
+      }, 2000);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [recipeData, isLoading, navigate, toast]);
   
   // Set recipe in context when data is loaded
   useEffect(() => {
@@ -142,13 +163,15 @@ const RecipeDetailContainer = () => {
     }
   };
 
-  // Update the function signature to accept null as a possible action
+  // Function to handle ingredient selection
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
     // Using the context function to update selected ingredients
     selectIngredientForModification(ingredient, action);
   };
 
   if (isLoading) return <RecipeDetailSkeleton />;
+  
+  if (!recipeData) return null; // Will redirect due to the useEffect
 
   return (
     <div className="min-h-screen bg-gray-50">
