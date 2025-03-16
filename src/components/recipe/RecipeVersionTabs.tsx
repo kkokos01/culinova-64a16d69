@@ -95,28 +95,34 @@ const RecipeVersionTabs: React.FC = () => {
               onClick={() => handleVersionSelect(version.id)}
               className="flex items-center gap-1 border border-gray-200 rounded-md px-4 py-2 m-1 data-[state=active]:bg-sage-100 data-[state=active]:border-sage-300"
             >
-              {version.name}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 ml-1">
-                    <MoreVertical className="h-3.5 w-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-36">
-                  <DropdownMenuItem onClick={(e) => handleRenameClick(version, e as React.MouseEvent)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Rename
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => handleDeleteClick(version, e as React.MouseEvent)}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => handleSaveClick(version, e as React.MouseEvent)}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* Render children without nesting button in button */}
+              <span>{version.name}</span>
+              <span 
+                onClick={(e) => e.stopPropagation()}
+                className="inline-block ml-1"
+              >
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <span className="p-1 cursor-pointer">
+                      <MoreVertical className="h-3.5 w-3.5" />
+                    </span>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-36">
+                    <DropdownMenuItem onClick={(e) => handleRenameClick(version, e as React.MouseEvent)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => handleDeleteClick(version, e as React.MouseEvent)}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => handleSaveClick(version, e as React.MouseEvent)}>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </span>
             </TabsTrigger>
           ))}
         </TabsList>
