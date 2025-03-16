@@ -1,6 +1,3 @@
 
-// Fixed circular dependency by direct export
-import { RecipeProvider } from './RecipeContext';
-import { useRecipe } from './RecipeContext';
-
-export { RecipeProvider, useRecipe };
+// Export both from the context file directly
+export { RecipeProvider, useRecipe } from './RecipeContext';

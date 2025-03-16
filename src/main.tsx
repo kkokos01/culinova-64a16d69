@@ -11,8 +11,19 @@ if (!rootElement) {
 } else {
   try {
     console.log("Mounting React app");
-    createRoot(rootElement).render(<App />);
+    
+    // Add more detailed error handling
+    const root = createRoot(rootElement);
+    
+    // Wrap render in try-catch for better error reporting
+    try {
+      console.log("Attempting to render app");
+      root.render(<App />);
+      console.log("App rendered successfully");
+    } catch (renderError) {
+      console.error("Error rendering App component:", renderError);
+    }
   } catch (error) {
-    console.error("Error rendering app:", error);
+    console.error("Critical error mounting app:", error);
   }
 }

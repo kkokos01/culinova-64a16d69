@@ -1,11 +1,11 @@
 
-// Import directly from component
-import { useToast as useToastHook } from "@/components/ui/use-toast";
+// Import the original toast hook from the UI component
+import { useToast as useToastOriginal } from "@/components/ui/use-toast";
 import { toast as sonnerToast } from "sonner";
 
-// Export the hook
+// Export the hook with a different name to avoid the recursive call
 export const useToast = () => {
-  return useToastHook();
+  return useToastOriginal();
 };
 
 // Re-export toast directly from sonner
