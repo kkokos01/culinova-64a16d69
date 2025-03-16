@@ -75,16 +75,16 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     
     return (
       <div className="fixed inset-0 bg-white z-50 overflow-auto">
-        <div className="sticky top-0 bg-white border-b z-10 px-4 py-3 flex items-center justify-between">
+        <div className="sticky top-0 bg-gradient-to-r from-sage-50 to-sage-100 border-b border-sage-200 z-10 px-4 py-3 flex items-center justify-between">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setLeftPanelOpen(false)}
-            className="text-gray-500"
+            className="text-sage-500 hover:text-sage-700 hover:bg-sage-100/80"
           >
             <X className="h-5 w-5" />
           </Button>
-          <h2 className="text-lg font-semibold">Modify Recipe</h2>
+          <h2 className="text-lg font-semibold text-sage-800">Modify Recipe</h2>
           <div className="w-8"></div> {/* Spacer for alignment */}
         </div>
         <div className="p-4">
@@ -102,13 +102,13 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
               <Button 
                 variant="outline"
                 onClick={resetToOriginal}
-                className="w-full"
+                className="w-full border-sage-300 hover:bg-sage-50"
               >
                 Reset to Original
               </Button>
               <Button 
                 onClick={handleAcceptModification}
-                className="w-full"
+                className="w-full bg-sage-500 hover:bg-sage-600"
               >
                 Save as New Version
               </Button>
@@ -148,7 +148,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       {/* Fixed bottom button */}
       <div className="fixed bottom-0 inset-x-0 p-3 bg-white border-t">
         <Button 
-          className="w-full"
+          className="w-full bg-sage-500 hover:bg-sage-600"
           onClick={() => setLeftPanelOpen(true)}
         >
           Modify Recipe

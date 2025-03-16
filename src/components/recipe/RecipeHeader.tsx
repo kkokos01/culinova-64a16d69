@@ -25,7 +25,7 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
           <div className="mb-4">
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
               {recipe.title}
-              {isModified && <span className="ml-2 text-sm font-normal text-purple-600">(Modified)</span>}
+              {isModified && <span className="ml-2 text-sm font-normal text-sage-600">(Modified)</span>}
             </h1>
             <p className="text-gray-600 mb-4 text-base">{recipe.description}</p>
           </div>
@@ -62,7 +62,7 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
               <div className="absolute bottom-4 right-4">
                 <Button 
                   onClick={onModifyWithAI} 
-                  className="bg-purple-600/90 hover:bg-purple-700 shadow-md backdrop-blur-sm text-white"
+                  className="bg-sage-500/90 hover:bg-sage-600 shadow-md backdrop-blur-sm text-white"
                 >
                   <Wand2 className="mr-2 h-4 w-4" />
                   Modify with AI

@@ -52,8 +52,8 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mb-6 p-3 bg-white rounded-lg shadow-sm border border-purple-100">
-        <label htmlFor="custom-instructions" className="block text-sm font-medium text-purple-800 mb-2">
+      <div className="mb-6 p-3 bg-white rounded-lg shadow-sm border border-sage-100">
+        <label htmlFor="custom-instructions" className="block text-sm font-medium text-sage-800 mb-2">
           Custom Instructions
         </label>
         <Textarea
@@ -61,13 +61,13 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
           placeholder="Example: Make this recipe keto-friendly and reduce the cooking time"
           value={customInstructions}
           onChange={(e) => onCustomInstructionsChange(e.target.value)}
-          className="h-24 sm:h-28 text-sm border-purple-200 focus-visible:ring-purple-400"
+          className="h-24 sm:h-28 text-sm border-sage-200 focus-visible:ring-sage-400"
         />
       </div>
       
       {/* Common modification options */}
-      <div className="mb-6 p-3 bg-white rounded-lg shadow-sm border border-purple-100">
-        <label className="block text-sm font-medium text-purple-800 mb-2">
+      <div className="mb-6 p-3 bg-white rounded-lg shadow-sm border border-sage-100">
+        <label className="block text-sm font-medium text-sage-800 mb-2">
           Quick Modifications
         </label>
         <div className="flex flex-wrap gap-2">
@@ -78,8 +78,8 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
               size="sm"
               className={`rounded-full px-4 py-1 h-auto text-sm ${
                 selectedModifications.includes(option)
-                  ? "bg-purple-100 border-purple-400 text-purple-700 font-medium"
-                  : "bg-white border-purple-200 text-gray-600 hover:bg-purple-50 hover:border-purple-300"
+                  ? "bg-sage-100 border-sage-400 text-sage-700 font-medium"
+                  : "bg-white border-sage-200 text-gray-600 hover:bg-sage-50 hover:border-sage-300"
               }`}
               onClick={() => toggleModification(option)}
             >
@@ -93,13 +93,13 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
       </div>
       
       {/* Selected ingredients display */}
-      <div className="mb-6 p-3 bg-white rounded-lg shadow-sm border border-purple-100">
+      <div className="mb-6 p-3 bg-white rounded-lg shadow-sm border border-sage-100">
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-purple-800">
+          <label className="block text-sm font-medium text-sage-800">
             Ingredient Modifications
           </label>
           {selectedIngredients.size > 0 && (
-            <Badge variant="outline" className="text-xs px-2 bg-purple-50 border-purple-200 text-purple-700">
+            <Badge variant="outline" className="text-xs px-2 bg-sage-50 border-sage-200 text-sage-700">
               {selectedIngredients.size} selected
             </Badge>
           )}
@@ -111,7 +111,7 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
             onRemoveSelection={onRemoveIngredientSelection}
           />
         ) : (
-          <div className="text-sm text-gray-500 bg-purple-50/50 border border-dashed border-purple-200 rounded-md p-4 text-center">
+          <div className="text-sm text-gray-500 bg-sage-50/50 border border-dashed border-sage-200 rounded-md p-4 text-center">
             Select ingredients from the recipe to modify their quantities or remove them
           </div>
         )}
@@ -119,7 +119,7 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
       
       {/* Submit button */}
       <Button 
-        className="w-full bg-purple-600 hover:bg-purple-700 shadow-md flex items-center justify-center gap-2"
+        className="w-full bg-sage-600 hover:bg-sage-700 shadow-md flex items-center justify-center gap-2"
         onClick={onStartModification}
         disabled={selectedIngredients.size === 0 && selectedModifications.length === 0 && !customInstructions.trim()}
       >
