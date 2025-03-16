@@ -7,7 +7,7 @@ import UnifiedModificationPanel from "./UnifiedModificationPanel";
 import RecipeVersionTabs from "./RecipeVersionTabs";
 import { useRecipe } from "@/context/recipe";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface DesktopLayoutProps {
@@ -96,7 +96,11 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             onExpand={() => {
               setLeftPanelCollapsed(false);
             }}
-            className="bg-white p-4 relative transition-all duration-300"
+            className={`p-4 relative transition-all duration-300 ${
+              leftPanelCollapsed 
+                ? "bg-gradient-to-b from-purple-50 to-purple-100 border-r-2 border-purple-200" 
+                : "bg-gradient-to-br from-purple-50 via-purple-100 to-blue-50 shadow-lg"
+            }`}
           >
             {leftPanelCollapsed ? (
               <div className="h-full flex flex-col items-center justify-center">
@@ -104,23 +108,24 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                   variant="ghost" 
                   size="icon" 
                   onClick={handleToggleModifyPanel}
-                  className="absolute top-4 right-2"
+                  className="absolute top-4 right-2 text-purple-500 hover:text-purple-700 hover:bg-purple-100/80"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
-                <div className="rotate-90 whitespace-nowrap text-sm font-medium text-gray-500">
-                  Recipe Modification
+                <div className="rotate-90 whitespace-nowrap text-base font-medium text-purple-700 flex items-center space-x-2">
+                  <Wand2 className="h-4 w-4 transform -rotate-90 mr-2" />
+                  <span>Recipe Modification</span>
                 </div>
               </div>
             ) : (
               <div className="overflow-y-auto h-full">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Modify Recipe</h2>
+                  <h2 className="text-xl font-semibold text-purple-800">Modify Recipe</h2>
                   <Button 
                     variant="ghost" 
                     size="icon" 
                     onClick={handleToggleModifyPanel}
-                    className="self-start"
+                    className="self-start text-purple-500 hover:text-purple-700 hover:bg-purple-100/80"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -141,13 +146,13 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                     <Button 
                       variant="outline"
                       onClick={resetToOriginal}
-                      className="w-full"
+                      className="w-full border-purple-300 hover:bg-purple-50"
                     >
                       Reset to Original
                     </Button>
                     <Button 
                       onClick={handleAcceptModification}
-                      className="w-full"
+                      className="w-full bg-purple-600 hover:bg-purple-700"
                     >
                       Save as New Version
                     </Button>
