@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { SpaceProvider } from "@/context/SpaceContext";
 import { RecipeProvider } from "@/context/recipe/RecipeContext";
+import { ToastProvider } from "@/components/ui/use-toast";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -19,26 +20,28 @@ function App() {
   return (
     <div className="app-root">
       <QueryClientProvider client={queryClient}>
-        <div>
-          <AuthProvider>
-            <SpaceProvider>
-              <RecipeProvider>
-                <TooltipProvider>
-                  <div className="app-container">
-                    <Toaster />
-                    <Sonner />
-                    <BrowserRouter>
-                      <Routes>
-                        <Route path="/" element={<Index />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </BrowserRouter>
-                  </div>
-                </TooltipProvider>
-              </RecipeProvider>
-            </SpaceProvider>
-          </AuthProvider>
-        </div>
+        <ToastProvider>
+          <div>
+            <AuthProvider>
+              <SpaceProvider>
+                <RecipeProvider>
+                  <TooltipProvider>
+                    <div className="app-container">
+                      <Toaster />
+                      <Sonner />
+                      <BrowserRouter>
+                        <Routes>
+                          <Route path="/" element={<Index />} />
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </BrowserRouter>
+                    </div>
+                  </TooltipProvider>
+                </RecipeProvider>
+              </SpaceProvider>
+            </AuthProvider>
+          </div>
+        </ToastProvider>
       </QueryClientProvider>
     </div>
   );
