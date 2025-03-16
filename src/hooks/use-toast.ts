@@ -1,11 +1,24 @@
 
-// Import the original toast hook from the UI component
-import { useToast as useToastOriginal } from "@/components/ui/use-toast";
+// Import the toast API from sonner directly
 import { toast as sonnerToast } from "sonner";
 
-// Export the hook with a different name to avoid the recursive call
+// Create a custom hook that doesn't depend on the UI component
 export const useToast = () => {
-  return useToastOriginal();
+  // Return a simple toast API with a similar interface
+  return {
+    toast: (props: any) => {
+      if (props.variant === "destructive") {
+        return sonnerToast.error(props.title, {
+          description: props.description,
+        });
+      }
+      return sonnerToast(props.title, {
+        description: props.description,
+      });
+    },
+    toasts: [], // Provide empty array for compatibility
+    dismiss: () => {} // Provide no-op for compatibility
+  };
 };
 
 // Re-export toast directly from sonner
