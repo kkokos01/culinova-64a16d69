@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRecipe } from "@/context/recipe";
+import { RecipeVersion } from "@/context/recipe/types";
 import { MoreVertical, Pencil, Trash2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
