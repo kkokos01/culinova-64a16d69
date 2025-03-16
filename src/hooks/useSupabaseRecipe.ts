@@ -148,17 +148,17 @@ export const useSupabaseRecipe = (recipeId: string) => {
         
         if (ingredientsData) {
           for (const ing of ingredientsData) {
-            // Handle food and unit as objects with proper type checking
-            const food = ing.food && typeof ing.food === 'object' ? ing.food : null;
-            const unit = ing.unit && typeof ing.unit === 'object' ? ing.unit : null;
+            // Safely handle food and unit objects with type checking
+            const ingredientFood = ing.food && typeof ing.food === 'object' ? ing.food : null;
+            const ingredientUnit = ing.unit && typeof ing.unit === 'object' ? ing.unit : null;
             
             ingredients.push({
-              id: ing.id,
-              food_id: food?.id || '',
-              unit_id: unit?.id || '',
-              amount: ing.amount,
-              food: food || undefined,
-              unit: unit || undefined
+              id: ing.id || '',
+              food_id: ingredientFood ? ingredientFood.id || '' : '',
+              unit_id: ingredientUnit ? ingredientUnit.id || '' : '',
+              amount: ing.amount || 0,
+              food: ingredientFood || undefined,
+              unit: ingredientUnit || undefined
             });
           }
         }

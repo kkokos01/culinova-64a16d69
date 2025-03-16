@@ -1,6 +1,6 @@
 
-// Import directly from sonner since @/components/ui/sonner doesn't export useToast and toast
-import { toast } from "sonner";
+// Import directly from sonner
+import { toast as sonnerToast } from "sonner";
 import { useToast as useToastHook } from "@/components/ui/use-toast";
 
 // Create our own hook that matches the expected signature
@@ -10,4 +10,4 @@ export const useToast = () => {
 };
 
 // Re-export toast directly from sonner
-export { toast };
+export { sonnerToast as toast };

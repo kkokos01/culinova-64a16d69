@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Recipe } from "@/types";
 import { RecipeVersion } from "@/context/recipe/types";
@@ -77,7 +78,7 @@ export async function fetchRecipeVersions(recipeId: string): Promise<RecipeVersi
 async function constructVersionObject(dbVersion: any, recipeData: any): Promise<RecipeVersion> {
   try {
     // Fetch ingredients for this version
-    const { data: ingredients, error: ingredientsError } = await supabase
+    const { data: ingredientsData, error: ingredientsError } = await supabase
       .from('recipe_version_ingredients')
       .select(`
         id, amount, order_index,
@@ -100,15 +101,15 @@ async function constructVersionObject(dbVersion: any, recipeData: any): Promise<
     // Create recipe object for this version - using original recipe data as the base
     const versionRecipe: Recipe = {
       ...recipeData,
-      ingredients: ingredients ? ingredients.map(ing => {
+      ingredients: ingredientsData ? ingredientsData.map(ing => {
         // Fix: Handle food and unit as individual objects, not arrays
         const food = ing.food || null;
         const unit = ing.unit || null;
         
         return {
           id: ing.id,
-          food_id: food?.id || '',
-          unit_id: unit?.id || '',
+          food_id: food ? food.id : '',
+          unit_id: unit ? unit.id : '',
           amount: ing.amount,
           food: food || undefined,
           unit: unit || undefined
