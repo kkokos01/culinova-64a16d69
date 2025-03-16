@@ -49,20 +49,21 @@ const SelectedIngredientsPanel: React.FC<SelectedIngredientsPanelProps> = ({
     <div className="border border-gray-200 rounded-md p-3 bg-gray-50">
       <div className="space-y-2">
         {Array.from(selectedIngredients.entries()).map(([id, { ingredient, action }]) => (
-          <div key={id} className="flex items-center justify-between bg-white p-2 rounded border border-gray-100 text-sm">
-            <div className="flex items-center gap-2 min-w-0">
-              <Badge className={`shrink-0 ${getBadgeStyles(action)}`}>
+          <div key={id} className="flex items-start justify-between bg-white p-2 rounded border border-gray-100 text-sm">
+            <div className="flex items-start gap-2 min-w-0 flex-grow mr-2">
+              <Badge className={`shrink-0 mt-0.5 ${getBadgeStyles(action)}`}>
                 {action === "increase" ? <Plus className="h-3 w-3" /> : 
                  action === "decrease" ? <Minus className="h-3 w-3" /> : 
                  <X className="h-3 w-3" />}
               </Badge>
-              <span className="truncate">
-                <span className="font-medium">{getActionText(action)}</span> {ingredient.food?.name}
+              <span className="break-words">
+                <span className="font-medium">{getActionText(action)}</span>{" "}
+                {ingredient.food?.name}
               </span>
             </div>
             <button 
               onClick={() => onRemoveSelection(id)}
-              className="ml-2 text-gray-400 hover:text-red-500"
+              className="ml-2 text-gray-400 hover:text-red-500 flex-shrink-0"
               aria-label="Remove selection"
             >
               <Trash2 className="h-4 w-4" />
