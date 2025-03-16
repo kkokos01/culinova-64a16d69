@@ -7,6 +7,25 @@ import { useDebugSupabaseData } from "@/utils/debugSupabaseData";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+// Define types for the ingredients data returned from Supabase
+interface IngredientData {
+  id: string;
+  recipe_id: string;
+  food_id: string;
+  unit_id: string;
+  amount: number;
+  foods: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  units: {
+    id: string;
+    name: string;
+    abbreviation: string;
+  };
+}
+
 // Main exported component wrapped with the RecipeProvider
 const RecipeDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -82,8 +101,8 @@ const RecipeDetail = () => {
         // Access first ingredient's food and unit correctly
         let firstIngredientInfo = "None";
         if (ingredientsData.length > 0) {
-          const firstIng = ingredientsData[0];
-          // Correctly access the foods and units properties as objects, not arrays
+          const firstIng = ingredientsData[0] as IngredientData;
+          // Type assertion to ensure TypeScript understands this is an object
           const foodName = firstIng.foods ? firstIng.foods.name : "None";
           const amount = firstIng.amount || 0;
           const unitAbbr = firstIng.units ? firstIng.units.abbreviation : "";
