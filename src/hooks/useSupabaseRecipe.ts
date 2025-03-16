@@ -65,7 +65,7 @@ export const useSupabaseRecipe = (recipeId: string) => {
         // Transform ingredients to ensure proper structure for our Recipe type
         const ingredients = ingredientsWithFood?.map(ingredient => {
           // Transform the joined foods data to be in the expected "food" property
-          // Important: foods and units from the join are objects, not arrays
+          // Foods and units are objects from the join, not arrays
           return {
             id: ingredient.id,
             recipe_id: ingredient.recipe_id,
@@ -73,8 +73,8 @@ export const useSupabaseRecipe = (recipeId: string) => {
             unit_id: ingredient.unit_id,
             amount: ingredient.amount,
             order_index: ingredient.order_index,
-            food: ingredient.foods || null, // Here foods is an object, not an array
-            unit: ingredient.units || null  // Here units is an object, not an array
+            food: ingredient.foods || null,
+            unit: ingredient.units || null
           };
         }) || [];
         
