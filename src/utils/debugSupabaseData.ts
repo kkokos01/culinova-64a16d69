@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 export const useDebugSupabaseData = () => {
   const { toast } = useToast();
 
+  // Inspect a single recipe with its details
   const inspectRecipe = async (recipeId: string) => {
     try {
       console.log("Inspecting recipe data structure:", recipeId);
@@ -79,5 +80,128 @@ export const useDebugSupabaseData = () => {
     }
   };
 
-  return { inspectRecipe };
+  // Get all foods available in the database
+  const getAllFoods = async () => {
+    try {
+      const { data: foods, error } = await supabase
+        .from('foods')
+        .select('*')
+        .order('name');
+        
+      if (error) {
+        throw new Error(`Failed to fetch foods: ${error.message}`);
+      }
+      
+      console.log("All available foods:", foods);
+      return foods;
+    } catch (err) {
+      console.error("Error fetching foods:", err);
+      toast({
+        title: "Error fetching foods",
+        description: err instanceof Error ? err.message : "Failed to fetch foods data",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  // Get all units available in the database
+  const getAllUnits = async () => {
+    try {
+      const { data: units, error } = await supabase
+        .from('units')
+        .select('*')
+        .order('display_order');
+        
+      if (error) {
+        throw new Error(`Failed to fetch units: ${error.message}`);
+      }
+      
+      console.log("All available units:", units);
+      return units;
+    } catch (err) {
+      console.error("Error fetching units:", err);
+      toast({
+        title: "Error fetching units",
+        description: err instanceof Error ? err.message : "Failed to fetch units data",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  // Analyze database structure for recipe-related tables
+  const analyzeRecipeStructure = async () => {
+    try {
+      console.log("Analyzing recipe database structure...");
+      
+      // Get count of recipes
+      const { count: recipeCount, error: recipeError } = await supabase
+        .from('recipes')
+        .select('*', { count: 'exact', head: true });
+        
+      if (recipeError) throw new Error(`Recipe count error: ${recipeError.message}`);
+      
+      // Get count of foods
+      const { count: foodCount, error: foodError } = await supabase
+        .from('foods')
+        .select('*', { count: 'exact', head: true });
+        
+      if (foodError) throw new Error(`Food count error: ${foodError.message}`);
+      
+      // Get count of units
+      const { count: unitCount, error: unitError } = await supabase
+        .from('units')
+        .select('*', { count: 'exact', head: true });
+        
+      if (unitError) throw new Error(`Unit count error: ${unitError.message}`);
+      
+      // Get ingredients sample
+      const { data: ingredientsSample, error: ingredientsError } = await supabase
+        .from('ingredients')
+        .select(`
+          *,
+          food:food_id(id, name),
+          unit:unit_id(id, name, abbreviation)
+        `)
+        .limit(10);
+        
+      if (ingredientsError) throw new Error(`Ingredients error: ${ingredientsError.message}`);
+      
+      // Get a sample of available recipes
+      const { data: recipes, error: recipesListError } = await supabase
+        .from('recipes')
+        .select('id, title, created_at')
+        .order('created_at', { ascending: false })
+        .limit(10);
+        
+      if (recipesListError) throw new Error(`Recipes list error: ${recipesListError.message}`);
+      
+      const analysisResults = {
+        recipeCount,
+        foodCount,
+        unitCount,
+        ingredientsSample,
+        recentRecipes: recipes
+      };
+      
+      console.log("Database analysis results:", analysisResults);
+      return analysisResults;
+    } catch (err) {
+      console.error("Error analyzing database:", err);
+      toast({
+        title: "Error analyzing database",
+        description: err instanceof Error ? err.message : "Failed to analyze database structure",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  return { 
+    inspectRecipe,
+    getAllFoods,
+    getAllUnits,
+    analyzeRecipeStructure
+  };
 };
