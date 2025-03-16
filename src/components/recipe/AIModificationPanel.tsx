@@ -89,9 +89,11 @@ const AIModificationPanel: React.FC<AIModificationPanelProps> = ({
                   <div className="flex-shrink-0 mt-0.5">
                     {type.icon}
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <CardTitle className="text-base break-words">{type.title}</CardTitle>
-                    <CardDescription className="text-xs sm:text-sm line-clamp-2 break-words">{type.description}</CardDescription>
+                    <CardDescription className="text-xs sm:text-sm line-clamp-3 break-words">
+                      {type.description}
+                    </CardDescription>
                   </div>
                 </CardHeader>
                 {selectedModification === type.id && (
@@ -105,7 +107,7 @@ const AIModificationPanel: React.FC<AIModificationPanelProps> = ({
                         className="w-full mt-2 text-sm"
                         onClick={() => onStartModification(type.id)}
                       >
-                        Continue with {type.title}
+                        <span className="whitespace-normal break-words">Continue with {type.title}</span>
                       </Button>
                     </div>
                   </CardContent>
@@ -141,7 +143,7 @@ const AIModificationPanel: React.FC<AIModificationPanelProps> = ({
                   className="w-full text-sm"
                   onClick={() => onStartModification("custom")}
                 >
-                  Generate Modification
+                  <span className="whitespace-normal break-words">Generate Modification</span>
                 </Button>
               </div>
             </CardContent>

@@ -65,25 +65,25 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
       {/* Ingredients */}
       <div className="mb-8">
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
-        <ul className="space-y-2 grid sm:grid-cols-2 gap-2">
+        <div className="grid sm:grid-cols-2 gap-2">
           {recipe.ingredients?.map((ingredient) => {
             const styles = getIngredientStyles(ingredient);
             
             return (
-              <li 
+              <div 
                 key={ingredient.id} 
-                className={`flex items-center p-2.5 rounded-md border transition-colors ${styles.container} cursor-pointer`}
+                className={`flex items-center p-2.5 rounded-md border transition-colors ${styles.container} cursor-pointer h-full`}
                 onClick={(e) => handleIngredientClick(ingredient, e)}
               >
                 <div className="flex-1 min-w-0">
-                  <div className={`flex items-baseline flex-wrap gap-x-2 ${styles.text}`}>
+                  <div className={`flex items-baseline gap-x-2 ${styles.text}`}>
                     <span className="font-medium whitespace-nowrap">
                       {ingredient.amount} {ingredient.unit?.abbreviation}
                     </span>
                     <span className="truncate">{ingredient.food?.name}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 ml-2 action-buttons">
+                <div className="flex items-center gap-1 ml-2 action-buttons shrink-0">
                   <button
                     onClick={() => onSelectIngredient(ingredient, "increase")}
                     className={`p-1 rounded-full ${
@@ -118,10 +118,10 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
                     <X className="h-4 w-4" />
                   </button>
                 </div>
-              </li>
+              </div>
             );
           })}
-        </ul>
+        </div>
       </div>
       
       {/* Steps */}
