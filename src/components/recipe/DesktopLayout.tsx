@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
 import RecipeContent from "./RecipeContent";
-import UnifiedModificationPanel from "./UnifiedModificationPanel";
 import RecipeVersionTabs from "./RecipeVersionTabs";
 import { useRecipe } from "@/context/recipe";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";

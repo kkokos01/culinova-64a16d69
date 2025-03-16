@@ -51,7 +51,7 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
   };
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto text-white">
       <div className="mb-6 p-3 bg-white/10 rounded-lg shadow-sm border border-white/20">
         <label htmlFor="custom-instructions" className="block text-sm font-medium text-white mb-2">
           Custom Instructions
