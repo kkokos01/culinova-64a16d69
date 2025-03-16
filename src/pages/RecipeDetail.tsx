@@ -6,12 +6,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Ingredient } from "@/types";
 import Navbar from "@/components/Navbar";
 import { RecipeProvider, useRecipe } from "@/context/recipe"; 
-import { useMockRecipe } from "@/hooks/useMockRecipe";
 import RecipeDetailSkeleton from "@/components/recipe/RecipeDetailSkeleton";
 import MobileLayout from "@/components/recipe/MobileLayout";
 import DesktopLayout from "@/components/recipe/DesktopLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/toaster";
+import { useSupabaseRecipe } from "@/hooks/useSupabaseRecipe";
 
 // Main container component
 const RecipeDetailContainer = () => {
@@ -37,8 +37,8 @@ const RecipeDetailContainer = () => {
     fetchVersionsFromDb
   } = useRecipe();
   
-  // Use our mock recipe hook initially - we'll replace this with Supabase later
-  const { recipe: recipeData, loading: isLoading, error } = useMockRecipe(id || "");
+  // Use our Supabase recipe hook
+  const { recipe: recipeData, loading: isLoading, error } = useSupabaseRecipe(id || "");
   
   // Set recipe in context when data is loaded
   useEffect(() => {
