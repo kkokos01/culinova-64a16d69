@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
@@ -88,8 +89,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             }}
             className={`relative transition-all duration-300 ${
               leftPanelCollapsed 
-                ? "bg-sage-400 text-white" 
-                : "bg-sage-400 text-white shadow-lg"
+                ? "bg-sage-500 text-white" 
+                : "bg-sage-500 text-white shadow-lg"
             }`}
           >
             {leftPanelCollapsed ? (
@@ -98,7 +99,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                   variant="ghost" 
                   size="icon" 
                   onClick={handleToggleModifyPanel}
-                  className="absolute top-4 right-2 text-white hover:text-white hover:bg-sage-500/60"
+                  className="absolute top-4 right-2 text-white hover:text-white hover:bg-sage-600/60"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -111,12 +112,12 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               <div className="overflow-y-auto h-full">
                 <Card className="rounded-none border-x-0 border-t-0 border-b border-white/20 shadow-none">
                   <CardHeader className="p-3 flex flex-row items-center justify-between">
-                    <h2 className="text-lg font-semibold text-sage-700">Modify Recipe</h2>
+                    <h2 className="text-lg font-semibold text-sage-600">Modify Recipe</h2>
                     <Button 
                       variant="ghost" 
                       size="icon" 
                       onClick={handleToggleModifyPanel}
-                      className="text-sage-700 hover:text-sage-700 hover:bg-sage-100"
+                      className="text-sage-600 hover:text-sage-600 hover:bg-sage-100"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -140,13 +141,13 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                       <Button 
                         variant="outline"
                         onClick={resetToOriginal}
-                        className="w-full border-white/30 text-white hover:bg-sage-500 hover:text-white"
+                        className="w-full border-white/30 text-white hover:bg-sage-600 hover:text-white"
                       >
                         Reset to Original
                       </Button>
                       <Button 
                         onClick={handleAcceptModification}
-                        className="w-full bg-white text-sage-700 hover:bg-white/90 font-medium"
+                        className="w-full bg-white text-sage-600 hover:bg-white/90 font-medium"
                       >
                         Save as New Version
                       </Button>

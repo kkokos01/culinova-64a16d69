@@ -34,18 +34,18 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
   } = useRecipe();
 
   return (
-    <div className={`h-full flex flex-col overflow-hidden ${isMobile ? "bg-sage-400" : ""}`}>
+    <div className={`h-full flex flex-col overflow-hidden ${isMobile ? "bg-sage-500" : ""}`}>
       <Card className="bg-white rounded-none border-x-0 border-t-0 border-b border-white/20 shadow-none">
         <CardHeader className="p-3 flex flex-row items-center justify-between">
           <Button
             variant="ghost"
             size="icon"
             onClick={closePanel}
-            className="text-sage-700 hover:text-sage-700 hover:bg-sage-100"
+            className="text-sage-600 hover:text-sage-600 hover:bg-sage-100"
           >
             <X className="h-5 w-5" />
           </Button>
-          <h2 className="text-lg font-semibold text-sage-700">Modify Recipe</h2>
+          <h2 className="text-lg font-semibold text-sage-600">Modify Recipe</h2>
           <div className="w-8"></div>
         </CardHeader>
       </Card>
@@ -67,13 +67,13 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
             <Button 
               variant="outline"
               onClick={resetToOriginal}
-              className="w-full border-white/30 text-white hover:bg-sage-500 hover:text-white"
+              className="w-full border-white/30 text-white hover:bg-sage-600 hover:text-white"
             >
               Reset to Original
             </Button>
             <Button 
               onClick={onAcceptModification}
-              className="w-full bg-white text-sage-700 hover:bg-white/90 font-medium"
+              className="w-full bg-white text-sage-600 hover:bg-white/90 font-medium"
             >
               Save as New Version
             </Button>

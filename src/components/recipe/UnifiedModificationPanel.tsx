@@ -78,7 +78,7 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
               size="sm"
               className={`rounded-full px-4 py-1 h-auto text-sm ${
                 selectedModifications.includes(option)
-                  ? "bg-sage-100 border-sage-300 text-sage-700 font-medium"
+                  ? "bg-sage-100 border-sage-300 text-sage-600 font-medium"
                   : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400"
               }`}
               onClick={() => toggleModification(option)}
@@ -119,7 +119,7 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
       
       {/* Submit button with improved contrast */}
       <Button 
-        className="w-full bg-white text-sage-700 hover:bg-gray-100 font-medium shadow-md flex items-center justify-center gap-2"
+        className="w-full bg-white text-sage-600 hover:bg-gray-100 font-medium shadow-md flex items-center justify-center gap-2"
         onClick={onStartModification}
         disabled={selectedIngredients.size === 0 && selectedModifications.length === 0 && !customInstructions.trim()}
       >
