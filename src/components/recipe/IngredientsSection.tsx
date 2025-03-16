@@ -1,6 +1,6 @@
 
 import React from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Ingredient } from "@/types";
 import IngredientItem from "./IngredientItem";
 
@@ -23,6 +23,11 @@ const IngredientsSection: React.FC<IngredientsSectionProps> = ({
 
   // Check if we have ingredients without food details
   const hasIncompleteData = ingredients.some(i => !i.food || !i.food.name);
+
+  // Check for non-validated ingredients
+  const hasNonValidated = ingredients.some(i => 
+    i?.food && i.food.is_validated === false
+  );
 
   // Count valid ingredients (with both food and unit information)
   const validIngredientCount = ingredients.filter(i => 
@@ -54,6 +59,15 @@ const IngredientsSection: React.FC<IngredientsSectionProps> = ({
           <AlertTriangle className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
           <p className="text-red-700 text-sm">
             Some ingredients are missing food information. This may indicate a database connectivity issue or improper food references.
+          </p>
+        </div>
+      )}
+      
+      {hasNonValidated && (
+        <div className="flex items-center mb-3 p-2 bg-blue-50 border border-blue-200 rounded-md">
+          <CheckCircle2 className="text-blue-500 mr-2 h-5 w-5 flex-shrink-0" />
+          <p className="text-blue-700 text-sm">
+            Some ingredients contain AI-suggested foods that have not yet been validated. You may want to review these items.
           </p>
         </div>
       )}

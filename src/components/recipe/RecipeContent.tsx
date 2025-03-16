@@ -38,10 +38,26 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
   const ingredients = recipe.ingredients || [];
   const steps = recipe.steps || [];
 
+  // Normalize ingredient data to handle both direct and joined structures
+  const normalizedIngredients = ingredients.map(ingredient => {
+    // Ensure we have a properly structured ingredient
+    return {
+      ...ingredient,
+      // If food is an object but not an array, use it directly
+      food: ingredient.food && typeof ingredient.food === 'object' && !Array.isArray(ingredient.food) 
+        ? ingredient.food 
+        : undefined,
+      // If unit is an object but not an array, use it directly
+      unit: ingredient.unit && typeof ingredient.unit === 'object' && !Array.isArray(ingredient.unit)
+        ? ingredient.unit
+        : undefined
+    };
+  });
+
   return (
     <div className="max-w-4xl mx-auto">
       <IngredientsSection 
-        ingredients={ingredients} 
+        ingredients={normalizedIngredients} 
         selectedIngredients={selectedIngredients}
         onSelectIngredient={onSelectIngredient}
       />

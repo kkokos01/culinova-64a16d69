@@ -53,7 +53,7 @@ export const useSupabaseRecipe = (recipeId: string) => {
             unit_id,
             amount,
             order_index,
-            foods:food_id(id, name, description),
+            foods:food_id(id, name, description, is_validated, confidence_score, source),
             units:unit_id(id, name, abbreviation)
           `)
           .eq('recipe_id', recipeId);
