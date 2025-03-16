@@ -19,9 +19,9 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
 }) => {
   return (
     <div className="mb-4">
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div className="flex flex-col md:flex-row gap-4">
         {/* Recipe details - left side */}
-        <div className="flex flex-col flex-grow">
+        <div className="flex-grow">
           <div className="mb-2">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
               {recipe.title}
@@ -52,7 +52,7 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
         
         {/* Image - right side with overlay button */}
         {recipe.image_url && (
-          <div className="lg:w-1/3 rounded-lg overflow-hidden shadow-md h-40 lg:h-32 relative">
+          <div className="md:w-1/3 lg:w-1/4 rounded-lg overflow-hidden shadow-md h-40 md:h-40 w-full aspect-square relative">
             <img 
               src={recipe.image_url} 
               alt={recipe.title} 
