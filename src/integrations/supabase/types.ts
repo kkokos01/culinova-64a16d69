@@ -863,6 +863,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      create_mock_recipes_in_space: {
+        Args: {
+          space_id_param: string
+          user_id_param: string
+          count_param?: number
+        }
+        Returns: string[]
+      }
       create_space_for_existing_user: {
         Args: {
           user_id_param: string
@@ -920,6 +928,49 @@ export type Database = {
           tags: string[] | null
           updated_at: string
         }[]
+      }
+      get_recipe_with_details: {
+        Args: {
+          recipe_id_param: string
+        }
+        Returns: {
+          id: string
+          title: string
+          description: string
+          cook_time_minutes: number
+          prep_time_minutes: number
+          servings: number
+          difficulty: string
+          user_id: string
+          space_id: string
+          is_public: boolean
+          privacy_level: string
+          image_url: string
+          created_at: string
+          updated_at: string
+          ingredient_id: string
+          ingredient_food_id: string
+          ingredient_unit_id: string
+          ingredient_amount: number
+          ingredient_order_index: number
+          food_name: string
+          food_description: string
+          food_category_id: string
+          food_properties: Json
+          unit_name: string
+          unit_abbreviation: string
+          unit_plural_name: string
+          step_id: string
+          step_instruction: string
+          step_order_number: number
+          step_duration_minutes: number
+        }[]
+      }
+      get_user_default_space: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: string
       }
       is_member_of_space: {
         Args: {
