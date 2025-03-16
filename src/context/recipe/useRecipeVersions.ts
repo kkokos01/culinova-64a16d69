@@ -73,11 +73,12 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
             ...recipeData,
             ingredients: ingredients?.map(ing => ({
               id: ing.id,
-              food_id: ing.food?.id || '',
-              unit_id: ing.unit?.id || '',
+              // Fix: Handle food and unit as objects, not arrays
+              food_id: ing.food ? ing.food.id : '',
+              unit_id: ing.unit ? ing.unit.id : '',
               amount: ing.amount,
-              food: ing.food,
-              unit: ing.unit
+              food: ing.food ? ing.food : undefined,
+              unit: ing.unit ? ing.unit : undefined
             })) || [],
             steps: steps || []
           };
@@ -161,6 +162,7 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
       if (recipe.ingredients && recipe.ingredients.length > 0) {
         const versionIngredients = recipe.ingredients.map((ing, index) => ({
           version_id: newDbVersion.id,
+          // Fix: Properly handle potentially undefined food and unit objects
           food_id: ing.food?.id || ing.food_id,
           unit_id: ing.unit?.id || ing.unit_id,
           amount: ing.amount,
