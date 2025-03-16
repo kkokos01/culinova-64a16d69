@@ -46,13 +46,19 @@ export const useSupabaseRecipe = (recipeId: string) => {
           return;
         }
         
-        // Fetch ingredients with related data
-        const { data: ingredients, error: ingredientsError } = await supabase
+        // Fetch ingredients with related data, ensuring we get food details
+        // This query first gets ingredients for the recipe, then joins with foods and units tables
+        const { data: ingredientsWithFood, error: ingredientsError } = await supabase
           .from('ingredients')
           .select(`
-            *,
-            food:food_id(*),
-            unit:unit_id(*)
+            id, 
+            recipe_id,
+            food_id,
+            unit_id,
+            amount,
+            order_index,
+            foods:food_id(id, name, description),
+            units:unit_id(id, name, abbreviation)
           `)
           .eq('recipe_id', recipeId);
           
@@ -60,8 +66,29 @@ export const useSupabaseRecipe = (recipeId: string) => {
           throw new Error(`Failed to fetch ingredients: ${ingredientsError.message}`);
         }
         
-        // Log ingredient data for debugging
-        console.log("Fetched ingredients data:", ingredients);
+        // Transform ingredients to ensure proper structure for our Recipe type
+        const ingredients = ingredientsWithFood?.map(ingredient => {
+          return {
+            id: ingredient.id,
+            recipe_id: ingredient.recipe_id,
+            food_id: ingredient.food_id,
+            unit_id: ingredient.unit_id,
+            amount: ingredient.amount,
+            order_index: ingredient.order_index,
+            // Transform the joined foods data to be in the expected "food" property
+            food: ingredient.foods,
+            // Transform the joined units data to be in the expected "unit" property
+            unit: ingredient.units
+          };
+        }) || [];
+        
+        // Log processed ingredients for debugging
+        console.log("Processed ingredients:", ingredients.map(i => ({
+          id: i.id,
+          food: i.food,
+          unit: i.unit,
+          amount: i.amount
+        })));
         
         // Fetch steps
         const { data: steps, error: stepsError } = await supabase

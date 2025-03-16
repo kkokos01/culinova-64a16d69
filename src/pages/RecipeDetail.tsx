@@ -43,8 +43,8 @@ const RecipeDetail = () => {
             food_id,
             unit_id,
             amount,
-            food:food_id(id, name, description),
-            unit:unit_id(id, name, abbreviation)
+            foods:food_id(id, name, description),
+            units:unit_id(id, name, abbreviation)
           `)
           .eq('recipe_id', id);
           
@@ -84,9 +84,9 @@ const RecipeDetail = () => {
         let firstIngredientInfo = "None";
         if (ingredientsData.length > 0) {
           const firstIng = ingredientsData[0];
-          const foodName = firstIng.food ? firstIng.food.name : "None";
+          const foodName = firstIng.foods ? firstIng.foods.name : "None";
           const amount = firstIng.amount || 0;
-          const unitAbbr = firstIng.unit ? firstIng.unit.abbreviation : "";
+          const unitAbbr = firstIng.units ? firstIng.units.abbreviation : "";
           
           firstIngredientInfo = `${foodName} - ${amount} ${unitAbbr}`;
         }
