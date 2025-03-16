@@ -1,67 +1,80 @@
 
 import React, { createContext, useContext, useState } from "react";
 import { Recipe, Ingredient } from "@/types";
+import { v4 as uuidv4 } from 'uuid';
 
-// Define a type for recipe versions
-export type RecipeVersion = {
+// Define the version type
+export interface RecipeVersion {
   id: string;
   name: string;
   recipe: Recipe;
   isActive: boolean;
-};
+}
 
-type RecipeContextType = {
+// Define the context type
+interface RecipeContextType {
   recipe: Recipe | null;
+  setRecipe: (recipe: Recipe) => void;
   originalRecipe: Recipe | null;
-  recipeVersions: RecipeVersion[];
-  isModified: boolean;
-  isProcessingAI: boolean;
+  setOriginalRecipe: (recipe: Recipe) => void;
   selectedIngredient: Ingredient | null;
-  selectedIngredients: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
-  customInstructions: string;
-  setRecipe: (recipe: Recipe | null) => void;
-  setOriginalRecipe: (recipe: Recipe | null) => void;
-  setIsModified: (isModified: boolean) => void;
-  setIsProcessingAI: (isProcessing: boolean) => void;
   setSelectedIngredient: (ingredient: Ingredient | null) => void;
-  resetToOriginal: () => void;
+  selectedIngredients: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
   selectIngredientForModification: (ingredient: Ingredient, action: "increase" | "decrease" | "remove") => void;
   removeIngredientSelection: (id: string) => void;
+  customInstructions: string;
   setCustomInstructions: (instructions: string) => void;
-  // Added new functions to support recipe versions
+  isModified: boolean;
+  setIsModified: (isModified: boolean) => void;
+  resetToOriginal: () => void;
+  recipeVersions: RecipeVersion[];
+  activeVersionId: string;
   addRecipeVersion: (name: string, recipe: Recipe) => void;
-  setActiveVersion: (id: string) => void;
-  renameVersion: (id: string, newName: string) => void;
-  deleteVersion: (id: string) => void;
-};
+  setActiveVersion: (versionId: string) => void;
+  renameVersion: (versionId: string, newName: string) => void;
+  deleteVersion: (versionId: string) => void;
+}
 
-const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
+// Create context with default values
+const RecipeContext = createContext<RecipeContextType>({
+  recipe: null,
+  setRecipe: () => {},
+  originalRecipe: null,
+  setOriginalRecipe: () => {},
+  selectedIngredient: null,
+  setSelectedIngredient: () => {},
+  selectedIngredients: new Map(),
+  selectIngredientForModification: () => {},
+  removeIngredientSelection: () => {},
+  customInstructions: "",
+  setCustomInstructions: () => {},
+  isModified: false,
+  setIsModified: () => {},
+  resetToOriginal: () => {},
+  recipeVersions: [],
+  activeVersionId: "",
+  addRecipeVersion: () => {},
+  setActiveVersion: () => {},
+  renameVersion: () => {},
+  deleteVersion: () => {},
+});
 
+// Provider component
 export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [originalRecipe, setOriginalRecipe] = useState<Recipe | null>(null);
-  const [isModified, setIsModified] = useState(false);
-  const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
-  const [selectedIngredients, setSelectedIngredients] = useState<
-    Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>
-  >(new Map());
+  const [selectedIngredients, setSelectedIngredients] = useState<Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>>(
+    new Map()
+  );
   const [customInstructions, setCustomInstructions] = useState("");
+  const [isModified, setIsModified] = useState(false);
   const [recipeVersions, setRecipeVersions] = useState<RecipeVersion[]>([]);
 
-  const resetToOriginal = () => {
-    if (originalRecipe) {
-      setRecipe(originalRecipe);
-      setIsModified(false);
-      
-      // Set the original version as active
-      const originalVersionId = recipeVersions.find(v => v.name === "Original")?.id;
-      if (originalVersionId) {
-        setActiveVersion(originalVersionId);
-      }
-    }
-  };
+  // Calculate active version ID from the versions array
+  const activeVersionId = recipeVersions.find(v => v.isActive)?.id || "";
 
+  // Select an ingredient for modification
   const selectIngredientForModification = (ingredient: Ingredient, action: "increase" | "decrease" | "remove") => {
     setSelectedIngredients(prev => {
       const newMap = new Map(prev);
@@ -70,6 +83,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   };
 
+  // Remove an ingredient from the selection
   const removeIngredientSelection = (id: string) => {
     setSelectedIngredients(prev => {
       const newMap = new Map(prev);
@@ -78,89 +92,97 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   };
 
-  // New functions for recipe versions
-  const addRecipeVersion = (name: string, newRecipe: Recipe) => {
+  // Reset to original recipe
+  const resetToOriginal = () => {
+    if (originalRecipe) {
+      setRecipe(originalRecipe);
+      setIsModified(false);
+    }
+  };
+
+  // Add a new recipe version
+  const addRecipeVersion = (name: string, recipe: Recipe) => {
+    // Deactivate all existing versions
+    const updatedVersions = recipeVersions.map(version => ({
+      ...version,
+      isActive: false
+    }));
+    
+    // Create a new version and set it as active
     const newVersion: RecipeVersion = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       name,
-      recipe: newRecipe,
+      recipe: { ...recipe },
       isActive: true
     };
-
-    setRecipeVersions(prev => {
-      // Set all versions to inactive
-      const updatedVersions = prev.map(v => ({...v, isActive: false}));
-      // Add the new version
-      return [...updatedVersions, newVersion];
-    });
-
-    // Set the new recipe as current
-    setRecipe(newRecipe);
+    
+    setRecipeVersions([...updatedVersions, newVersion]);
   };
 
-  const setActiveVersion = (id: string) => {
-    setRecipeVersions(prev => {
-      const updatedVersions = prev.map(v => ({
-        ...v,
-        isActive: v.id === id
-      }));
-      
-      // Update the current recipe
-      const activeVersion = updatedVersions.find(v => v.id === id);
-      if (activeVersion) {
-        setRecipe(activeVersion.recipe);
+  // Set active version
+  const setActiveVersion = (versionId: string) => {
+    const updatedVersions = recipeVersions.map(version => {
+      const isActive = version.id === versionId;
+      // If this version is being activated, also update the current recipe
+      if (isActive) {
+        setRecipe(version.recipe);
       }
-      
-      return updatedVersions;
+      return {
+        ...version,
+        isActive
+      };
     });
+    
+    setRecipeVersions(updatedVersions);
   };
 
-  const renameVersion = (id: string, newName: string) => {
-    setRecipeVersions(prev => 
-      prev.map(v => v.id === id ? {...v, name: newName} : v)
+  // Rename version
+  const renameVersion = (versionId: string, newName: string) => {
+    const updatedVersions = recipeVersions.map(version => 
+      version.id === versionId 
+        ? { ...version, name: newName } 
+        : version
     );
+    
+    setRecipeVersions(updatedVersions);
   };
 
-  const deleteVersion = (id: string) => {
-    setRecipeVersions(prev => {
-      const filteredVersions = prev.filter(v => v.id !== id);
-      
-      // If we're deleting the active version, set the first available one as active
-      const wasActive = prev.find(v => v.id === id)?.isActive;
-      
-      if (wasActive && filteredVersions.length > 0) {
-        // Set the original as active if available, otherwise the first version
-        const originalVersion = filteredVersions.find(v => v.name === "Original");
-        const newActiveVersion = originalVersion || filteredVersions[0];
-        
-        newActiveVersion.isActive = true;
-        setRecipe(newActiveVersion.recipe);
-      }
-      
-      return filteredVersions;
-    });
+  // Delete version
+  const deleteVersion = (versionId: string) => {
+    // Find if the version being deleted is active
+    const isActiveVersion = recipeVersions.find(v => v.id === versionId)?.isActive || false;
+    
+    // Filter out the version to delete
+    const remainingVersions = recipeVersions.filter(version => version.id !== versionId);
+    
+    // If we deleted the active version, make the first remaining version active
+    if (isActiveVersion && remainingVersions.length > 0) {
+      remainingVersions[0].isActive = true;
+      setRecipe(remainingVersions[0].recipe);
+    }
+    
+    setRecipeVersions(remainingVersions);
   };
 
   return (
     <RecipeContext.Provider
       value={{
         recipe,
-        originalRecipe,
-        recipeVersions,
-        isModified,
-        isProcessingAI,
-        selectedIngredient,
-        selectedIngredients,
-        customInstructions,
         setRecipe,
+        originalRecipe,
         setOriginalRecipe,
-        setIsModified,
-        setIsProcessingAI,
+        selectedIngredient,
         setSelectedIngredient,
-        resetToOriginal,
+        selectedIngredients,
         selectIngredientForModification,
         removeIngredientSelection,
+        customInstructions,
         setCustomInstructions,
+        isModified,
+        setIsModified,
+        resetToOriginal,
+        recipeVersions,
+        activeVersionId,
         addRecipeVersion,
         setActiveVersion,
         renameVersion,
@@ -172,10 +194,5 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   );
 };
 
-export const useRecipe = (): RecipeContextType => {
-  const context = useContext(RecipeContext);
-  if (context === undefined) {
-    throw new Error("useRecipe must be used within a RecipeProvider");
-  }
-  return context;
-};
+// Hook to use the recipe context
+export const useRecipe = () => useContext(RecipeContext);

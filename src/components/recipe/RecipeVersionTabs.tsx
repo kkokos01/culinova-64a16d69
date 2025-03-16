@@ -11,16 +11,19 @@ import { MoreVertical, Pencil, Trash2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const RecipeVersionTabs: React.FC = () => {
-  const { recipeVersions, setActiveVersion, renameVersion, deleteVersion } = useRecipe();
+  const { recipeVersions, activeVersionId, setActiveVersion, renameVersion, deleteVersion } = useRecipe();
   const { toast } = useToast();
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
   const [newVersionName, setNewVersionName] = useState("");
-  
-  const activeVersionId = recipeVersions.find(v => v.isActive)?.id || "";
 
   const handleVersionSelect = (versionId: string) => {
     setActiveVersion(versionId);
+  };
+
+  // Handle dropdown actions with separate handlers that prevent event propagation
+  const handleOpenDropdown = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   const handleRenameClick = (version: RecipeVersion, e: React.MouseEvent) => {
@@ -73,8 +76,8 @@ const RecipeVersionTabs: React.FC = () => {
     return (
       <div className="mb-4 pb-1">
         <div className="w-full">
-          <div className="w-full mb-2 overflow-x-auto overflow-y-hidden flex-wrap inline-flex h-auto min-h-[40px] items-center rounded-md bg-muted p-1 text-muted-foreground">
-            <div className="border border-gray-200 rounded-md px-4 py-2 m-1 inline-flex items-center justify-center whitespace-normal break-words text-center rounded-md text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+          <div className="w-full mb-2 overflow-x-auto overflow-y-hidden flex-wrap">
+            <div className="border border-gray-200 rounded-md px-4 py-2 m-1 inline-flex items-center justify-center">
               Original
             </div>
           </div>
@@ -85,22 +88,23 @@ const RecipeVersionTabs: React.FC = () => {
 
   return (
     <div className="mb-4 pb-1">
-      <Tabs value={activeVersionId} className="w-full">
-        <TabsList className="w-full mb-2 overflow-x-auto overflow-y-hidden flex-wrap bg-transparent p-0">
+      <div className="w-full">
+        <div className="w-full mb-2 overflow-x-auto overflow-y-hidden flex flex-wrap">
           {recipeVersions.map((version) => (
-            <TabsTrigger 
-              key={version.id} 
-              value={version.id}
+            <div 
+              key={version.id}
               onClick={() => handleVersionSelect(version.id)}
-              className="flex items-center gap-1 border border-gray-200 rounded-md px-4 py-2 m-1 data-[state=active]:bg-sage-100 data-[state=active]:border-sage-300"
+              className={`flex items-center gap-1 border border-gray-200 rounded-md px-4 py-2 m-1 cursor-pointer ${
+                version.isActive ? 'bg-sage-100 border-sage-300' : ''
+              }`}
             >
               <span>{version.name}</span>
-              <span className="inline-block ml-1" onClick={(e) => e.stopPropagation()}>
+              <div className="inline-block ml-1">
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-5 w-5 p-0">
+                  <DropdownMenuTrigger asChild onClick={handleOpenDropdown}>
+                    <div className="p-1">
                       <MoreVertical className="h-3.5 w-3.5" />
-                    </Button>
+                    </div>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-36">
                     <DropdownMenuItem onClick={(e) => handleRenameClick(version, e)}>
@@ -117,11 +121,11 @@ const RecipeVersionTabs: React.FC = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </span>
-            </TabsTrigger>
+              </div>
+            </div>
           ))}
-        </TabsList>
-      </Tabs>
+        </div>
+      </div>
 
       {/* Rename Dialog */}
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
