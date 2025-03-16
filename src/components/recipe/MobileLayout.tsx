@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
@@ -33,6 +34,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 }) => {
   const { 
     addRecipeVersion,
+    selectedIngredients,
   } = useRecipe();
   
   const modificationPanel = usePanelState(false);
@@ -86,7 +88,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
               <div className="mt-4">
                 <RecipeContent 
                   recipe={recipe} 
-                  selectedIngredients={useState => useState.selectedIngredients}
+                  selectedIngredients={selectedIngredients}
                   onSelectIngredient={handleSelectIngredient} 
                 />
               </div>

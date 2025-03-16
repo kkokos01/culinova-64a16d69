@@ -17,9 +17,6 @@ const RecipeDetailContainer = () => {
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 768px)");
   
-  const [leftPanelOpen, setLeftPanelOpen] = useState(false);
-  const [rightPanelOpen, setRightPanelOpen] = useState(false);
-  
   // Use the Recipe Context
   const { 
     setRecipe, 
@@ -73,9 +70,6 @@ const RecipeDetailContainer = () => {
   
   const handleModifyWithAI = () => {
     // Open the AI modification panel
-    if (isMobile) {
-      setLeftPanelOpen(true);
-    }
     // For desktop, the panel is already visible in the left panel
   };
   
@@ -98,9 +92,6 @@ const RecipeDetailContainer = () => {
     // Toggle modified status on (we would normally wait for the API response)
     setTimeout(() => {
       setIsModified(true);
-      if (isMobile) {
-        setLeftPanelOpen(false);
-      }
     }, 1500);
   };
   
@@ -130,10 +121,6 @@ const RecipeDetailContainer = () => {
             selectedIngredient={selectedIngredient}
             isModified={isModified}
             resetToOriginal={resetToOriginal}
-            leftPanelOpen={leftPanelOpen}
-            rightPanelOpen={rightPanelOpen}
-            setLeftPanelOpen={setLeftPanelOpen}
-            setRightPanelOpen={setRightPanelOpen}
             handleModifyWithAI={handleModifyWithAI}
             handleStartModification={handleStartModification}
             handleAcceptChanges={handleAcceptChanges}
