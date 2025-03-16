@@ -67,12 +67,12 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
   return (
     <div className="max-w-4xl mx-auto">
       {/* Ingredients */}
-      <div className="mb-6"> {/* Reduced mb-8 to mb-6 */}
-        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3"> {/* Reduced text size and spacing */}
+      <div className="mb-6">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3">
           Ingredients
         </h2>
         {ingredients.length > 0 ? (
-          <div className="grid sm:grid-cols-2 gap-2"> {/* Reduced gap */}
+          <div className="grid sm:grid-cols-2 gap-2">
             {ingredients.map((ingredient) => {
               if (!ingredient || !ingredient.id) return null;
               
@@ -82,28 +82,28 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
               return (
                 <div 
                   key={ingredient.id} 
-                  className={`flex items-center p-2 rounded-md border transition-colors ${styles.container} cursor-pointer h-full`} {/* Reduced padding */}
+                  className={`flex items-center p-2 rounded-md border transition-colors ${styles.container} cursor-pointer h-full`}
                   onClick={(e) => handleIngredientClick(ingredient, e)}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className={`flex items-baseline gap-x-1.5 text-sm ${styles.text}`}> {/* Added text-sm and reduced gap */}
+                    <div className={`flex items-baseline gap-x-1.5 text-sm ${styles.text}`}>
                       <span className="font-medium whitespace-nowrap">
                         {ingredient.amount} {ingredient.unit?.abbreviation || ''}
                       </span>
                       <span className="truncate">{foodName}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-0.5 ml-1.5 action-buttons shrink-0"> {/* Reduced gap and margin */}
+                  <div className="flex items-center gap-0.5 ml-1.5 action-buttons shrink-0">
                     <button
                       onClick={() => onSelectIngredient(ingredient, "increase")}
                       className={`p-0.5 rounded-full ${
                         selectedIngredients.get(ingredient.id)?.action === "increase" 
                           ? "bg-green-100 text-green-700" 
                           : "hover:bg-gray-200 text-green-600"
-                      }`} {/* Reduced padding */}
+                      }`}
                       aria-label="Increase ingredient"
                     >
-                      <Plus className="h-3.5 w-3.5" /> {/* Reduced icon size */}
+                      <Plus className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => onSelectIngredient(ingredient, "decrease")}
@@ -138,23 +138,23 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
       </div>
       
       {/* Steps */}
-      <div className="mb-6"> {/* Reduced mb-8 to mb-6 */}
-        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3"> {/* Reduced text size and spacing */}
+      <div className="mb-6">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3">
           Instructions
         </h2>
         {steps.length > 0 ? (
-          <ol className="space-y-4"> {/* Reduced space-y-6 to space-y-4 */}
+          <ol className="space-y-4">
             {steps.map((step) => (
               <li key={step.id} className="flex">
-                <div className="flex-shrink-0 mr-3"> {/* Reduced mr-4 to mr-3 */}
-                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold"> {/* Reduced size and font */}
+                <div className="flex-shrink-0 mr-3">
+                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
                     {step.order_number}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-700 text-sm">{step.instruction}</p> {/* Made text consistently sm */}
+                  <p className="text-gray-700 text-sm">{step.instruction}</p>
                   {step.duration_minutes && (
-                    <p className="text-xs text-gray-500 mt-0.5"> {/* Reduced size and spacing */}
+                    <p className="text-xs text-gray-500 mt-0.5">
                       Approximately {step.duration_minutes} minutes
                     </p>
                   )}
