@@ -14,6 +14,41 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
   selectedIngredients, 
   onSelectIngredient 
 }) => {
+  // Helper function to get the appropriate styling based on action
+  const getIngredientStyles = (ingredient: Ingredient) => {
+    if (!selectedIngredients.has(ingredient.id)) {
+      return {
+        container: "border-gray-100 hover:bg-gray-100",
+        text: ""
+      };
+    }
+    
+    const action = selectedIngredients.get(ingredient.id)?.action;
+    
+    switch (action) {
+      case "increase":
+        return {
+          container: "border-primary bg-green-50/70",
+          text: "font-medium"
+        };
+      case "decrease":
+        return {
+          container: "border-amber-400 bg-amber-50/70",
+          text: "font-medium"
+        };
+      case "remove":
+        return {
+          container: "border-red-400 bg-red-50/70",
+          text: "line-through opacity-75"
+        };
+      default:
+        return {
+          container: "border-gray-100 hover:bg-gray-100",
+          text: ""
+        };
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Ingredients */}
@@ -21,17 +56,15 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
         <ul className="space-y-2 grid sm:grid-cols-2 gap-2">
           {recipe.ingredients?.map((ingredient) => {
-            const isSelected = selectedIngredients.has(ingredient.id);
+            const styles = getIngredientStyles(ingredient);
             
             return (
               <li 
                 key={ingredient.id} 
-                className={`flex items-center p-2.5 rounded-md border transition-colors ${
-                  isSelected ? 'border-primary bg-primary/5' : 'border-gray-100 hover:bg-gray-100'
-                }`}
+                className={`flex items-center p-2.5 rounded-md border transition-colors ${styles.container}`}
               >
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline flex-wrap gap-x-2">
+                  <div className={`flex items-baseline flex-wrap gap-x-2 ${styles.text}`}>
                     <span className="font-medium whitespace-nowrap">
                       {ingredient.amount} {ingredient.unit?.abbreviation}
                     </span>
@@ -41,21 +74,33 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
                 <div className="flex items-center gap-1 ml-2">
                   <button
                     onClick={() => onSelectIngredient(ingredient, "increase")}
-                    className="p-1 rounded-full hover:bg-gray-200 text-green-600"
+                    className={`p-1 rounded-full ${
+                      selectedIngredients.get(ingredient.id)?.action === "increase" 
+                        ? "bg-green-100 text-green-700" 
+                        : "hover:bg-gray-200 text-green-600"
+                    }`}
                     aria-label="Increase ingredient"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => onSelectIngredient(ingredient, "decrease")}
-                    className="p-1 rounded-full hover:bg-gray-200 text-amber-600"
+                    className={`p-1 rounded-full ${
+                      selectedIngredients.get(ingredient.id)?.action === "decrease" 
+                        ? "bg-amber-100 text-amber-700" 
+                        : "hover:bg-gray-200 text-amber-600"
+                    }`}
                     aria-label="Decrease ingredient"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => onSelectIngredient(ingredient, "remove")}
-                    className="p-1 rounded-full hover:bg-gray-200 text-red-600"
+                    className={`p-1 rounded-full ${
+                      selectedIngredients.get(ingredient.id)?.action === "remove" 
+                        ? "bg-red-100 text-red-700" 
+                        : "hover:bg-gray-200 text-red-600"
+                    }`}
                     aria-label="Remove ingredient"
                   >
                     <X className="h-4 w-4" />

@@ -17,6 +17,25 @@ const SelectedIngredientsPanel: React.FC<SelectedIngredientsPanelProps> = ({
     return null;
   }
   
+  // Helper function to get badge styling based on action
+  const getBadgeStyles = (action: "increase" | "decrease" | "remove") => {
+    switch (action) {
+      case "increase":
+        return "bg-green-500 hover:bg-green-600";
+      case "decrease":
+        return "bg-amber-500 hover:bg-amber-600";
+      case "remove":
+        return "bg-red-500 hover:bg-red-600";
+      default:
+        return "";
+    }
+  };
+  
+  // Helper function to get text styling based on action
+  const getTextStyles = (action: "increase" | "decrease" | "remove") => {
+    return action === "remove" ? "line-through opacity-75" : "";
+  };
+  
   return (
     <div className="mt-4 border border-dashed border-gray-200 rounded-md p-3 bg-gray-50">
       <h3 className="text-sm font-medium mb-2">Selected Ingredients</h3>
@@ -24,16 +43,12 @@ const SelectedIngredientsPanel: React.FC<SelectedIngredientsPanelProps> = ({
         {Array.from(selectedIngredients.entries()).map(([id, { ingredient, action }]) => (
           <div key={id} className="flex items-center justify-between bg-white p-2 rounded border border-gray-100 text-sm">
             <div className="flex items-center gap-2 min-w-0">
-              <Badge className={`shrink-0 ${
-                action === "increase" ? "bg-green-500" : 
-                action === "decrease" ? "bg-amber-500" : 
-                "bg-red-500"
-              }`}>
+              <Badge className={`shrink-0 ${getBadgeStyles(action)}`}>
                 {action === "increase" ? <Plus className="h-3 w-3" /> : 
                  action === "decrease" ? <Minus className="h-3 w-3" /> : 
                  <X className="h-3 w-3" />}
               </Badge>
-              <span className="truncate">
+              <span className={`truncate ${getTextStyles(action)}`}>
                 {ingredient.amount} {ingredient.unit?.abbreviation} {ingredient.food?.name}
               </span>
             </div>
