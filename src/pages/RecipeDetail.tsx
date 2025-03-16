@@ -5,12 +5,13 @@ import { useMediaQuery } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { Ingredient } from "@/types";
 import Navbar from "@/components/Navbar";
-import { RecipeProvider, useRecipe } from "@/context/recipe"; // Updated import path
+import { RecipeProvider, useRecipe } from "@/context/recipe"; 
 import { useMockRecipe } from "@/hooks/useMockRecipe";
 import RecipeDetailSkeleton from "@/components/recipe/RecipeDetailSkeleton";
 import MobileLayout from "@/components/recipe/MobileLayout";
 import DesktopLayout from "@/components/recipe/DesktopLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { Toaster } from "@/components/ui/toaster";
 
 // Main container component
 const RecipeDetailContainer = () => {
@@ -136,7 +137,7 @@ const RecipeDetailContainer = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="pt-12 md:pt-16"> {/* Reduced padding from pt-20/pt-24 to pt-12/pt-16 */}
+      <div className="pt-12 md:pt-16">
         {isMobile ? (
           <MobileLayout 
             recipe={recipeData}
@@ -163,6 +164,7 @@ const RecipeDetailContainer = () => {
           />
         )}
       </div>
+      <Toaster />
     </div>
   );
 };

@@ -41,7 +41,7 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
     }
   };
 
-  // Add a new recipe version to the database
+  // Add a new recipe version
   const addRecipeVersion = async (name: string, recipe: Recipe) => {
     if (!recipe || !recipe.id) {
       console.error("Cannot create version: Recipe is undefined or missing ID");
@@ -68,11 +68,12 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
       // Create a display name that ensures uniqueness
       const displayName = versionExists ? `${name} (${new Date().toLocaleTimeString()})` : name;
       
-      // Create the new version
+      // Create the new version - use authenticated user ID if available or recipe user_id as fallback
+      const userId = recipe.user_id || 'guest';
       const newVersion = await recipeVersionsApi.createRecipeVersion(
         displayName, 
         recipe, 
-        recipe.user_id || ''
+        userId
       );
       
       // Update local state
