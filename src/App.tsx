@@ -17,6 +17,7 @@ import Profile from "./pages/auth/Profile";
 import AuthCallback from "./pages/auth/AuthCallback";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import DatabaseTest from "@/pages/auth/DatabaseTest";
+import SupabaseRecipes from "./pages/SupabaseRecipes";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ function App() {
                 <Route path="/" element={<Index />} />
                 <Route path="/recipes" element={<Recipes />} />
                 <Route path="/recipes/:id" element={<RecipeDetail />} />
+                <Route path="/supabase-recipes" element={<SupabaseRecipes />} />
                 
                 {/* Auth routes */}
                 <Route path="/sign-in" element={<SignIn />} />
