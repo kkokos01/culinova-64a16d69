@@ -25,7 +25,7 @@ const Recipes = () => {
   const { toast } = useToast();
   
   // Use the Supabase recipes hook instead of mock data
-  const { recipes, loading: isLoading, error } = useSupabaseRecipes();
+  const { recipes, loading: isLoading, error, refreshRecipes } = useSupabaseRecipes();
   
   // Get the seed recipes function
   const { seedRecipes } = useSeedRecipes();
@@ -73,10 +73,37 @@ const Recipes = () => {
   };
 
   const handleSeedRecipes = async () => {
-    await seedRecipes();
-    // No need to refresh manually, the useSupabaseRecipes hook will refetch 
-    // when the currentSpace changes due to its dependency array
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to add sample recipes",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!currentSpace) {
+      toast({
+        title: "Space Required",
+        description: "Please select a space to add recipes to",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log("Adding sample recipes...");
+    const result = await seedRecipes();
+    console.log("Seed result:", result);
+    
+    if (result) {
+      // Refresh the recipes list to show the new recipes
+      console.log("Refreshing recipes after seeding...");
+      refreshRecipes();
+    }
   };
+
+  console.log("Auth state:", { user: !!user, spaceId: currentSpace?.id });
+  console.log("Recipe count:", recipes.length);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -88,7 +115,7 @@ const Recipes = () => {
             description="Find inspiration for your next culinary adventure with our collection of recipes from Supabase."
           />
           
-          {user && currentSpace && recipes.length === 0 && !isLoading && (
+          {user && currentSpace && (
             <Button 
               onClick={handleSeedRecipes}
               className="bg-sage-500 hover:bg-sage-600"

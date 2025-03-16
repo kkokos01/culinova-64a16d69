@@ -6,11 +6,12 @@ import { useToast } from "@/hooks/use-toast";
 
 export const useSeedRecipes = () => {
   const { user } = useAuth();
-  const { currentSpace } = useSpace();
+  const { currentSpace, refreshSpaces } = useSpace();
   const { toast } = useToast();
 
   const seedRecipes = async () => {
     if (!user || !currentSpace) {
+      console.error("Cannot seed recipes: No user or space selected");
       toast({
         title: "Error",
         description: "You must be logged in and have a space selected to seed recipes",
@@ -20,6 +21,12 @@ export const useSeedRecipes = () => {
     }
 
     try {
+      console.log("Seeding recipes with parameters:", {
+        space_id: currentSpace.id,
+        user_id: user.id,
+        count: 5
+      });
+
       toast({
         title: "Seeding Recipes",
         description: "Adding sample recipes to your space...",
@@ -36,8 +43,11 @@ export const useSeedRecipes = () => {
       );
 
       if (error) {
+        console.error("Supabase RPC error:", error);
         throw error;
       }
+
+      console.log("Seed recipe result:", data);
 
       toast({
         title: "Success",
