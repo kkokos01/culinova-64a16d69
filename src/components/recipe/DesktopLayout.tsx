@@ -94,12 +94,14 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             }`}
           >
             {leftPanelCollapsed ? (
-              <div className="h-full flex flex-col items-center justify-center">
+              <div 
+                className="h-full flex flex-col items-center justify-center cursor-pointer hover:bg-sage-600/60 transition-colors"
+                onClick={handleToggleModifyPanel}
+              >
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={handleToggleModifyPanel}
-                  className="absolute top-4 right-2 text-white hover:text-white hover:bg-sage-600/60"
+                  className="absolute top-4 right-2 text-white hover:text-white hover:bg-sage-600/60 pointer-events-none"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
