@@ -27,10 +27,12 @@ export interface RecipeContextType {
   resetToOriginal: () => void;
   recipeVersions: RecipeVersion[];
   activeVersionId: string;
-  addRecipeVersion: (name: string, recipe: Recipe) => void;
-  setActiveVersion: (versionId: string) => void;
-  renameVersion: (versionId: string, newName: string) => void;
-  deleteVersion: (versionId: string) => void;
+  isLoadingVersions: boolean;
+  fetchVersionsFromDb: (recipeId: string) => Promise<void>;
+  addRecipeVersion: (name: string, recipe: Recipe) => Promise<void>;
+  setActiveVersion: (versionId: string) => Promise<void>;
+  renameVersion: (versionId: string, newName: string) => Promise<void>;
+  deleteVersion: (versionId: string) => Promise<void>;
   hasInitializedVersions: boolean;
   setHasInitializedVersions: (initialized: boolean) => void;
 }

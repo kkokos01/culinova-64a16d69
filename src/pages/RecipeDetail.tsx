@@ -10,6 +10,7 @@ import { useMockRecipe } from "@/hooks/useMockRecipe";
 import RecipeDetailSkeleton from "@/components/recipe/RecipeDetailSkeleton";
 import MobileLayout from "@/components/recipe/MobileLayout";
 import DesktopLayout from "@/components/recipe/DesktopLayout";
+import { supabase } from "@/integrations/supabase/client";
 
 // Main container component
 const RecipeDetailContainer = () => {
@@ -31,10 +32,11 @@ const RecipeDetailContainer = () => {
     addRecipeVersion,
     recipeVersions,
     hasInitializedVersions,
-    setHasInitializedVersions
+    setHasInitializedVersions,
+    fetchVersionsFromDb
   } = useRecipe();
   
-  // Use our mock recipe hook instead of react-query
+  // Use our mock recipe hook initially - we'll replace this with Supabase later
   const { recipe: recipeData, loading: isLoading, error } = useMockRecipe(id || "");
   
   // Set recipe in context when data is loaded
@@ -45,17 +47,21 @@ const RecipeDetailContainer = () => {
     }
   }, [recipeData, setRecipe, setOriginalRecipe]);
   
-  // Initialize versions ONLY ONCE when recipe data is first loaded
+  // Fetch versions from the database when recipe data is loaded
   useEffect(() => {
     if (recipeData && !hasInitializedVersions) {
-      // Only add Original version if we have no versions
+      // Fetch versions from the database
+      fetchVersionsFromDb(recipeData.id);
+      
+      // If no versions exist yet, create the Original version
       if (recipeVersions.length === 0) {
         addRecipeVersion("Original", recipeData);
       }
+      
       // Mark that we've initialized versions to prevent re-initialization
       setHasInitializedVersions(true);
     }
-  }, [recipeData, recipeVersions.length, hasInitializedVersions, addRecipeVersion, setHasInitializedVersions]);
+  }, [recipeData, hasInitializedVersions, recipeVersions.length, addRecipeVersion, setHasInitializedVersions, fetchVersionsFromDb]);
   
   // Handle errors
   useEffect(() => {
@@ -95,7 +101,13 @@ const RecipeDetailContainer = () => {
     }, 1500);
   };
   
-  const handleAcceptChanges = () => {
+  const handleAcceptChanges = async () => {
+    if (recipeData) {
+      // In the real implementation, we would save the changes to the database
+      // and create a new version with the modifications
+      await addRecipeVersion("Modified", recipeData);
+    }
+    
     toast({
       title: "Changes Accepted",
       description: "The recipe version has been saved.",

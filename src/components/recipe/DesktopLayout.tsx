@@ -38,6 +38,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     selectedIngredients, 
     customInstructions,
     recipeVersions,
+    isLoadingVersions,
     selectIngredientForModification, 
     removeIngredientSelection,
     setCustomInstructions,
@@ -59,9 +60,9 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     onSelectIngredient(ingredient, action);
   };
 
-  const handleAcceptModification = () => {
+  const handleAcceptModification = async () => {
     if (recipe) {
-      addRecipeVersion("Modified", recipe);
+      await addRecipeVersion("Modified", recipe);
       handleAcceptChanges();
     }
   };

@@ -460,6 +460,7 @@ export type Database = {
           prep_time_minutes: number
           privacy_level: string
           servings: number
+          space_id: string | null
           title: string
           updated_at: string
           user_id: string
@@ -475,6 +476,7 @@ export type Database = {
           prep_time_minutes: number
           privacy_level?: string
           servings: number
+          space_id?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -490,11 +492,20 @@ export type Database = {
           prep_time_minutes?: number
           privacy_level?: string
           servings?: number
+          space_id?: string | null
           title?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "recipes_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       schema_migrations: {
         Row: {
@@ -1035,6 +1046,10 @@ export type Database = {
         }
         Returns: string
       }
+      migrate_recipes_to_default_spaces: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       nlevel: {
         Args: {
           "": unknown
@@ -1079,6 +1094,7 @@ export type Database = {
     }
     Enums: {
       measurement_system: "metric" | "imperial" | "universal"
+      modification_type: "manual" | "ai" | "dietary" | "scaling" | "time"
       property_type:
         | "calories"
         | "protein"

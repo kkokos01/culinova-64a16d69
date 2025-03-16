@@ -1,19 +1,21 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit2, Trash } from "lucide-react";
+import { MoreHorizontal, Edit2, Trash, Loader2 } from "lucide-react";
 import { useRecipe } from "@/context/recipe";
 import { RecipeVersion } from "@/context/recipe/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const RecipeVersionTabs = () => {
   const { 
     recipeVersions, 
     activeVersionId, 
+    isLoadingVersions,
     setActiveVersion, 
     renameVersion, 
     deleteVersion 
@@ -29,9 +31,9 @@ const RecipeVersionTabs = () => {
   };
   
   // Handle rename submission
-  const handleSubmitRename = (id: string) => {
+  const handleSubmitRename = async (id: string) => {
     if (newName.trim()) {
-      renameVersion(id, newName.trim());
+      await renameVersion(id, newName.trim());
     }
     setIsRenaming(null);
   };
@@ -44,6 +46,17 @@ const RecipeVersionTabs = () => {
       setIsRenaming(null);
     }
   };
+  
+  if (isLoadingVersions) {
+    return (
+      <div className="border-b mb-6">
+        <div className="flex items-center overflow-x-auto pb-1 hide-scrollbar">
+          <Skeleton className="h-10 w-24 rounded" />
+          <Skeleton className="h-10 w-28 rounded ml-2" />
+        </div>
+      </div>
+    );
+  }
   
   // Don't render if there's only 1 or 0 versions
   if (recipeVersions.length <= 1) {
@@ -78,7 +91,7 @@ const RecipeVersionTabs = () => {
               >
                 {version.name}
                 
-                {version.id !== "original" && (
+                {version.name !== "Original" && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button
