@@ -22,6 +22,12 @@ export const useSupabaseRecipe = (recipeId: string) => {
   const { recipe: mockRecipe, loading: mockLoading } = useMockRecipe(recipeId);
 
   useEffect(() => {
+    // Skip if no recipeId is provided
+    if (!recipeId) {
+      setLoading(false);
+      return;
+    }
+    
     const fetchRecipe = async () => {
       try {
         setLoading(true);
@@ -42,6 +48,7 @@ export const useSupabaseRecipe = (recipeId: string) => {
             .rpc('get_recipe_with_details', { recipe_id_param: recipeId });
           
           if (!fnError && recipeDetailsData && recipeDetailsData.length > 0) {
+            console.log("Using RPC function for recipe details");
             // Process the data from our custom RPC function
             const recipeBase = {
               id: recipeDetailsData[0].id,
@@ -109,7 +116,8 @@ export const useSupabaseRecipe = (recipeId: string) => {
           console.log("RPC function failed, falling back to manual queries:", rpcError);
         }
 
-        // Fallback to previous approach with improved table aliases
+        console.log("Fetching recipe with separate queries");
+        
         // Fetch the recipe
         const { data: recipeData, error: recipeError } = await supabase
           .from("recipes")
@@ -142,36 +150,48 @@ export const useSupabaseRecipe = (recipeId: string) => {
         const ingredients: Ingredient[] = [];
         
         if (ingredientsData && ingredientsData.length > 0) {
-          // Fetch foods and units separately
-          const foodIds = ingredientsData.map(ing => ing.food_id).filter(Boolean);
-          const unitIds = ingredientsData.map(ing => ing.unit_id).filter(Boolean);
-          
-          // Fetch all foods needed in one query
-          const { data: foodsData, error: foodsError } = await supabase
-            .from("foods")
-            .select("id, name, description, category_id, properties")
-            .in("id", foodIds);
+          // Extract IDs for batch fetching
+          const foodIds = ingredientsData
+            .map(ing => ing.food_id)
+            .filter(id => id !== null && id !== undefined);
             
-          if (foodsError) throw foodsError;
+          const unitIds = ingredientsData
+            .map(ing => ing.unit_id)
+            .filter(id => id !== null && id !== undefined);
           
-          // Fetch all units needed in one query
-          const { data: unitsData, error: unitsError } = await supabase
-            .from("units")
-            .select("id, name, abbreviation, plural_name")
-            .in("id", unitIds);
-            
-          if (unitsError) throw unitsError;
+          let foodsMap = new Map();
+          let unitsMap = new Map();
           
-          // Create a map for quick lookups
-          const foodsMap = new Map();
-          const unitsMap = new Map();
-          
-          if (foodsData) {
-            foodsData.forEach(food => foodsMap.set(food.id, food));
+          // Only fetch foods if we have food IDs
+          if (foodIds.length > 0) {
+            const { data: foodsData } = await supabase
+              .from("foods")
+              .select("id, name, description, category_id, properties")
+              .in("id", foodIds);
+              
+            if (foodsData) {
+              foodsData.forEach(food => {
+                if (food && food.id) {
+                  foodsMap.set(food.id, food);
+                }
+              });
+            }
           }
           
-          if (unitsData) {
-            unitsData.forEach(unit => unitsMap.set(unit.id, unit));
+          // Only fetch units if we have unit IDs
+          if (unitIds.length > 0) {
+            const { data: unitsData } = await supabase
+              .from("units")
+              .select("id, name, abbreviation, plural_name")
+              .in("id", unitIds);
+              
+            if (unitsData) {
+              unitsData.forEach(unit => {
+                if (unit && unit.id) {
+                  unitsMap.set(unit.id, unit);
+                }
+              });
+            }
           }
           
           // Now build the ingredients with the fetched data
@@ -222,7 +242,7 @@ export const useSupabaseRecipe = (recipeId: string) => {
     };
 
     fetchRecipe();
-  }, [recipeId, toast, mockRecipe]);
+  }, [recipeId, toast, mockRecipe, mockLoading]);
 
   return { recipe, loading, error };
 };
