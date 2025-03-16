@@ -5,7 +5,7 @@ import { useMediaQuery } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { Ingredient } from "@/types";
 import Navbar from "@/components/Navbar";
-import { RecipeProvider, useRecipe } from "@/context/RecipeContext";
+import { RecipeProvider, useRecipe } from "@/context/recipe"; // Updated import path
 import { useMockRecipe } from "@/hooks/useMockRecipe";
 import RecipeDetailSkeleton from "@/components/recipe/RecipeDetailSkeleton";
 import MobileLayout from "@/components/recipe/MobileLayout";
