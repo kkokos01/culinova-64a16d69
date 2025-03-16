@@ -22,6 +22,19 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
     setIsLoadingVersions(true);
     
     try {
+      // First fetch the original recipe to ensure we have all details
+      const { data: recipeData, error: recipeError } = await supabase
+        .from('recipes')
+        .select('*')
+        .eq('id', recipeId)
+        .single();
+      
+      if (recipeError) throw recipeError;
+      
+      if (!recipeData) {
+        throw new Error("Recipe not found");
+      }
+      
       // Get versions for this recipe
       const { data: dbVersions, error } = await supabase
         .from('recipe_versions')
@@ -55,21 +68,9 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
           
           if (stepsError) throw stepsError;
           
-          // Create recipe object for this version
+          // Create recipe object for this version - using original recipe data as the base
           const versionRecipe: Recipe = {
-            ...dbVersion.recipe_id, // Will be replaced in full implementation
-            id: recipeId,
-            title: '', // Will be populated from the original recipe
-            description: '', // Will be populated from the original recipe
-            difficulty: 'medium',
-            servings: 0,
-            prep_time_minutes: 0,
-            cook_time_minutes: 0,
-            privacy_level: 'private',
-            is_public: false,
-            user_id: '',
-            created_at: '',
-            updated_at: '',
+            ...recipeData,
             ingredients: ingredients?.map(ing => ({
               id: ing.id,
               food_id: ing.food?.id || '',
@@ -96,6 +97,9 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
         if (activeVersion) {
           setRecipe(activeVersion.recipe);
         }
+      } else {
+        // If no versions exist yet, we'll create the Original version in the parent component
+        setRecipeVersions([]);
       }
     } catch (error: any) {
       console.error('Error fetching recipe versions:', error.message);
@@ -126,7 +130,7 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
         setActiveVersion(recipeVersions.find(v => v.name === "Original")?.id || "");
         return;
       }
-
+      
       // Calculate next version number
       const nextVersionNumber = recipeVersions.length > 0 
         ? Math.max(...recipeVersions.map(v => parseInt(v.id.split('-')[0]) || 0)) + 1 
@@ -157,8 +161,8 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
       if (recipe.ingredients && recipe.ingredients.length > 0) {
         const versionIngredients = recipe.ingredients.map((ing, index) => ({
           version_id: newDbVersion.id,
-          food_id: ing.food_id,
-          unit_id: ing.unit_id,
+          food_id: ing.food?.id || ing.food_id,
+          unit_id: ing.unit?.id || ing.unit_id,
           amount: ing.amount,
           order_index: index
         }));
@@ -193,17 +197,20 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
         .eq('recipe_id', recipe.id)
         .neq('id', newDbVersion.id);
       
-      // Update local versions state
-      // In a real implementation, we would refetch versions
-      // For now, we'll manually update the state
+      // Create a complete recipe object for the new version
+      const newVersionRecipe: Recipe = {
+        ...recipe
+      };
+      
+      // Create the new version object
       const newVersion: RecipeVersion = {
         id: newDbVersion.id,
         name: newDbVersion.display_name,
-        recipe: { ...recipe },
+        recipe: newVersionRecipe,
         isActive: true
       };
       
-      // Update local versions
+      // Update local versions state
       setRecipeVersions(prev => {
         // Deactivate all existing versions
         const updatedVersions = prev.map(version => ({
@@ -213,6 +220,9 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
         
         return [...updatedVersions, newVersion];
       });
+      
+      // Set the newly created version as the active recipe
+      setRecipe(newVersionRecipe);
       
     } catch (error: any) {
       console.error('Error creating recipe version:', error.message);
@@ -310,6 +320,11 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
       // Don't allow deleting Original
       const originalVersion = recipeVersions.find(v => v.name === "Original");
       if (originalVersion && originalVersion.id === versionId) {
+        toast({
+          title: "Cannot delete Original version",
+          description: "The Original version cannot be deleted.",
+          variant: "destructive"
+        });
         return;
       }
       

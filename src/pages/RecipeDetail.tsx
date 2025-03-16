@@ -49,18 +49,23 @@ const RecipeDetailContainer = () => {
   
   // Fetch versions from the database when recipe data is loaded
   useEffect(() => {
-    if (recipeData && !hasInitializedVersions) {
-      // Fetch versions from the database
-      fetchVersionsFromDb(recipeData.id);
-      
-      // If no versions exist yet, create the Original version
-      if (recipeVersions.length === 0) {
-        addRecipeVersion("Original", recipeData);
+    const initializeVersions = async () => {
+      if (recipeData && !hasInitializedVersions) {
+        // Fetch versions from the database
+        await fetchVersionsFromDb(recipeData.id);
+        
+        // If no versions exist yet, create the Original version
+        if (recipeVersions.length === 0) {
+          console.log("Creating Original version for recipe", recipeData.id);
+          await addRecipeVersion("Original", recipeData);
+        }
+        
+        // Mark that we've initialized versions to prevent re-initialization
+        setHasInitializedVersions(true);
       }
-      
-      // Mark that we've initialized versions to prevent re-initialization
-      setHasInitializedVersions(true);
-    }
+    };
+    
+    initializeVersions();
   }, [recipeData, hasInitializedVersions, recipeVersions.length, addRecipeVersion, setHasInitializedVersions, fetchVersionsFromDb]);
   
   // Handle errors
