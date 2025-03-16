@@ -148,9 +148,20 @@ export const useSupabaseRecipe = (recipeId: string) => {
         
         if (ingredientsData) {
           for (const ing of ingredientsData) {
-            // Safely handle food and unit objects with type checking
-            const ingredientFood = ing.food && typeof ing.food === 'object' ? ing.food : null;
-            const ingredientUnit = ing.unit && typeof ing.unit === 'object' ? ing.unit : null;
+            // Handle foods and units safely
+            // Make sure we have valid objects, not arrays or parser errors
+            const isValidFood = ing.food && 
+              typeof ing.food === 'object' && 
+              !Array.isArray(ing.food) && 
+              'id' in ing.food;
+              
+            const isValidUnit = ing.unit && 
+              typeof ing.unit === 'object' && 
+              !Array.isArray(ing.unit) && 
+              'id' in ing.unit;
+            
+            const ingredientFood = isValidFood ? ing.food : null;
+            const ingredientUnit = isValidUnit ? ing.unit : null;
             
             ingredients.push({
               id: ing.id || '',
