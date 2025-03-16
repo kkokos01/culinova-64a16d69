@@ -120,56 +120,72 @@ export const useSupabaseRecipe = (recipeId: string) => {
         if (recipeError) throw recipeError;
         if (!recipeData) throw new Error("Recipe not found");
 
-        // Fetch ingredients with their food and unit details
-        // Use explicit table aliases to avoid ambiguous column references
+        // Fetch ingredients with their food and unit details separately to avoid parser errors
         const { data: ingredientsData, error: ingredientsError } = await supabase
-          .from("ingredients as i")
-          .select(`
-            i.id, i.amount, i.order_index,
-            food:foods!i.food_id(id, name, description, category_id, properties),
-            unit:units!i.unit_id(id, name, abbreviation, plural_name)
-          `)
-          .eq("i.recipe_id", recipeId)
-          .order("i.order_index", { ascending: true });
+          .from("ingredients")
+          .select("id, amount, order_index, food_id, unit_id, recipe_id")
+          .eq("recipe_id", recipeId)
+          .order("order_index", { ascending: true });
 
         if (ingredientsError) throw ingredientsError;
 
         // Fetch steps
         const { data: stepsData, error: stepsError } = await supabase
-          .from("steps as s")
-          .select("s.id, s.order_number, s.instruction, s.duration_minutes")
-          .eq("s.recipe_id", recipeId)
-          .order("s.order_number", { ascending: true });
+          .from("steps")
+          .select("id, order_number, instruction, duration_minutes, recipe_id")
+          .eq("recipe_id", recipeId)
+          .order("order_number", { ascending: true });
 
         if (stepsError) throw stepsError;
 
         // Transform ingredients data to match our expected format
         const ingredients: Ingredient[] = [];
         
-        if (ingredientsData) {
-          for (const ing of ingredientsData) {
-            // Handle foods and units safely
-            // Make sure we have valid objects, not arrays or parser errors
-            const isValidFood = ing.food && 
-              typeof ing.food === 'object' && 
-              !Array.isArray(ing.food) && 
-              'id' in ing.food;
-              
-            const isValidUnit = ing.unit && 
-              typeof ing.unit === 'object' && 
-              !Array.isArray(ing.unit) && 
-              'id' in ing.unit;
+        if (ingredientsData && ingredientsData.length > 0) {
+          // Fetch foods and units separately
+          const foodIds = ingredientsData.map(ing => ing.food_id).filter(Boolean);
+          const unitIds = ingredientsData.map(ing => ing.unit_id).filter(Boolean);
+          
+          // Fetch all foods needed in one query
+          const { data: foodsData, error: foodsError } = await supabase
+            .from("foods")
+            .select("id, name, description, category_id, properties")
+            .in("id", foodIds);
             
-            const ingredientFood = isValidFood ? ing.food : null;
-            const ingredientUnit = isValidUnit ? ing.unit : null;
+          if (foodsError) throw foodsError;
+          
+          // Fetch all units needed in one query
+          const { data: unitsData, error: unitsError } = await supabase
+            .from("units")
+            .select("id, name, abbreviation, plural_name")
+            .in("id", unitIds);
+            
+          if (unitsError) throw unitsError;
+          
+          // Create a map for quick lookups
+          const foodsMap = new Map();
+          const unitsMap = new Map();
+          
+          if (foodsData) {
+            foodsData.forEach(food => foodsMap.set(food.id, food));
+          }
+          
+          if (unitsData) {
+            unitsData.forEach(unit => unitsMap.set(unit.id, unit));
+          }
+          
+          // Now build the ingredients with the fetched data
+          for (const ing of ingredientsData) {
+            const food = ing.food_id ? foodsMap.get(ing.food_id) : undefined;
+            const unit = ing.unit_id ? unitsMap.get(ing.unit_id) : undefined;
             
             ingredients.push({
               id: ing.id || '',
-              food_id: ingredientFood ? ingredientFood.id || '' : '',
-              unit_id: ingredientUnit ? ingredientUnit.id || '' : '',
+              food_id: ing.food_id || '',
+              unit_id: ing.unit_id || '',
               amount: ing.amount || 0,
-              food: ingredientFood || undefined,
-              unit: ingredientUnit || undefined
+              food: food,
+              unit: unit
             });
           }
         }
