@@ -33,7 +33,7 @@ const TabsTrigger = React.forwardRef<
     )}
     {...props}
   >
-    {typeof children === 'function' ? children(props) : children}
+    {children}
   </TabsPrimitive.Trigger>
 ))
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
