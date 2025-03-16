@@ -1,5 +1,3 @@
-
-
 export interface User {
   id: string;
   email: string;
@@ -79,6 +77,9 @@ export interface Food {
   children?: Food[];
   properties_list?: FoodProperty[];
   default_unit?: Unit;
+  is_validated?: boolean;
+  confidence_score?: number;
+  source?: string;
 }
 
 export type PropertyType = 
@@ -203,4 +204,3 @@ export interface Meal {
   servings: number;
   recipe?: Recipe;
 }
-

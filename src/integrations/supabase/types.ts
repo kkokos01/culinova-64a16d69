@@ -172,6 +172,7 @@ export type Database = {
       foods: {
         Row: {
           category_id: string | null
+          confidence_score: number | null
           created_at: string
           created_by: string
           default_unit_id: string | null
@@ -179,18 +180,21 @@ export type Database = {
           id: string
           inheritable_properties: Json | null
           is_active: boolean | null
+          is_validated: boolean | null
           name: string
           parent_id: string | null
           path: unknown | null
           properties: Json | null
           search_vector_en: unknown | null
           search_vector_es: unknown | null
+          source: string | null
           space_id: string | null
           tags: string[] | null
           updated_at: string
         }
         Insert: {
           category_id?: string | null
+          confidence_score?: number | null
           created_at?: string
           created_by: string
           default_unit_id?: string | null
@@ -198,18 +202,21 @@ export type Database = {
           id?: string
           inheritable_properties?: Json | null
           is_active?: boolean | null
+          is_validated?: boolean | null
           name: string
           parent_id?: string | null
           path?: unknown | null
           properties?: Json | null
           search_vector_en?: unknown | null
           search_vector_es?: unknown | null
+          source?: string | null
           space_id?: string | null
           tags?: string[] | null
           updated_at?: string
         }
         Update: {
           category_id?: string | null
+          confidence_score?: number | null
           created_at?: string
           created_by?: string
           default_unit_id?: string | null
@@ -217,12 +224,14 @@ export type Database = {
           id?: string
           inheritable_properties?: Json | null
           is_active?: boolean | null
+          is_validated?: boolean | null
           name?: string
           parent_id?: string | null
           path?: unknown | null
           properties?: Json | null
           search_vector_en?: unknown | null
           search_vector_es?: unknown | null
+          source?: string | null
           space_id?: string | null
           tags?: string[] | null
           updated_at?: string
@@ -881,6 +890,25 @@ export type Database = {
         }
         Returns: string
       }
+      find_or_create_food: {
+        Args: {
+          p_name: string
+          p_space_id: string
+          p_user_id: string
+          p_description?: string
+          p_category_id?: string
+          p_source?: string
+          p_confidence?: number
+        }
+        Returns: {
+          id: string
+          name: string
+          food_id: string
+          confidence_score: number
+          is_validated: boolean
+          is_new: boolean
+        }[]
+      }
       fix_default_spaces: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -891,6 +919,7 @@ export type Database = {
         }
         Returns: {
           category_id: string | null
+          confidence_score: number | null
           created_at: string
           created_by: string
           default_unit_id: string | null
@@ -898,12 +927,14 @@ export type Database = {
           id: string
           inheritable_properties: Json | null
           is_active: boolean | null
+          is_validated: boolean | null
           name: string
           parent_id: string | null
           path: unknown | null
           properties: Json | null
           search_vector_en: unknown | null
           search_vector_es: unknown | null
+          source: string | null
           space_id: string | null
           tags: string[] | null
           updated_at: string
@@ -915,6 +946,7 @@ export type Database = {
         }
         Returns: {
           category_id: string | null
+          confidence_score: number | null
           created_at: string
           created_by: string
           default_unit_id: string | null
@@ -922,15 +954,31 @@ export type Database = {
           id: string
           inheritable_properties: Json | null
           is_active: boolean | null
+          is_validated: boolean | null
           name: string
           parent_id: string | null
           path: unknown | null
           properties: Json | null
           search_vector_en: unknown | null
           search_vector_es: unknown | null
+          source: string | null
           space_id: string | null
           tags: string[] | null
           updated_at: string
+        }[]
+      }
+      get_recipe_versions: {
+        Args: {
+          recipe_id_param: string
+        }
+        Returns: {
+          id: string
+          recipe_id: string
+          display_name: string
+          version_number: number
+          is_current: boolean
+          created_at: string
+          modification_type: string
         }[]
       }
       get_recipe_with_details: {
@@ -1125,6 +1173,7 @@ export type Database = {
         }
         Returns: {
           category_id: string | null
+          confidence_score: number | null
           created_at: string
           created_by: string
           default_unit_id: string | null
@@ -1132,12 +1181,14 @@ export type Database = {
           id: string
           inheritable_properties: Json | null
           is_active: boolean | null
+          is_validated: boolean | null
           name: string
           parent_id: string | null
           path: unknown | null
           properties: Json | null
           search_vector_en: unknown | null
           search_vector_es: unknown | null
+          source: string | null
           space_id: string | null
           tags: string[] | null
           updated_at: string
