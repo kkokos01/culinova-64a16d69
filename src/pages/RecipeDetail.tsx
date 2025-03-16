@@ -11,7 +11,6 @@ import MobileLayout from "@/components/recipe/MobileLayout";
 import DesktopLayout from "@/components/recipe/DesktopLayout";
 import { Toaster } from "@/components/ui/toaster";
 import { useSupabaseRecipe } from "@/hooks/useSupabaseRecipe";
-import { supabase } from "@/integrations/supabase/client";
 
 // Main container component
 const RecipeDetailContainer = () => {
