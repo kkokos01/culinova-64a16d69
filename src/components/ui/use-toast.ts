@@ -1,7 +1,4 @@
 
-// This file should NOT import from hooks/use-toast
-// Instead, directly use the toast components
-
 import { useState, useEffect, createContext, useContext } from "react";
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
@@ -224,6 +221,6 @@ function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Export necessary functions and types
 export { useToast, toast, ToastProvider };
 export type { ToastContextType };
+
