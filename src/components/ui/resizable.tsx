@@ -17,7 +17,21 @@ const ResizablePanelGroup = ({
   />
 )
 
-const ResizablePanel = ResizablePrimitive.Panel
+// Extended ResizablePanel to accept an additional size prop
+const ResizablePanel = ({
+  className,
+  size,
+  ...props
+}: React.ComponentProps<typeof ResizablePrimitive.Panel> & {
+  size?: number
+}) => (
+  <ResizablePrimitive.Panel
+    className={cn("", className)}
+    {...props}
+    // If a size prop is provided, use it to control the panel size
+    {...(size !== undefined && { style: { flexGrow: size, flexBasis: 0 } })}
+  />
+)
 
 const ResizableHandle = ({
   withHandle,

@@ -45,15 +45,18 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   
   // State for panel visibility
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(true);
-  // State for panel size - this is the key to fixing the issue
+  // State for panel size
   const [leftPanelSize, setLeftPanelSize] = useState(4);
+  
+  // This useEffect is critical - it ensures the panel size updates when collapsed state changes
+  useEffect(() => {
+    // Set the size based on the collapsed state
+    setLeftPanelSize(leftPanelCollapsed ? 4 : 35);
+  }, [leftPanelCollapsed]);
 
   // Toggle the panel when Modify with AI is clicked
   const handleToggleModifyPanel = () => {
-    const newCollapsedState = !leftPanelCollapsed;
-    setLeftPanelCollapsed(newCollapsedState);
-    // Directly update the panel size when toggling
-    setLeftPanelSize(newCollapsedState ? 4 : 35);
+    setLeftPanelCollapsed(!leftPanelCollapsed);
   };
 
   // Update this function to use the onSelectIngredient prop directly
@@ -82,19 +85,18 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           {/* Left Panel - AI Modification */}
           <ResizablePanel 
             defaultSize={leftPanelSize}
+            size={leftPanelSize}
             minSize={leftPanelCollapsed ? 4 : 25} 
             maxSize={leftPanelCollapsed ? 4 : 40}
             collapsible
             collapsedSize={4}
             onCollapse={() => {
               setLeftPanelCollapsed(true);
-              setLeftPanelSize(4);
             }}
             onExpand={() => {
               setLeftPanelCollapsed(false);
-              setLeftPanelSize(35);
             }}
-            className="bg-white p-4 relative"
+            className="bg-white p-4 relative transition-all duration-300"
           >
             {leftPanelCollapsed ? (
               <div className="h-full flex flex-col items-center justify-center">
