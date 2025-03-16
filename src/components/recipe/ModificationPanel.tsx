@@ -43,11 +43,13 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
         >
           <X className="h-5 w-5" />
         </Button>
-        <h2 className="text-lg font-semibold text-white">Modify Recipe</h2>
+        <h2 className="text-lg font-semibold text-black">Modify Recipe</h2>
         <div className="w-8"></div>
       </div>
       
       <div className="p-4 flex-1 overflow-y-auto">
+        <p className="text-black mb-6">Customize this recipe with AI assistance</p>
+        
         <UnifiedModificationPanel
           recipe={recipe}
           selectedIngredients={selectedIngredients}

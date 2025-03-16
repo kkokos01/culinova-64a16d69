@@ -70,9 +70,9 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   };
 
   return (
-    <div className="container mx-auto py-4 px-4"> {/* Reduced py-6 to py-4 */}
+    <div className="container mx-auto py-4 px-4">
       {recipe && (
-        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-120px)] rounded-lg border"> {/* Reduced 130px to 120px */}
+        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-120px)] rounded-lg border">
           <ResizablePanel 
             defaultSize={4}
             size={leftPanelSize}
@@ -110,7 +110,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             ) : (
               <div className="overflow-y-auto h-full">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-white">Modify Recipe</h2>
+                  <h2 className="text-xl font-semibold text-black">Modify Recipe</h2>
                   <Button 
                     variant="ghost" 
                     size="icon" 
@@ -120,7 +120,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                 </div>
-                <p className="text-white/90 mb-6">Customize this recipe with AI assistance</p>
+                <p className="text-black mb-6">Customize this recipe with AI assistance</p>
                 
                 <UnifiedModificationPanel
                   recipe={recipe}
@@ -155,7 +155,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           <ResizableHandle withHandle />
 
           <ResizablePanel defaultSize={65} className="bg-white overflow-y-auto">
-            <div className="p-5"> {/* Reduced p-6 to p-5 */}
+            <div className="p-5">
               <RecipeHeader
                 recipe={recipe}
                 isModified={isModified}
