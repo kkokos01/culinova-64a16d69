@@ -8,7 +8,7 @@ interface RecipeHeaderProps {
   recipe: Recipe;
   isModified: boolean;
   onModifyWithAI: () => void;
-  showModifyButton?: boolean; // New prop to control button visibility
+  showModifyButton?: boolean; // Controls button visibility
 }
 
 const RecipeHeader: React.FC<RecipeHeaderProps> = ({ 
@@ -62,7 +62,7 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
               <div className="absolute bottom-4 right-4">
                 <Button 
                   onClick={onModifyWithAI} 
-                  className="bg-sage-500/90 hover:bg-sage-600 shadow-md backdrop-blur-sm text-white"
+                  className="bg-sage-700 hover:bg-sage-800 shadow-md text-white"
                 >
                   <Wand2 className="mr-2 h-4 w-4" />
                   Modify with AI

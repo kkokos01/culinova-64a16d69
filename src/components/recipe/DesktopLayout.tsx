@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
@@ -43,37 +42,28 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     addRecipeVersion
   } = useRecipe();
   
-  // State for panel visibility
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(true);
-  // State for panel size
   const [leftPanelSize, setLeftPanelSize] = useState(4);
   
-  // This useEffect is critical - it ensures the panel size updates when collapsed state changes
   useEffect(() => {
-    // Set the size based on the collapsed state
     setLeftPanelSize(leftPanelCollapsed ? 4 : 35);
   }, [leftPanelCollapsed]);
 
-  // Toggle the panel when Modify with AI is clicked
   const handleToggleModifyPanel = () => {
     setLeftPanelCollapsed(!leftPanelCollapsed);
   };
 
-  // Update this function to use the onSelectIngredient prop directly
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
     onSelectIngredient(ingredient, action);
   };
 
-  // Handle AI modification acceptance
   const handleAcceptModification = () => {
     if (recipe) {
-      // Create a new version
       addRecipeVersion("Modified", recipe);
       handleAcceptChanges();
     }
   };
 
-  // Start modification with our unified approach
   const startUnifiedModification = () => {
     handleStartModification("unified");
   };
@@ -82,7 +72,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     <div className="container mx-auto py-6 px-4">
       {recipe && (
         <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-130px)] rounded-lg border">
-          {/* Left Panel - AI Modification */}
           <ResizablePanel 
             defaultSize={4}
             size={leftPanelSize}
@@ -152,7 +141,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                     </Button>
                     <Button 
                       onClick={handleAcceptModification}
-                      className="w-full bg-sage-500 hover:bg-sage-600"
+                      className="w-full bg-sage-700 hover:bg-sage-800 text-white font-medium"
                     >
                       Save as New Version
                     </Button>
@@ -164,14 +153,13 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
           <ResizableHandle withHandle />
 
-          {/* Main Content - Recipe with Tabs */}
           <ResizablePanel defaultSize={65} className="bg-white overflow-y-auto">
             <div className="p-6">
               <RecipeHeader
                 recipe={recipe}
                 isModified={isModified}
                 onModifyWithAI={handleToggleModifyPanel}
-                showModifyButton={leftPanelCollapsed} // Only show the button when the panel is collapsed
+                showModifyButton={leftPanelCollapsed}
               />
 
               <RecipeVersionTabs />

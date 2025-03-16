@@ -117,9 +117,9 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
         )}
       </div>
       
-      {/* Submit button */}
+      {/* Submit button with improved contrast */}
       <Button 
-        className="w-full bg-sage-600 hover:bg-sage-700 shadow-md flex items-center justify-center gap-2"
+        className="w-full bg-sage-700 hover:bg-sage-800 text-white font-medium shadow-md flex items-center justify-center gap-2"
         onClick={onStartModification}
         disabled={selectedIngredients.size === 0 && selectedModifications.length === 0 && !customInstructions.trim()}
       >

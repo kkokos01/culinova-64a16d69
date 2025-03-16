@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
@@ -49,27 +48,22 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     setCustomInstructions 
   } = useRecipe();
   
-  // Update this function to use the onSelectIngredient prop directly
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
     onSelectIngredient(ingredient, action);
   };
 
-  // Handle AI modification acceptance
   const handleAcceptModification = () => {
     if (recipe) {
-      // Create a new version
       addRecipeVersion("Modified", recipe);
       handleAcceptChanges();
       setLeftPanelOpen(false);
     }
   };
 
-  // Start modification with any type - our new panel doesn't distinguish by type
   const startUnifiedModification = () => {
     handleStartModification("unified");
   };
 
-  // Render the slide-out left panel (AI Modification)
   const renderLeftPanel = () => {
     if (!leftPanelOpen) return null;
     
@@ -85,7 +79,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
             <X className="h-5 w-5" />
           </Button>
           <h2 className="text-lg font-semibold text-sage-800">Modify Recipe</h2>
-          <div className="w-8"></div> {/* Spacer for alignment */}
+          <div className="w-8"></div>
         </div>
         <div className="p-4">
           <UnifiedModificationPanel
@@ -108,7 +102,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
               </Button>
               <Button 
                 onClick={handleAcceptModification}
-                className="w-full bg-sage-500 hover:bg-sage-600"
+                className="w-full bg-sage-700 hover:bg-sage-800 text-white font-medium"
               >
                 Save as New Version
               </Button>
@@ -145,10 +139,9 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       
       {renderLeftPanel()}
       
-      {/* Fixed bottom button */}
       <div className="fixed bottom-0 inset-x-0 p-3 bg-white border-t">
         <Button 
-          className="w-full bg-sage-500 hover:bg-sage-600"
+          className="w-full bg-sage-700 hover:bg-sage-800 text-white font-medium shadow-md"
           onClick={() => setLeftPanelOpen(true)}
         >
           Modify Recipe
