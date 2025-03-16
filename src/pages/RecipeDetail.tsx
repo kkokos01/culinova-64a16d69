@@ -79,8 +79,20 @@ const RecipeDetail = () => {
           foodData
         });
         
+        // Fix: Access first ingredient's food and unit correctly
+        // Handle the case where the ingredients array might be empty
+        let firstIngredientInfo = "None";
+        if (ingredientsData.length > 0) {
+          const firstIng = ingredientsData[0];
+          const foodName = firstIng.food ? firstIng.food.name : "None";
+          const amount = firstIng.amount || 0;
+          const unitAbbr = firstIng.unit ? firstIng.unit.abbreviation : "";
+          
+          firstIngredientInfo = `${foodName} - ${amount} ${unitAbbr}`;
+        }
+        
         setDatabaseStatus(`Recipe in DB: ${recipeData.title}. Found ${ingredientsData.length} ingredients. 
-        First ingredient: ${ingredientsData[0]?.food?.name || 'None'} - ${ingredientsData[0]?.amount || 0} ${ingredientsData[0]?.unit?.abbreviation || ''}`);
+        First ingredient: ${firstIngredientInfo}`);
       }
     } catch (error) {
       console.error("Database check error:", error);
