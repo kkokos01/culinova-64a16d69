@@ -22,6 +22,7 @@ interface MobileLayoutProps {
   handleStartModification: (modificationType: string) => void;
   handleAcceptChanges: () => void;
   setSelectedIngredient: (ingredient: Ingredient | null) => void;
+  onSelectIngredient: (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => void;
 }
 
 const MobileLayout: React.FC<MobileLayoutProps> = ({
@@ -37,6 +38,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   handleStartModification,
   handleAcceptChanges,
   setSelectedIngredient,
+  onSelectIngredient,
 }) => {
   const { 
     selectedIngredients, 
@@ -47,9 +49,9 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     setCustomInstructions 
   } = useRecipe();
   
-  const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove") => {
-    setSelectedIngredient(ingredient);
-    selectIngredientForModification(ingredient, action);
+  // Update this function to use the onSelectIngredient prop directly
+  const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
+    onSelectIngredient(ingredient, action);
   };
 
   // Handle AI modification acceptance

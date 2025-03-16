@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useMediaQuery } from "@/hooks/use-mobile";
@@ -111,6 +112,7 @@ const RecipeDetailContainer = () => {
     setIsModified(false);
   };
 
+  // Update the function signature to accept null as a possible action
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
     // Using the context function to update selected ingredients
     selectIngredientForModification(ingredient, action);

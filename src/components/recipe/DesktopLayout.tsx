@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
@@ -19,6 +18,7 @@ interface DesktopLayoutProps {
   handleStartModification: (modificationType: string) => void;
   handleAcceptChanges: () => void;
   setSelectedIngredient: (ingredient: Ingredient | null) => void;
+  onSelectIngredient: (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => void;
 }
 
 const DesktopLayout: React.FC<DesktopLayoutProps> = ({
@@ -30,6 +30,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   handleStartModification,
   handleAcceptChanges,
   setSelectedIngredient,
+  onSelectIngredient,
 }) => {
   const { 
     selectedIngredients, 
@@ -44,9 +45,9 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   // State for panel visibility
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
 
-  const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove") => {
-    setSelectedIngredient(ingredient);
-    selectIngredientForModification(ingredient, action);
+  // Update this function to use the onSelectIngredient prop directly
+  const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
+    onSelectIngredient(ingredient, action);
   };
 
   // Handle AI modification acceptance
