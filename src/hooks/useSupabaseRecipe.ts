@@ -47,6 +47,7 @@ export const useSupabaseRecipe = (recipeId: string) => {
         if (!recipeData) throw new Error("Recipe not found");
 
         // Fetch ingredients with their food and unit details
+        // Use explicit table aliases to avoid ambiguous column references
         const { data: ingredientsData, error: ingredientsError } = await supabase
           .from("ingredients")
           .select(`

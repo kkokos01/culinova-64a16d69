@@ -29,73 +29,103 @@ export async function fetchRecipeVersions(recipeId: string): Promise<RecipeVersi
       throw new Error("Recipe not found");
     }
     
-    // Get versions for this recipe
-    const { data: dbVersions, error } = await supabase
-      .from('recipe_versions')
-      .select('*')
-      .eq('recipe_id', recipeId)
-      .order('version_number', { ascending: true });
+    // Use database function to avoid ambiguous column references
+    const { data: dbVersionsRaw, error } = await supabase
+      .rpc('get_recipe_versions', { recipe_id_param: recipeId });
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error using RPC, falling back to direct query:", error);
+      
+      // Fallback to direct query with proper table aliases
+      const { data: dbVersions, error: queryError } = await supabase
+        .from('recipe_versions')
+        .select('id, display_name, version_number, is_current, created_at, modification_type')
+        .eq('recipe_id', recipeId)
+        .order('version_number', { ascending: true });
+      
+      if (queryError) throw queryError;
+      
+      if (!dbVersions || dbVersions.length === 0) {
+        return [];
+      }
+      
+      // Convert to our frontend version format using the fallback query results
+      const versions: RecipeVersion[] = await Promise.all(dbVersions.map(async (dbVersion) => {
+        return await constructVersionObject(dbVersion, recipeData);
+      }));
+      
+      return versions;
+    }
     
-    if (!dbVersions || dbVersions.length === 0) {
+    // If RPC worked, use its results
+    if (!dbVersionsRaw || dbVersionsRaw.length === 0) {
       return [];
     }
     
     // Convert to our frontend version format
-    const versions: RecipeVersion[] = await Promise.all(dbVersions.map(async (dbVersion) => {
-      // Fetch ingredients for this version
-      const { data: ingredients, error: ingredientsError } = await supabase
-        .from('recipe_version_ingredients')
-        .select(`
-          id, amount, order_index,
-          food:food_id(id, name, description, category_id, properties),
-          unit:unit_id(id, name, abbreviation, plural_name)
-        `)
-        .eq('version_id', dbVersion.id);
-      
-      if (ingredientsError) throw ingredientsError;
-      
-      // Fetch steps for this version
-      const { data: steps, error: stepsError } = await supabase
-        .from('recipe_version_steps')
-        .select('*')
-        .eq('version_id', dbVersion.id)
-        .order('order_number', { ascending: true });
-      
-      if (stepsError) throw stepsError;
-      
-      // Create recipe object for this version - using original recipe data as the base
-      const versionRecipe: Recipe = {
-        ...recipeData,
-        ingredients: ingredients?.map(ing => {
-          // Handle food and unit as objects with proper type checking
-          const food = typeof ing.food === 'object' ? ing.food : null;
-          const unit = typeof ing.unit === 'object' ? ing.unit : null;
-          
-          return {
-            id: ing.id,
-            food_id: food?.id || '',
-            unit_id: unit?.id || '',
-            amount: ing.amount,
-            food: food || undefined,
-            unit: unit || undefined
-          };
-        }) || [],
-        steps: steps || []
-      };
-      
-      return {
-        id: dbVersion.id,
-        name: dbVersion.display_name,
-        recipe: versionRecipe,
-        isActive: dbVersion.is_current
-      };
+    const versions: RecipeVersion[] = await Promise.all(dbVersionsRaw.map(async (dbVersion) => {
+      return await constructVersionObject(dbVersion, recipeData);
     }));
     
     return versions;
   } catch (error) {
     console.error("Error in fetchRecipeVersions:", error);
+    throw error;
+  }
+}
+
+// Helper function to construct version objects
+async function constructVersionObject(dbVersion: any, recipeData: any): Promise<RecipeVersion> {
+  try {
+    // Fetch ingredients for this version
+    const { data: ingredients, error: ingredientsError } = await supabase
+      .from('recipe_version_ingredients')
+      .select(`
+        id, amount, order_index,
+        food:food_id(id, name, description, category_id, properties),
+        unit:unit_id(id, name, abbreviation, plural_name)
+      `)
+      .eq('version_id', dbVersion.id);
+    
+    if (ingredientsError) throw ingredientsError;
+    
+    // Fetch steps for this version
+    const { data: steps, error: stepsError } = await supabase
+      .from('recipe_version_steps')
+      .select('*')
+      .eq('version_id', dbVersion.id)
+      .order('order_number', { ascending: true });
+    
+    if (stepsError) throw stepsError;
+    
+    // Create recipe object for this version - using original recipe data as the base
+    const versionRecipe: Recipe = {
+      ...recipeData,
+      ingredients: ingredients?.map(ing => {
+        // Handle food and unit as objects with proper type checking
+        const food = typeof ing.food === 'object' ? ing.food : null;
+        const unit = typeof ing.unit === 'object' ? ing.unit : null;
+        
+        return {
+          id: ing.id,
+          food_id: food?.id || '',
+          unit_id: unit?.id || '',
+          amount: ing.amount,
+          food: food || undefined,
+          unit: unit || undefined
+        };
+      }) || [],
+      steps: steps || []
+    };
+    
+    return {
+      id: dbVersion.id,
+      name: dbVersion.display_name || dbVersion.name,
+      recipe: versionRecipe,
+      isActive: dbVersion.is_current || dbVersion.is_active
+    };
+  } catch (error) {
+    console.error("Error constructing version object:", error);
     throw error;
   }
 }

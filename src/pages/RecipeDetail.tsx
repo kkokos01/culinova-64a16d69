@@ -9,7 +9,6 @@ import { RecipeProvider, useRecipe } from "@/context/recipe";
 import RecipeDetailSkeleton from "@/components/recipe/RecipeDetailSkeleton";
 import MobileLayout from "@/components/recipe/MobileLayout";
 import DesktopLayout from "@/components/recipe/DesktopLayout";
-import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/toaster";
 import { useSupabaseRecipe } from "@/hooks/useSupabaseRecipe";
 
@@ -55,24 +54,33 @@ const RecipeDetailContainer = () => {
       if (recipeData && !hasInitializedVersions) {
         console.log("Initializing versions for recipe", recipeData.id);
         
-        // Fetch versions from the database
-        await fetchVersionsFromDb(recipeData.id);
-        
-        // If no versions exist yet, create the Original version
-        if (recipeVersions.length === 0) {
-          console.log("No versions found, creating Original version for recipe", recipeData.id);
-          await addRecipeVersion("Original", recipeData);
-        } else {
-          console.log("Found existing versions:", recipeVersions.length);
+        try {
+          // Fetch versions from the database
+          const versions = await fetchVersionsFromDb(recipeData.id);
+          
+          // If no versions exist yet, create the Original version
+          if (!versions || versions.length === 0) {
+            console.log("No versions found, creating Original version for recipe", recipeData.id);
+            await addRecipeVersion("Original", recipeData);
+          } else {
+            console.log("Found existing versions:", versions.length);
+          }
+        } catch (error) {
+          console.error("Error initializing versions:", error);
+          toast({
+            title: "Error loading recipe versions",
+            description: error instanceof Error ? error.message : "Failed to load recipe versions",
+            variant: "destructive"
+          });
+        } finally {
+          // Mark that we've initialized versions to prevent re-initialization
+          setHasInitializedVersions(true);
         }
-        
-        // Mark that we've initialized versions to prevent re-initialization
-        setHasInitializedVersions(true);
       }
     };
     
     initializeVersions();
-  }, [recipeData, hasInitializedVersions, recipeVersions.length, addRecipeVersion, setHasInitializedVersions, fetchVersionsFromDb]);
+  }, [recipeData, hasInitializedVersions, addRecipeVersion, setHasInitializedVersions, fetchVersionsFromDb, toast]);
   
   // Handle errors
   useEffect(() => {
@@ -114,16 +122,25 @@ const RecipeDetailContainer = () => {
   
   const handleAcceptChanges = async () => {
     if (recipeData) {
-      // In the real implementation, we would save the changes to the database
-      // and create a new version with the modifications
-      await addRecipeVersion("Modified", recipeData);
+      try {
+        // In the real implementation, we would save the changes to the database
+        // and create a new version with the modifications
+        await addRecipeVersion("Modified", recipeData);
+        
+        toast({
+          title: "Changes Accepted",
+          description: "The recipe version has been saved.",
+        });
+        setIsModified(false);
+      } catch (error) {
+        console.error("Error saving modifications:", error);
+        toast({
+          title: "Error Saving Changes",
+          description: error instanceof Error ? error.message : "Failed to save changes",
+          variant: "destructive"
+        });
+      }
     }
-    
-    toast({
-      title: "Changes Accepted",
-      description: "The recipe version has been saved.",
-    });
-    setIsModified(false);
   };
 
   // Update the function signature to accept null as a possible action
