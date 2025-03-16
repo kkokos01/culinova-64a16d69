@@ -7,7 +7,7 @@ import AIModificationPanel from "./AIModificationPanel";
 import RecipeVersionTabs from "./RecipeVersionTabs";
 import { Button } from "@/components/ui/button";
 import { X, ChevronLeft } from "lucide-react";
-import { useRecipe } from "@/context/RecipeContext";
+import { useRecipe } from "@/context/recipe";
 
 interface MobileLayoutProps {
   recipe: Recipe | null;

@@ -1,10 +1,11 @@
+
 import React, { useState } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
 import RecipeContent from "./RecipeContent";
 import AIModificationPanel from "./AIModificationPanel";
 import RecipeVersionTabs from "./RecipeVersionTabs";
-import { useRecipe } from "@/context/RecipeContext";
+import { useRecipe } from "@/context/recipe";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
