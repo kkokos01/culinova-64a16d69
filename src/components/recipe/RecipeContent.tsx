@@ -26,9 +26,9 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
           id: ingredient.id,
           food_id: ingredient.food_id,
           food: ingredient.food,
-          foodName: ingredient.food?.name || 'No food name',
+          foodName: ingredient.food ? ingredient.food.name || 'No food name' : 'No food name',
           amount: ingredient.amount,
-          unit: ingredient.unit?.abbreviation || 'No unit'
+          unit: ingredient.unit ? ingredient.unit.abbreviation || 'No unit' : 'No unit'
         });
       });
     }

@@ -64,8 +64,6 @@ export const useSupabaseRecipe = (recipeId: string) => {
         
         // Transform ingredients to ensure proper structure for our Recipe type
         const ingredients = ingredientsData?.map(ingredient => {
-          // Transform the joined foods data to be in the expected "food" property
-          // Foods and units are objects from the join, not arrays
           return {
             id: ingredient.id,
             recipe_id: ingredient.recipe_id,
@@ -73,8 +71,9 @@ export const useSupabaseRecipe = (recipeId: string) => {
             unit_id: ingredient.unit_id,
             amount: ingredient.amount,
             order_index: ingredient.order_index,
-            food: ingredient.foods, // This is an object, not an array
-            unit: ingredient.units  // This is an object, not an array
+            // Type assertion to handle the foods and units objects properly
+            food: ingredient.foods as any, // This is an object, not an array
+            unit: ingredient.units as any  // This is an object, not an array
           };
         }) || [];
         
@@ -82,9 +81,9 @@ export const useSupabaseRecipe = (recipeId: string) => {
         console.log("Processed ingredients:", ingredients.map(i => ({
           id: i.id,
           food: i.food,
-          food_name: i.food?.name || 'Unknown food', // food is an object with a name property
+          food_name: i.food ? i.food.name || 'Unknown food' : 'Unknown food',
           unit: i.unit,
-          unit_abbr: i.unit?.abbreviation || '', // unit is an object with an abbreviation property
+          unit_abbr: i.unit ? i.unit.abbreviation || '' : '',
           amount: i.amount
         })));
         
@@ -111,9 +110,9 @@ export const useSupabaseRecipe = (recipeId: string) => {
           title: completeRecipe.title,
           ingredients: completeRecipe.ingredients?.map(i => ({
             id: i.id,
-            food_name: i.food?.name || 'Unknown', // food is an object with a name property
+            food_name: i.food ? i.food.name || 'Unknown' : 'Unknown',
             amount: i.amount,
-            unit: i.unit?.abbreviation || '' // unit is an object with an abbreviation property
+            unit: i.unit ? i.unit.abbreviation || '' : ''
           }))
         });
         
