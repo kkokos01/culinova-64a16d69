@@ -51,16 +51,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     setLeftPanelCollapsed(!leftPanelCollapsed);
   };
 
-  // Effect to connect the handler to the passed-in function
-  useEffect(() => {
-    // Update the external handler to toggle our panel
-    const originalHandler = handleModifyWithAI;
-    handleModifyWithAI = () => {
-      originalHandler(); // Keep the original functionality
-      handleToggleModifyPanel(); // Add our toggle
-    };
-  }, [handleModifyWithAI]);
-
   // Update this function to use the onSelectIngredient prop directly
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
     onSelectIngredient(ingredient, action);
@@ -86,7 +76,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-130px)] rounded-lg border">
           {/* Left Panel - AI Modification */}
           <ResizablePanel 
-            defaultSize={35} 
+            defaultSize={leftPanelCollapsed ? 4 : 35}
             minSize={leftPanelCollapsed ? 4 : 25} 
             maxSize={leftPanelCollapsed ? 4 : 40}
             collapsible
