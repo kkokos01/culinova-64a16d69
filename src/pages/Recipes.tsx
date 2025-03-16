@@ -11,6 +11,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useSpace } from "@/context/SpaceContext";
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseRecipes } from "@/hooks/useSupabaseRecipes";
+import { useSeedRecipes } from "@/utils/seedRecipes";
+import { Button } from "@/components/ui/button";
 
 const Recipes = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,6 +26,9 @@ const Recipes = () => {
   
   // Use the Supabase recipes hook instead of mock data
   const { recipes, loading: isLoading, error } = useSupabaseRecipes();
+  
+  // Get the seed recipes function
+  const { seedRecipes } = useSeedRecipes();
   
   // Show error toast if there's an error fetching recipes
   useEffect(() => {
@@ -67,14 +72,31 @@ const Recipes = () => {
     setSortOption("newest");
   };
 
+  const handleSeedRecipes = async () => {
+    await seedRecipes();
+    // No need to refresh manually, the useSupabaseRecipes hook will refetch 
+    // when the currentSpace changes due to its dependency array
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main className="container mx-auto px-4 py-24">
-        <PageHeader 
-          title="Explore Recipes"
-          description="Find inspiration for your next culinary adventure with our collection of recipes from Supabase."
-        />
+        <div className="flex justify-between items-center mb-8">
+          <PageHeader 
+            title="Explore Recipes"
+            description="Find inspiration for your next culinary adventure with our collection of recipes from Supabase."
+          />
+          
+          {user && currentSpace && recipes.length === 0 && !isLoading && (
+            <Button 
+              onClick={handleSeedRecipes}
+              className="bg-sage-500 hover:bg-sage-600"
+            >
+              Add Sample Recipes
+            </Button>
+          )}
+        </div>
         
         <SearchFilters 
           searchQuery={searchQuery}
