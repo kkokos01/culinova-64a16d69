@@ -1,6 +1,5 @@
 
 import React, { useState } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -18,7 +17,10 @@ const RecipeVersionTabs: React.FC = () => {
   const [newVersionName, setNewVersionName] = useState("");
 
   const handleVersionSelect = (versionId: string) => {
-    setActiveVersion(versionId);
+    // Don't reselect the already active version to avoid unnecessary rerenders
+    if (versionId !== activeVersionId) {
+      setActiveVersion(versionId);
+    }
   };
 
   // Handle dropdown actions with separate handlers that prevent event propagation

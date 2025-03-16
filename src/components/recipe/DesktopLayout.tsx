@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
 import RecipeContent from "./RecipeContent";
@@ -32,7 +32,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   setSelectedIngredient,
 }) => {
   const { 
-    originalRecipe, 
     selectedIngredients, 
     customInstructions,
     recipeVersions,
@@ -44,13 +43,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   
   // State for panel visibility
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
-
-  // Effect to initialize the original recipe version when it's first loaded
-  useEffect(() => {
-    if (originalRecipe && recipeVersions.length === 0) {
-      addRecipeVersion("Original", originalRecipe);
-    }
-  }, [originalRecipe, recipeVersions.length, addRecipeVersion]);
 
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove") => {
     setSelectedIngredient(ingredient);

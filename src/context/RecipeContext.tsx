@@ -33,6 +33,8 @@ interface RecipeContextType {
   setActiveVersion: (versionId: string) => void;
   renameVersion: (versionId: string, newName: string) => void;
   deleteVersion: (versionId: string) => void;
+  hasInitializedVersions: boolean;
+  setHasInitializedVersions: (initialized: boolean) => void;
 }
 
 // Create context with default values
@@ -57,6 +59,8 @@ const RecipeContext = createContext<RecipeContextType>({
   setActiveVersion: () => {},
   renameVersion: () => {},
   deleteVersion: () => {},
+  hasInitializedVersions: false,
+  setHasInitializedVersions: () => {},
 });
 
 // Provider component
@@ -70,6 +74,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [customInstructions, setCustomInstructions] = useState("");
   const [isModified, setIsModified] = useState(false);
   const [recipeVersions, setRecipeVersions] = useState<RecipeVersion[]>([]);
+  const [hasInitializedVersions, setHasInitializedVersions] = useState(false);
 
   // Calculate active version ID from the versions array
   const activeVersionId = recipeVersions.find(v => v.isActive)?.id || "";
@@ -100,18 +105,29 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  // Add a new recipe version
+  // Add a new recipe version - now with safeguards
   const addRecipeVersion = (name: string, recipe: Recipe) => {
+    // Check if version with this name already exists
+    const versionExists = recipeVersions.some(v => v.name === name);
+    
+    // If it's the "Original" version and we already have it, don't create another one
+    if (name === "Original" && versionExists) {
+      // Just make sure Original is active if that's what we want
+      setActiveVersion(recipeVersions.find(v => v.name === "Original")?.id || "");
+      return;
+    }
+    
+    // For non-Original versions or if Original doesn't exist yet:
     // Deactivate all existing versions
     const updatedVersions = recipeVersions.map(version => ({
       ...version,
       isActive: false
     }));
     
-    // Create a new version and set it as active
+    // Create a new version with unique ID and set it as active
     const newVersion: RecipeVersion = {
       id: uuidv4(),
-      name,
+      name: versionExists ? `${name} (${new Date().toLocaleTimeString()})` : name,
       recipe: { ...recipe },
       isActive: true
     };
@@ -138,6 +154,12 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Rename version
   const renameVersion = (versionId: string, newName: string) => {
+    // Don't allow renaming Original
+    const originalVersion = recipeVersions.find(v => v.name === "Original");
+    if (originalVersion && originalVersion.id === versionId && newName !== "Original") {
+      return;
+    }
+    
     const updatedVersions = recipeVersions.map(version => 
       version.id === versionId 
         ? { ...version, name: newName } 
@@ -149,6 +171,12 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Delete version
   const deleteVersion = (versionId: string) => {
+    // Don't allow deleting Original
+    const originalVersion = recipeVersions.find(v => v.name === "Original");
+    if (originalVersion && originalVersion.id === versionId) {
+      return;
+    }
+    
     // Find if the version being deleted is active
     const isActiveVersion = recipeVersions.find(v => v.id === versionId)?.isActive || false;
     
@@ -187,6 +215,8 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setActiveVersion,
         renameVersion,
         deleteVersion,
+        hasInitializedVersions,
+        setHasInitializedVersions,
       }}
     >
       {children}

@@ -30,7 +30,10 @@ const RecipeDetailContainer = () => {
     setIsModified,
     resetToOriginal,
     selectedIngredients,
-    addRecipeVersion
+    addRecipeVersion,
+    recipeVersions,
+    hasInitializedVersions,
+    setHasInitializedVersions
   } = useRecipe();
   
   // Use our mock recipe hook instead of react-query
@@ -41,11 +44,20 @@ const RecipeDetailContainer = () => {
     if (recipeData) {
       setRecipe(recipeData);
       setOriginalRecipe(recipeData);
-      
-      // Initialize the original version
-      addRecipeVersion("Original", recipeData);
     }
-  }, [recipeData, setRecipe, setOriginalRecipe, addRecipeVersion]);
+  }, [recipeData, setRecipe, setOriginalRecipe]);
+  
+  // Initialize versions ONLY ONCE when recipe data is first loaded
+  useEffect(() => {
+    if (recipeData && !hasInitializedVersions) {
+      // Only add Original version if we have no versions
+      if (recipeVersions.length === 0) {
+        addRecipeVersion("Original", recipeData);
+      }
+      // Mark that we've initialized versions to prevent re-initialization
+      setHasInitializedVersions(true);
+    }
+  }, [recipeData, recipeVersions.length, hasInitializedVersions, addRecipeVersion, setHasInitializedVersions]);
   
   // Handle errors
   useEffect(() => {
