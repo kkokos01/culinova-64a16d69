@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
@@ -177,7 +176,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               onRemoveIngredientSelection={removeIngredientSelection}
               customInstructions={customInstructions}
               onCustomInstructionsChange={setCustomInstructions}
-              onStartModification={handleStartModification}
+              onStartModification={() => handleStartModification("custom")}
               onSelectModificationType={handleSelectModificationType}
               onApplyModifications={handleApplyModifications}
               isModified={isModified}
@@ -212,7 +211,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             <RecipeContent 
               recipe={recipe} 
               selectedIngredients={selectedIngredients}
-              onSelectIngredient={handleSelectIngredient} 
+              onSelectIngredient={onSelectIngredient} 
             />
           </div>
         </ResizablePanel>
