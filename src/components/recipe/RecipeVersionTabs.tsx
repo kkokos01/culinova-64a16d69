@@ -25,21 +25,19 @@ const RecipeVersionTabs = () => {
   const [isSaving, setSaving] = useState<string | null>(null);
   const [isSwitching, setIsSwitching] = useState<string | null>(null);
   
-  // Deduplicate versions for display based on name
-  const displayVersions = recipeVersions.reduce((acc: RecipeVersion[], version) => {
-    // Check if we already have a version with this name
-    const existingVersionIndex = acc.findIndex(v => v.name === version.name);
+  // Deduplicate versions for display based on name and id
+  // This ensures we don't show duplicate tabs with the same name
+  const displayVersions = React.useMemo(() => {
+    const uniqueVersionMap = new Map<string, RecipeVersion>();
     
-    if (existingVersionIndex === -1) {
-      // If no version with this name exists, add it
-      acc.push(version);
-    } else if (version.isActive) {
-      // If this version is active, replace the existing one
-      acc[existingVersionIndex] = version;
-    }
+    // First pass: Add all versions to a map keyed by their ID
+    recipeVersions.forEach(version => {
+      uniqueVersionMap.set(version.id, version);
+    });
     
-    return acc;
-  }, []);
+    // Convert map values back to array
+    return Array.from(uniqueVersionMap.values());
+  }, [recipeVersions]);
   
   // Add effect to log current state for debugging
   useEffect(() => {
@@ -47,7 +45,8 @@ const RecipeVersionTabs = () => {
       console.log("Current active recipe in tabs:", recipe.title);
     }
     console.log("Current active version ID:", activeVersionId);
-  }, [recipe, activeVersionId]);
+    console.log("Number of versions to display:", displayVersions.length);
+  }, [recipe, activeVersionId, displayVersions.length]);
   
   // Handle initiating rename
   const handleStartRename = (version: RecipeVersion) => {

@@ -140,7 +140,7 @@ export const useVersionManagement = ({
       }
       
       // If we deleted the active version, set another one as active
-      if (setActiveVersionId === versionId && recipeVersions.length > 1) {
+      if (versionId === setActiveVersionId.toString()) {
         const newActiveVersion = recipeVersions.find(v => v.id !== versionId);
         if (newActiveVersion) {
           setActiveVersion(newActiveVersion.id);
