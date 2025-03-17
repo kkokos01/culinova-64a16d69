@@ -1,10 +1,11 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Recipe, Ingredient } from "@/types";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import DesktopLayout from "./DesktopLayout";
 import MobileLayout from "./MobileLayout";
 import { useRecipeDetail } from "@/hooks/useRecipeDetail";
+import { useRecipe } from "@/context/recipe";
 
 export interface MobileLayoutProps {
   recipe: Recipe;
@@ -37,8 +38,12 @@ export interface DesktopLayoutProps {
 const RecipeDetailContainer: React.FC = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   
+  // Get direct access to the recipe from the RecipeContext to ensure we're always using
+  // the latest recipe data from the active version
+  const { recipe: contextRecipe } = useRecipe();
+  
   const {
-    recipeData: recipe,
+    recipeData: hookRecipe,
     isLoading,
     error,
     selectedIngredient,
@@ -53,6 +58,18 @@ const RecipeDetailContainer: React.FC = () => {
     isAiModifying,
     removeIngredientSelection
   } = useRecipeDetail();
+
+  // Use the context recipe as the source of truth if available, otherwise fall back to hook data
+  // This ensures we always have the most up-to-date recipe data from the active version
+  const recipe = contextRecipe || hookRecipe;
+
+  // Log recipe content for debugging purposes
+  useEffect(() => {
+    if (recipe) {
+      console.log("RecipeDetailContainer rendering with recipe:", recipe.title);
+      console.log("Recipe ingredients count:", recipe.ingredients?.length || 0);
+    }
+  }, [recipe]);
 
   if (isLoading) {
     return <div>Loading...</div>;

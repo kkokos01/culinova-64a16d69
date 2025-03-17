@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   DropdownMenu,
@@ -29,6 +30,7 @@ const RecipeVersionTabs = () => {
   const [isRenaming, setIsRenaming] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [isSaving, setSaving] = useState<string | null>(null);
+  const [isSwitching, setIsSwitching] = useState<string | null>(null);
   
   // Deduplicate versions for display based on name
   const displayVersions = recipeVersions.reduce((acc: RecipeVersion[], version) => {
@@ -98,27 +100,45 @@ const RecipeVersionTabs = () => {
     }
   };
   
-  // Handle version selection
+  // Handle version selection with improved error handling and feedback
   const handleSelectVersion = async (version: RecipeVersion) => {
+    // Skip if already on this version
     if (version.id === activeVersionId) {
       console.log("Version already active, skipping:", version.name);
       return;
     }
     
     console.log("Selecting version:", version.id, version.name);
+    
     try {
+      // Set loading state
+      setIsSwitching(version.id);
+      
+      // Show toast notification
       toast({
         title: "Switching version",
         description: `Loading "${version.name}" version...`,
       });
       
+      // Set the active version - this should update the recipe in context
       await setActiveVersion(version.id);
       
-      // Confirm switch was successful
-      toast({
-        title: "Version loaded",
-        description: `Now viewing "${version.name}" version`,
-      });
+      // Add a small delay to ensure the state update has propagated
+      setTimeout(() => {
+        // Confirm switch was successful
+        toast({
+          title: "Version loaded",
+          description: `Now viewing "${version.name}" version`,
+        });
+        
+        // Log the recipe title after switching
+        if (recipe) {
+          console.log("Recipe after version switch:", recipe.title);
+        }
+        
+        // Clear loading state
+        setIsSwitching(null);
+      }, 100);
     } catch (error) {
       console.error("Error setting active version:", error);
       toast({
@@ -126,6 +146,7 @@ const RecipeVersionTabs = () => {
         description: "Failed to switch version",
         variant: "destructive"
       });
+      setIsSwitching(null);
     }
   };
   
@@ -165,12 +186,16 @@ const RecipeVersionTabs = () => {
             ) : (
               <button
                 onClick={() => handleSelectVersion(version)}
+                disabled={isSwitching !== null}
                 className={`flex items-center px-3 py-2 text-sm font-medium border-b-2 rounded-t-md whitespace-nowrap ${
                   version.id === activeVersionId
                     ? "border-primary text-primary"
                     : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300"
-                }`}
+                } ${isSwitching === version.id ? "opacity-70" : ""}`}
               >
+                {isSwitching === version.id ? (
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                ) : null}
                 {version.name}
                 
                 {/* Display temporary badge */}

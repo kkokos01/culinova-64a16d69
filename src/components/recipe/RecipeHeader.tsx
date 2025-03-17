@@ -1,73 +1,73 @@
 
-import React from "react";
-import { Recipe } from "@/types";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Database, Wand2 } from "lucide-react";
+import React, { useEffect } from "react";
+import { useRecipe } from "@/context/recipe";
+import RecipeVersionTabs from "./RecipeVersionTabs";
 
 interface RecipeHeaderProps {
-  recipe: Recipe;
-  isModified?: boolean;
-  onModifyWithAI: () => void;
-  showModifyButton?: boolean;
-  isTemporary?: boolean;
+  title: string;
+  description: string;
+  prepTime?: number;
+  cookTime?: number;
+  servings?: number;
+  difficulty?: string;
 }
 
-const RecipeHeader: React.FC<RecipeHeaderProps> = ({ 
-  recipe, 
-  isModified = false,
-  onModifyWithAI,
-  showModifyButton = true,
-  isTemporary = false
+const RecipeHeader: React.FC<RecipeHeaderProps> = ({
+  title,
+  description,
+  prepTime,
+  cookTime,
+  servings,
+  difficulty,
 }) => {
+  const { recipe } = useRecipe();
+  
+  // Log for debugging
+  useEffect(() => {
+    if (recipe) {
+      console.log("RecipeHeader rendering with recipe:", recipe.title);
+    }
+  }, [recipe]);
+  
+  // Use recipe from context if available to ensure we're showing the latest version
+  const displayTitle = recipe?.title || title;
+  const displayDescription = recipe?.description || description;
+  const displayPrepTime = recipe?.prep_time_minutes || prepTime;
+  const displayCookTime = recipe?.cook_time_minutes || cookTime;
+  const displayServings = recipe?.servings || servings;
+  const displayDifficulty = recipe?.difficulty || difficulty;
+  
   return (
-    <div className="mb-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-            {recipe.title}
-            {isModified && (
-              <Badge variant="outline" className="ml-2 px-2 py-1 bg-amber-50 text-amber-700 border-amber-300">
-                Modified
-              </Badge>
-            )}
-            {isTemporary && (
-              <Badge variant="outline" className="ml-2 px-2 py-1 bg-blue-50 text-blue-700 border-blue-300 flex items-center">
-                <Database className="h-3 w-3 mr-1" />
-                Temporary
-              </Badge>
-            )}
-          </h1>
-          <p className="text-gray-600 mt-1">{recipe.description}</p>
-        </div>
-        
-        {showModifyButton && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onModifyWithAI}
-            className="text-sage-600 border-sage-300 hover:bg-sage-50 flex items-center"
-          >
-            <Wand2 className="h-4 w-4 mr-1" />
-            Modify
-          </Button>
+    <div className="mb-8">
+      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
+        {displayTitle}
+      </h1>
+      <p className="text-gray-600 mb-4">{displayDescription}</p>
+      
+      <div className="flex flex-wrap gap-4 mb-4 text-sm text-gray-500">
+        {displayPrepTime && (
+          <div>
+            <span className="font-medium">Prep:</span> {displayPrepTime} min
+          </div>
+        )}
+        {displayCookTime && (
+          <div>
+            <span className="font-medium">Cook:</span> {displayCookTime} min
+          </div>
+        )}
+        {displayServings && (
+          <div>
+            <span className="font-medium">Servings:</span> {displayServings}
+          </div>
+        )}
+        {displayDifficulty && (
+          <div>
+            <span className="font-medium">Difficulty:</span> {displayDifficulty}
+          </div>
         )}
       </div>
-      
-      <div className="flex flex-wrap gap-3 mt-3">
-        <div className="text-sm text-gray-600">
-          <span className="font-medium text-gray-700">Prep:</span> {recipe.prep_time_minutes} min
-        </div>
-        <div className="text-sm text-gray-600">
-          <span className="font-medium text-gray-700">Cook:</span> {recipe.cook_time_minutes} min
-        </div>
-        <div className="text-sm text-gray-600">
-          <span className="font-medium text-gray-700">Servings:</span> {recipe.servings}
-        </div>
-        <div className="text-sm text-gray-600">
-          <span className="font-medium text-gray-700">Difficulty:</span> {recipe.difficulty}
-        </div>
-      </div>
+
+      <RecipeVersionTabs />
     </div>
   );
 };

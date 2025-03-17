@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Recipe } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +15,12 @@ export const useRecipeData = () => {
   const [originalRecipe, setOriginalRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  // Create a memoized recipe setter that includes proper logging
+  const updateRecipe = useCallback((newRecipe: Recipe) => {
+    console.log("useRecipeData: Updating recipe to:", newRecipe.title);
+    setRecipe(newRecipe);
+  }, []);
 
   // Fetch recipe data from Supabase
   useEffect(() => {
@@ -41,7 +47,8 @@ export const useRecipeData = () => {
           })) as Recipe['ingredients'];
         }
         
-        setRecipe(recipeData);
+        console.log("useRecipeData: Fetched recipe:", recipeData?.title);
+        updateRecipe(recipeData);
         setOriginalRecipe(recipeData);
         setLoading(false);
       } catch (err) {
@@ -62,7 +69,7 @@ export const useRecipeData = () => {
     } else {
       setLoading(false);
     }
-  }, [id, toast]);
+  }, [id, toast, updateRecipe]);
 
   // Handle recipe not found scenario
   useEffect(() => {
@@ -86,7 +93,7 @@ export const useRecipeData = () => {
     recipe,
     loading,
     error,
-    setRecipe,
+    setRecipe: updateRecipe,
     originalRecipe,
     setOriginalRecipe
   };

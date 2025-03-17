@@ -18,6 +18,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
 }) => {
   useEffect(() => {
     // Debug log for recipe ingredients with proper field names
+    console.log("RecipeContent rendering with recipe title:", recipe.title);
     console.log("RecipeContent rendering with ingredients:", recipe.ingredients);
     
     // Validate ingredient data structure
@@ -37,7 +38,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
         });
       });
     }
-  }, [recipe.ingredients]);
+  }, [recipe, recipe.title, recipe.ingredients]);
 
   // Make sure we have the ingredients and steps arrays
   const ingredients = recipe.ingredients || [];
@@ -56,4 +57,11 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
   );
 };
 
-export default RecipeContent;
+export default React.memo(RecipeContent, (prevProps, nextProps) => {
+  // Only re-render if the recipe ID changes or if the recipe title changes
+  // This ensures we update the component when switching between versions
+  return (
+    prevProps.recipe.id === nextProps.recipe.id &&
+    prevProps.recipe.title === nextProps.recipe.title
+  );
+});
