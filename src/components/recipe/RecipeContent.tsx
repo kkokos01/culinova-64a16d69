@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { Recipe, Ingredient } from "@/types";
 import IngredientsSection from "./IngredientsSection";
 import StepsSection from "./StepsSection";
+import { normalizeFood, normalizeUnit } from "@/api/types/supabaseTypes";
 
 interface RecipeContentProps {
   recipe: Recipe;
@@ -22,12 +23,9 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
     // Validate ingredient data structure
     if (recipe.ingredients) {
       recipe.ingredients.forEach((ingredient, index) => {
-        // Handle the possibility of food and unit being arrays or objects
-        const foodObj = ingredient.food ? 
-          (Array.isArray(ingredient.food) ? ingredient.food[0] : ingredient.food) : null;
-          
-        const unitObj = ingredient.unit ? 
-          (Array.isArray(ingredient.unit) ? ingredient.unit[0] : ingredient.unit) : null;
+        // Use our normalization functions
+        const foodObj = normalizeFood(ingredient.food);
+        const unitObj = normalizeUnit(ingredient.unit);
           
         console.log(`Ingredient ${index + 1}:`, {
           id: ingredient.id,

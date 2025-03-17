@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Recipe } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { recipeService } from "@/services/supabase/recipeService";
+import { normalizeFood, normalizeUnit } from "@/api/types/supabaseTypes";
 
 export const useSupabaseRecipe = (recipeId: string) => {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -26,20 +27,14 @@ export const useSupabaseRecipe = (recipeId: string) => {
         console.log("Fetching recipe from hook:", recipeId);
         const recipeData = await recipeService.getRecipe(recipeId);
         
-        // Normalize ingredients to ensure food and unit are always objects, not arrays
+        // Normalize ingredients using our helper functions
         if (recipeData?.ingredients) {
           recipeData.ingredients = recipeData.ingredients.map(ing => {
-            // Ensure food is an object, not an array
-            if (ing.food && Array.isArray(ing.food)) {
-              ing.food = ing.food[0] || null;
-            }
-            
-            // Ensure unit is an object, not an array
-            if (ing.unit && Array.isArray(ing.unit)) {
-              ing.unit = ing.unit[0] || null;
-            }
-            
-            return ing;
+            return {
+              ...ing,
+              food: normalizeFood(ing.food),
+              unit: normalizeUnit(ing.unit)
+            };
           });
           
           console.log("Normalized ingredients:", recipeData.ingredients.map(ing => ({

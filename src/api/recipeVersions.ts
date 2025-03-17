@@ -1,7 +1,11 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Recipe } from "@/types";
 import { RecipeVersion } from "@/context/recipe/types";
+import { 
+  RawVersionIngredient, 
+  RawVersionStep, 
+  normalizeVersionIngredient 
+} from "./types/supabaseTypes";
 
 // Fetch versions from the database for a specific recipe
 export async function fetchRecipeVersions(recipeId: string): Promise<RecipeVersion[]> {
@@ -101,27 +105,17 @@ async function constructVersionObject(dbVersion: any, recipeData: any): Promise<
     // Create recipe object for this version - using original recipe data as the base
     const versionRecipe: Recipe = {
       ...recipeData,
-      ingredients: ingredientsData ? ingredientsData.map(ing => {
-        // Fix: Properly handle food and unit which can be arrays or objects
-        // First determine if food is an array or object and handle accordingly
-        let foodObj = ing.food;
-        if (Array.isArray(foodObj)) {
-          foodObj = foodObj.length > 0 ? foodObj[0] : null;
-        }
-        
-        // Then determine if unit is an array or object and handle accordingly
-        let unitObj = ing.unit;
-        if (Array.isArray(unitObj)) {
-          unitObj = unitObj.length > 0 ? unitObj[0] : null;
-        }
+      ingredients: ingredientsData ? ingredientsData.map((ing: RawVersionIngredient) => {
+        // Use our normalization function to handle both array and object cases
+        const normalizedIngredient = normalizeVersionIngredient(ing);
         
         return {
-          id: ing.id,
-          food_id: foodObj && foodObj.id ? foodObj.id : '',
-          unit_id: unitObj && unitObj.id ? unitObj.id : '',
-          amount: ing.amount,
-          food: foodObj || undefined,
-          unit: unitObj || undefined
+          id: normalizedIngredient.id,
+          food_id: normalizedIngredient.food_id,
+          unit_id: normalizedIngredient.unit_id,
+          amount: normalizedIngredient.amount,
+          food: normalizedIngredient.food,
+          unit: normalizedIngredient.unit
         };
       }) : [],
       steps: steps || []
