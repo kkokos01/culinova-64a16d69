@@ -6,6 +6,8 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useDebugSupabaseData } from "@/utils/debugSupabaseData";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { databaseAnalyzer } from "@/utils/databaseAnalyzer";
+import { recipeService } from "@/services/supabase/recipeService";
 
 // Define types for the ingredients data returned from Supabase
 interface IngredientData {
@@ -14,12 +16,13 @@ interface IngredientData {
   food_id: string;
   unit_id: string;
   amount: number;
-  foods: {
+  // Use singular field names to match our type expectations
+  food: {
     id: string;
     name: string;
     description: string;
   };
-  units: {
+  unit: {
     id: string;
     name: string;
     abbreviation: string;
@@ -35,25 +38,37 @@ const RecipeDetail = () => {
   const [loading, setLoading] = useState(false);
   const [databaseStatus, setDatabaseStatus] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [typeAnalysis, setTypeAnalysis] = useState<any>(null);
 
-  // Function to directly check the database
-  const checkTikkaMasalaInDatabase = async () => {
+  // Function to analyze the database structure for debugging
+  const analyzeIngredientStructure = async () => {
+    if (id) {
+      const result = await databaseAnalyzer.analyzeRecipeIngredients(id);
+      setTypeAnalysis(result);
+      
+      if (result.error) {
+        setDatabaseStatus(`Analysis error: ${result.error}`);
+      } else {
+        setDatabaseStatus(`Analysis complete. Check console for details.`);
+        console.log("Type analysis:", result);
+      }
+    }
+  };
+
+  // Function to directly check the database using proper naming now
+  const checkRecipeInDatabase = async () => {
     setLoading(true);
     try {
       // First check if we are looking at the right recipe
       if (id) {
-        // Get direct data from database for this recipe
-        const { data: recipeData, error: recipeError } = await supabase
-          .from('recipes')
-          .select('*')
-          .eq('id', id)
-          .single();
-          
-        if (recipeError) {
-          throw new Error(`Error fetching recipe: ${recipeError.message}`);
+        // Use our service instead of direct queries
+        const recipeData = await recipeService.getRecipe(id);
+        
+        if (!recipeData) {
+          throw new Error("Recipe not found");
         }
         
-        // Get ingredients with detailed food and unit information
+        // Get direct ingredients data with consistent SINGULAR naming
         const { data: ingredientsData, error: ingredientsError } = await supabase
           .from('ingredients')
           .select(`
@@ -62,8 +77,8 @@ const RecipeDetail = () => {
             food_id,
             unit_id,
             amount,
-            foods:food_id(id, name, description),
-            units:unit_id(id, name, abbreviation)
+            food:food_id(id, name, description),
+            unit:unit_id(id, name, abbreviation)
           `)
           .eq('recipe_id', id);
           
@@ -71,46 +86,24 @@ const RecipeDetail = () => {
           throw new Error(`Error fetching ingredients: ${ingredientsError.message}`);
         }
         
-        // Additional diagnostics for food data
-        const foodIds = ingredientsData
-          .filter(ing => ing.food_id)
-          .map(ing => ing.food_id);
-          
-        let foodData = [];
-        
-        if (foodIds.length > 0) {
-          const { data: foods, error: foodsError } = await supabase
-            .from('foods')
-            .select('*')
-            .in('id', foodIds);
-            
-          if (foodsError) {
-            throw new Error(`Error fetching foods: ${foodsError.message}`);
-          }
-          
-          foodData = foods;
-        }
-        
         // Set comprehensive debug info
         setDebugInfo({
           recipe: recipeData,
-          ingredients: ingredientsData,
-          foodData
+          ingredients: ingredientsData
         });
         
-        // Access first ingredient's food and unit correctly
+        // Access first ingredient's food and unit correctly with singular naming
         let firstIngredientInfo = "None";
-        if (ingredientsData.length > 0) {
+        if (ingredientsData && ingredientsData.length > 0) {
           const firstIng = ingredientsData[0] as IngredientData;
-          // Type assertion to ensure TypeScript understands this is an object
-          const foodName = firstIng.foods ? firstIng.foods.name : "None";
+          const foodName = firstIng.food ? firstIng.food.name : "None";
           const amount = firstIng.amount || 0;
-          const unitAbbr = firstIng.units ? firstIng.units.abbreviation : "";
+          const unitAbbr = firstIng.unit ? firstIng.unit.abbreviation : "";
           
           firstIngredientInfo = `${foodName} - ${amount} ${unitAbbr}`;
         }
         
-        setDatabaseStatus(`Recipe in DB: ${recipeData.title}. Found ${ingredientsData.length} ingredients. 
+        setDatabaseStatus(`Recipe in DB: ${recipeData.title}. Found ${ingredientsData?.length || 0} ingredients. 
         First ingredient: ${firstIngredientInfo}`);
       }
     } catch (error) {
@@ -127,38 +120,31 @@ const RecipeDetail = () => {
       findTikkaMasala();
     }
     
-    // Check the database for diagnostic info
+    // Check the database and analyze structure for diagnostic info
     if (id) {
-      checkTikkaMasalaInDatabase();
+      checkRecipeInDatabase();
+      analyzeIngredientStructure();
     }
   }, [id, searchParams]);
 
   const findTikkaMasala = async () => {
     setLoading(true);
     try {
-      // Search for Tikka Masala recipe in the database
-      const { data, error } = await supabase
-        .from('recipes')
-        .select('id, title')
-        .ilike('title', '%tikka masala%')
-        .limit(1);
-        
-      if (error) {
-        throw error;
-      }
+      // Use our service to find the recipe
+      const tikkaMasala = await recipeService.findRecipeByName('tikka masala');
       
-      if (data && data.length > 0) {
+      if (tikkaMasala) {
         // Remove the query param
         searchParams.delete('findTikka');
         setSearchParams(searchParams);
         
         // Navigate to the specific recipe
-        if (id !== data[0].id) {
+        if (id !== tikkaMasala.id) {
           toast({
             title: "Tikka Masala Recipe Found",
             description: "Navigating to the authentic recipe"
           });
-          navigate(`/recipes/${data[0].id}`);
+          navigate(`/recipes/${tikkaMasala.id}`);
         }
       } else {
         toast({
@@ -186,19 +172,41 @@ const RecipeDetail = () => {
           <h3 className="font-bold text-amber-800">Database Diagnostic</h3>
           <p className="text-amber-700">{databaseStatus}</p>
           {loading && <p className="text-amber-700">Loading...</p>}
+          
+          {typeAnalysis && (
+            <div className="mt-2">
+              <details>
+                <summary className="cursor-pointer text-amber-800 font-medium">Data Structure Analysis</summary>
+                <div className="mt-2 max-h-60 overflow-auto bg-white/50 p-2 rounded text-xs">
+                  {typeAnalysis.recommendation && (
+                    <div className="p-2 bg-amber-200 rounded mb-2">
+                      <p className="text-amber-900 font-medium">{typeAnalysis.recommendation}</p>
+                    </div>
+                  )}
+                  <p><strong>Foods vs Food:</strong> {typeAnalysis.analysis?.foodsIsDefined ? 
+                    `Using 'foods' (${typeAnalysis.analysis.foodsType})` : 
+                    'foods undefined'} | {typeAnalysis.analysis?.foodIsDefined ? 
+                    `Using 'food' (${typeAnalysis.analysis.foodType})` : 
+                    'food undefined'}</p>
+                </div>
+              </details>
+            </div>
+          )}
+          
           {debugInfo && (
             <div className="mt-2">
               <details>
                 <summary className="cursor-pointer text-amber-800 font-medium">Show Raw Data</summary>
                 <div className="mt-2 max-h-60 overflow-auto bg-white/50 p-2 rounded text-xs">
                   <p><strong>Recipe:</strong> {debugInfo.recipe.title}</p>
-                  <p><strong>Ingredients Count:</strong> {debugInfo.ingredients.length}</p>
-                  <p><strong>Foods Count:</strong> {debugInfo.foodData.length}</p>
+                  <p><strong>Ingredients Count:</strong> {debugInfo.ingredients?.length || 0}</p>
                   <div className="mt-1">
-                    <strong>Food IDs:</strong> 
+                    <strong>Ingredients:</strong> 
                     <ul className="pl-4">
-                      {debugInfo.foodData.map((food: any) => (
-                        <li key={food.id}>{food.id.substring(0, 8)}... - {food.name}</li>
+                      {debugInfo.ingredients?.map((ing: any) => (
+                        <li key={ing.id}>
+                          {ing.food?.name || 'Unknown'} - {ing.amount} {ing.unit?.abbreviation || ''}
+                        </li>
                       ))}
                     </ul>
                   </div>

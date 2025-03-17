@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Recipe } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { recipeService } from "@/services/supabase/recipeService";
 
 export const useSupabaseRecipe = (recipeId: string) => {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -22,101 +22,22 @@ export const useSupabaseRecipe = (recipeId: string) => {
           return;
         }
         
-        // Fetch recipe data from Supabase
-        console.log("Fetching recipe from Supabase:", recipeId);
+        // Use our service to fetch the recipe with proper singular naming
+        console.log("Fetching recipe from hook:", recipeId);
+        const recipeData = await recipeService.getRecipe(recipeId);
         
-        // Fetch basic recipe data
-        const { data: recipeData, error: recipeError } = await supabase
-          .from('recipes')
-          .select('*')
-          .eq('id', recipeId)
-          .single();
-          
-        if (recipeError) {
-          throw new Error(`Failed to fetch recipe: ${recipeError.message}`);
+        // Debug log for recipe ingredients
+        if (recipeData?.ingredients) {
+          console.log("Received ingredients from service:", recipeData.ingredients.map(ing => ({
+            id: ing.id,
+            foodId: ing.food_id,
+            food: ing.food ? ing.food.name : 'missing food',
+            unitId: ing.unit_id,
+            unit: ing.unit ? ing.unit.abbreviation : 'missing unit'
+          })));
         }
         
-        if (!recipeData) {
-          console.log("No recipe found with ID:", recipeId);
-          setRecipe(null);
-          setLoading(false);
-          return;
-        }
-        
-        // Fetch ingredients with related data, ensuring we get food details
-        const { data: ingredientsData, error: ingredientsError } = await supabase
-          .from('ingredients')
-          .select(`
-            id, 
-            recipe_id,
-            food_id,
-            unit_id,
-            amount,
-            order_index,
-            foods:food_id(id, name, description, is_validated, confidence_score, source),
-            units:unit_id(id, name, abbreviation)
-          `)
-          .eq('recipe_id', recipeId);
-          
-        if (ingredientsError) {
-          throw new Error(`Failed to fetch ingredients: ${ingredientsError.message}`);
-        }
-        
-        // Transform ingredients to ensure proper structure for our Recipe type
-        const ingredients = ingredientsData?.map(ingredient => {
-          return {
-            id: ingredient.id,
-            recipe_id: ingredient.recipe_id,
-            food_id: ingredient.food_id,
-            unit_id: ingredient.unit_id,
-            amount: ingredient.amount,
-            order_index: ingredient.order_index,
-            // Type assertion to handle the foods and units objects properly
-            food: ingredient.foods as any, // This is an object, not an array
-            unit: ingredient.units as any  // This is an object, not an array
-          };
-        }) || [];
-        
-        // Log processed ingredients for debugging
-        console.log("Processed ingredients:", ingredients.map(i => ({
-          id: i.id,
-          food: i.food,
-          food_name: i.food ? i.food.name || 'Unknown food' : 'Unknown food',
-          unit: i.unit,
-          unit_abbr: i.unit ? i.unit.abbreviation || '' : '',
-          amount: i.amount
-        })));
-        
-        // Fetch steps
-        const { data: steps, error: stepsError } = await supabase
-          .from('steps')
-          .select('*')
-          .eq('recipe_id', recipeId)
-          .order('order_number');
-          
-        if (stepsError) {
-          throw new Error(`Failed to fetch steps: ${stepsError.message}`);
-        }
-        
-        // Combine into recipe object
-        const completeRecipe: Recipe = {
-          ...recipeData,
-          ingredients: ingredients || [],
-          steps: steps || []
-        };
-        
-        console.log("Constructed recipe with data:", {
-          id: completeRecipe.id,
-          title: completeRecipe.title,
-          ingredients: completeRecipe.ingredients?.map(i => ({
-            id: i.id,
-            food_name: i.food ? i.food.name || 'Unknown' : 'Unknown',
-            amount: i.amount,
-            unit: i.unit ? i.unit.abbreviation || '' : ''
-          }))
-        });
-        
-        setRecipe(completeRecipe);
+        setRecipe(recipeData);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching recipe:", err);

@@ -16,7 +16,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
   onSelectIngredient 
 }) => {
   useEffect(() => {
-    // Debug log for recipe ingredients
+    // Debug log for recipe ingredients with proper field names
     console.log("RecipeContent rendering with ingredients:", recipe.ingredients);
     
     // Validate ingredient data structure
@@ -25,7 +25,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
         console.log(`Ingredient ${index + 1}:`, {
           id: ingredient.id,
           food_id: ingredient.food_id,
-          food: ingredient.food,
+          food: ingredient.food, // Expect object, not array
           foodName: ingredient.food ? ingredient.food.name || 'No food name' : 'No food name',
           amount: ingredient.amount,
           unit: ingredient.unit ? ingredient.unit.abbreviation || 'No unit' : 'No unit'
