@@ -3,10 +3,8 @@ import { useEffect, useState } from "react";
 import { RecipeProvider } from "@/context/recipe"; 
 import RecipeDetailContainer from "@/components/recipe/RecipeDetailContainer";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useDebugSupabaseData } from "@/utils/debugSupabaseData";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { databaseAnalyzer } from "@/utils/databaseAnalyzer";
 import { recipeService } from "@/services/supabase/recipeService";
 
 // Define types for the ingredients data returned from Supabase
@@ -38,24 +36,8 @@ const RecipeDetail = () => {
   const [loading, setLoading] = useState(false);
   const [databaseStatus, setDatabaseStatus] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [typeAnalysis, setTypeAnalysis] = useState<any>(null);
 
-  // Function to analyze the database structure for debugging
-  const analyzeIngredientStructure = async () => {
-    if (id) {
-      const result = await databaseAnalyzer.analyzeRecipeIngredients(id);
-      setTypeAnalysis(result);
-      
-      if (result.error) {
-        setDatabaseStatus(`Analysis error: ${result.error}`);
-      } else {
-        setDatabaseStatus(`Analysis complete. Check console for details.`);
-        console.log("Type analysis:", result);
-      }
-    }
-  };
-
-  // Function to directly check the database using proper naming now
+  // Function to directly check the database using proper naming
   const checkRecipeInDatabase = async () => {
     setLoading(true);
     try {
@@ -120,10 +102,9 @@ const RecipeDetail = () => {
       findTikkaMasala();
     }
     
-    // Check the database and analyze structure for diagnostic info
+    // Check the database for diagnostic info
     if (id) {
       checkRecipeInDatabase();
-      analyzeIngredientStructure();
     }
   }, [id, searchParams]);
 
@@ -172,26 +153,6 @@ const RecipeDetail = () => {
           <h3 className="font-bold text-amber-800">Database Diagnostic</h3>
           <p className="text-amber-700">{databaseStatus}</p>
           {loading && <p className="text-amber-700">Loading...</p>}
-          
-          {typeAnalysis && (
-            <div className="mt-2">
-              <details>
-                <summary className="cursor-pointer text-amber-800 font-medium">Data Structure Analysis</summary>
-                <div className="mt-2 max-h-60 overflow-auto bg-white/50 p-2 rounded text-xs">
-                  {typeAnalysis.recommendation && (
-                    <div className="p-2 bg-amber-200 rounded mb-2">
-                      <p className="text-amber-900 font-medium">{typeAnalysis.recommendation}</p>
-                    </div>
-                  )}
-                  <p><strong>Foods vs Food:</strong> {typeAnalysis.analysis?.foodsIsDefined ? 
-                    `Using 'foods' (${typeAnalysis.analysis.foodsType})` : 
-                    'foods undefined'} | {typeAnalysis.analysis?.foodIsDefined ? 
-                    `Using 'food' (${typeAnalysis.analysis.foodType})` : 
-                    'food undefined'}</p>
-                </div>
-              </details>
-            </div>
-          )}
           
           {debugInfo && (
             <div className="mt-2">
