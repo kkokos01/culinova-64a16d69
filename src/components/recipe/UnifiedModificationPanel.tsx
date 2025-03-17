@@ -13,7 +13,7 @@ interface UnifiedModificationPanelProps {
   onRemoveIngredientSelection: (id: string) => void;
   customInstructions: string;
   onCustomInstructionsChange: (instructions: string) => void;
-  onApplyModifications: () => void;
+  onApplyModifications: () => void; // Changed from onApplyModifications to be consistent
   onSelectModificationType: (type: string) => void;
   isDisabled?: boolean;
   selectedModifications: string[];
@@ -25,7 +25,7 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
   onRemoveIngredientSelection,
   customInstructions,
   onCustomInstructionsChange,
-  onApplyModifications,
+  onApplyModifications, // Changed from onApplyModifications
   onSelectModificationType,
   isDisabled = false,
   selectedModifications = []
@@ -141,7 +141,7 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
           </div>
           
           <Button
-            onClick={onApplyModifications}
+            onClick={onApplyModifications} // Changed from onApplyModifications
             disabled={!canModify || isDisabled}
             className="w-full mt-4 bg-sage-500 hover:bg-sage-600 text-white font-medium py-2 rounded-md flex items-center justify-center"
           >

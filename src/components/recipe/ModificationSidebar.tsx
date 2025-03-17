@@ -14,6 +14,7 @@ interface ModificationSidebarProps {
   onCustomInstructionsChange: (instructions: string) => void;
   onStartModification: () => void;
   onSelectModificationType: (type: string) => void;
+  onApplyModifications: () => void; // Add this new prop
   isModified: boolean;
   resetToOriginal: () => void;
   onSaveChanges: () => Promise<void>;
@@ -32,6 +33,7 @@ const ModificationSidebar: React.FC<ModificationSidebarProps> = ({
   onCustomInstructionsChange,
   onStartModification,
   onSelectModificationType,
+  onApplyModifications, // Add this to the destructuring
   isModified,
   resetToOriginal,
   onSaveChanges,
@@ -66,7 +68,7 @@ const ModificationSidebar: React.FC<ModificationSidebarProps> = ({
           onRemoveIngredientSelection={onRemoveIngredientSelection}
           customInstructions={customInstructions}
           onCustomInstructionsChange={onCustomInstructionsChange}
-          onApplyModifications={onStartModification}
+          onApplyModifications={onApplyModifications} // Use the new prop instead of onStartModification
           onSelectModificationType={onSelectModificationType}
           isDisabled={isDisabled}
           selectedModifications={selectedModifications}
