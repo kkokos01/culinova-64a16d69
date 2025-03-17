@@ -29,16 +29,15 @@ export const useSupabaseRecipe = (recipeId: string) => {
         
         // Normalize ingredients using our helper functions
         if (recipeData?.ingredients) {
-          recipeData.ingredients = recipeData.ingredients.map(ing => {
-            // Convert the raw food and unit to the expected format
-            // This is a type assertion - we know that the resulting objects will
-            // satisfy the Food and Unit types after normalization
-            return {
-              ...ing,
-              food: normalizeFood(ing.food),
-              unit: normalizeUnit(ing.unit)
-            };
-          });
+          // Create a new array with properly typed ingredients
+          // Use type assertion (as Ingredient) to tell TypeScript that 
+          // we're ensuring the result will conform to the Ingredient type
+          recipeData.ingredients = recipeData.ingredients.map(ing => ({
+            ...ing,
+            food: normalizeFood(ing.food),
+            unit: normalizeUnit(ing.unit)
+          // Type assertion to tell TypeScript we've validated this structure
+          })) as Recipe['ingredients'];
           
           console.log("Normalized ingredients:", recipeData.ingredients.map(ing => ({
             id: ing.id,
