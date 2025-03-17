@@ -61,7 +61,11 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
   };
 
   const styles = getIngredientStyles();
-  const foodName = ingredient.food?.name || "Unknown ingredient";
+  
+  // Handle potential array structure for food
+  const foodObj = ingredient.food ? 
+    (Array.isArray(ingredient.food) ? ingredient.food[0] : ingredient.food) : null;
+  const foodName = foodObj?.name || "Unknown ingredient";
 
   return (
     <div 
@@ -71,7 +75,14 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
       <div className="flex-1 min-w-0">
         <div className={`flex items-baseline gap-x-1.5 text-base ${styles.text}`}>
           <span className="font-medium whitespace-nowrap">
-            {ingredient.amount} {ingredient.unit?.abbreviation || ''}
+            {ingredient.amount} {
+              // Handle potential array structure for unit
+              ingredient.unit ? 
+                (Array.isArray(ingredient.unit) ? 
+                  ingredient.unit[0]?.abbreviation : 
+                  ingredient.unit.abbreviation) || '' : 
+                ''
+            }
           </span>
           <span className="truncate">{foodName}</span>
         </div>

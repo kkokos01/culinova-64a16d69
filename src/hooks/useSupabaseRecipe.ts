@@ -26,9 +26,23 @@ export const useSupabaseRecipe = (recipeId: string) => {
         console.log("Fetching recipe from hook:", recipeId);
         const recipeData = await recipeService.getRecipe(recipeId);
         
-        // Debug log for recipe ingredients
+        // Normalize ingredients to ensure food and unit are always objects, not arrays
         if (recipeData?.ingredients) {
-          console.log("Received ingredients from service:", recipeData.ingredients.map(ing => ({
+          recipeData.ingredients = recipeData.ingredients.map(ing => {
+            // Ensure food is an object, not an array
+            if (ing.food && Array.isArray(ing.food)) {
+              ing.food = ing.food[0] || null;
+            }
+            
+            // Ensure unit is an object, not an array
+            if (ing.unit && Array.isArray(ing.unit)) {
+              ing.unit = ing.unit[0] || null;
+            }
+            
+            return ing;
+          });
+          
+          console.log("Normalized ingredients:", recipeData.ingredients.map(ing => ({
             id: ing.id,
             foodId: ing.food_id,
             food: ing.food ? ing.food.name : 'missing food',

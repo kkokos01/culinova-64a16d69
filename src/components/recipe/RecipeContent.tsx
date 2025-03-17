@@ -22,13 +22,20 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
     // Validate ingredient data structure
     if (recipe.ingredients) {
       recipe.ingredients.forEach((ingredient, index) => {
+        // Handle the possibility of food and unit being arrays or objects
+        const foodObj = ingredient.food ? 
+          (Array.isArray(ingredient.food) ? ingredient.food[0] : ingredient.food) : null;
+          
+        const unitObj = ingredient.unit ? 
+          (Array.isArray(ingredient.unit) ? ingredient.unit[0] : ingredient.unit) : null;
+          
         console.log(`Ingredient ${index + 1}:`, {
           id: ingredient.id,
           food_id: ingredient.food_id,
-          food: ingredient.food, // Expect object, not array
-          foodName: ingredient.food ? ingredient.food.name || 'No food name' : 'No food name',
+          food: foodObj, // Now guaranteed to be an object or null, not an array
+          foodName: foodObj ? foodObj.name || 'No food name' : 'No food name',
           amount: ingredient.amount,
-          unit: ingredient.unit ? ingredient.unit.abbreviation || 'No unit' : 'No unit'
+          unit: unitObj ? unitObj.abbreviation || 'No unit' : 'No unit'
         });
       });
     }

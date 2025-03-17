@@ -4,6 +4,24 @@ import { Recipe, Ingredient } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
 /**
+ * Helper function to normalize food and unit data from Supabase
+ * to handle both array and object forms consistently
+ */
+const normalizeIngredient = (ingredient: any): Ingredient => {
+  // Handle food property - can be array or object
+  if (ingredient.food && Array.isArray(ingredient.food)) {
+    ingredient.food = ingredient.food[0] || null;
+  }
+  
+  // Handle unit property - can be array or object
+  if (ingredient.unit && Array.isArray(ingredient.unit)) {
+    ingredient.unit = ingredient.unit[0] || null;
+  }
+  
+  return ingredient as Ingredient;
+};
+
+/**
  * Service for handling recipe-related Supabase queries
  * Ensures consistent naming conventions for joined tables
  */
@@ -74,10 +92,15 @@ export const recipeService = {
         stepsCount: steps?.length || 0,
       });
       
+      // Normalize ingredients to handle array/object inconsistency
+      const normalizedIngredients = ingredientsData ? 
+        ingredientsData.map(ingredient => normalizeIngredient(ingredient)) : 
+        [];
+      
       // Combine into recipe object with correct structure
       const completeRecipe: Recipe = {
         ...recipeData,
-        ingredients: ingredientsData || [],
+        ingredients: normalizedIngredients,
         steps: steps || []
       };
       
