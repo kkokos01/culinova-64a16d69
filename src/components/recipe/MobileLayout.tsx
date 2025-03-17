@@ -100,26 +100,29 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       
       {/* Modification Drawer */}
       <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <Drawer.Content className="bg-sage-700 text-white">
-          <div className="h-[85vh]">
-            <ModificationPanel
-              recipe={recipe}
-              isModified={isModified}
-              resetToOriginal={resetToOriginal}
-              onAcceptModification={handleSaveChanges}
-              onStartModification={handleStartModificationWithSelectedTypes}
-              closePanel={closeModificationPanel}
-              isMobile={true}
-              isSaving={isSaving}
-              isTemporary={true}
-              isAiModifying={isAiModifying}
-              selectedIngredients={selectedIngredients}
-              removeIngredientSelection={removeIngredientSelection}
-              selectedModifications={selectedModifications}
-              onSelectModificationType={handleSelectModificationType}
-            />
-          </div>
-        </Drawer.Content>
+        <Drawer.Portal>
+          <Drawer.Overlay />
+          <Drawer.Content className="bg-sage-700 text-white">
+            <div className="h-[85vh]">
+              <ModificationPanel
+                recipe={recipe}
+                isModified={isModified}
+                resetToOriginal={resetToOriginal}
+                onAcceptModification={handleSaveChanges}
+                onStartModification={handleStartModificationWithSelectedTypes}
+                closePanel={closeModificationPanel}
+                isMobile={true}
+                isSaving={isSaving}
+                isTemporary={true}
+                isAiModifying={isAiModifying}
+                selectedIngredients={selectedIngredients}
+                removeIngredientSelection={removeIngredientSelection}
+                selectedModifications={selectedModifications}
+                onSelectModificationType={handleSelectModificationType}
+              />
+            </div>
+          </Drawer.Content>
+        </Drawer.Portal>
       </Drawer>
     </div>
   );

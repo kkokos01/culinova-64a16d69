@@ -20,6 +20,8 @@ interface ModificationPanelContainerProps {
   isAiModifying?: boolean;
   selectedIngredients?: Map<string, any>;
   removeIngredientSelection?: (id: string) => void;
+  selectedModifications?: string[];
+  onSelectModificationType?: (type: string) => void;
 }
 
 const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
@@ -33,7 +35,9 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
   onStartModification,
   isAiModifying = false,
   selectedIngredients: externalSelectedIngredients,
-  removeIngredientSelection: externalRemoveIngredientSelection
+  removeIngredientSelection: externalRemoveIngredientSelection,
+  selectedModifications = [],
+  onSelectModificationType
 }) => {
   const {
     selectedIngredients: internalSelectedIngredients,
@@ -50,27 +54,34 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
   const removeIngredientSelection = externalRemoveIngredientSelection || internalRemoveIngredientSelection;
 
   // Track selected quick modifications
-  const [selectedModifications, setSelectedModifications] = useState<string[]>([]);
+  const [internalSelectedModifications, setInternalSelectedModifications] = useState<string[]>([]);
 
   // Handle selecting a quick modification type
   const handleSelectModificationType = (type: string) => {
-    setSelectedModifications(prev => {
-      // If already selected, remove it; otherwise, add it
-      if (prev.includes(type)) {
-        return prev.filter(item => item !== type);
-      } else {
-        return [...prev, type];
-      }
-    });
+    if (onSelectModificationType) {
+      onSelectModificationType(type);
+    } else {
+      setInternalSelectedModifications(prev => {
+        // If already selected, remove it; otherwise, add it
+        if (prev.includes(type)) {
+          return prev.filter(item => item !== type);
+        } else {
+          return [...prev, type];
+        }
+      });
+    }
   };
+
+  // Use either external or internal selected modifications
+  const effectiveSelectedModifications = onSelectModificationType ? selectedModifications : internalSelectedModifications;
 
   // Create modification instructions with selected types and custom instructions
   const createModificationInstructions = () => {
     let instructions = customInstructions;
     
-    if (selectedModifications.length > 0) {
+    if (effectiveSelectedModifications.length > 0) {
       // Add selected modifications at the beginning of instructions
-      const modificationText = `Make this recipe ${selectedModifications.join(', ')}`;
+      const modificationText = `Make this recipe ${effectiveSelectedModifications.join(', ')}`;
       
       if (instructions.trim()) {
         instructions = `${modificationText}. ${instructions}`;
@@ -85,7 +96,7 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
   // Determine if modification can be started
   const hasSelectedIngredients = selectedIngredients.size > 0;
   const hasCustomInstructions = customInstructions.trim().length > 0;
-  const hasSelectedModifications = selectedModifications.length > 0;
+  const hasSelectedModifications = effectiveSelectedModifications.length > 0;
   const canModify = hasSelectedIngredients || hasCustomInstructions || hasSelectedModifications;
 
   // Handle starting the modification
@@ -122,7 +133,7 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
         onCustomInstructionsChange={setCustomInstructions}
         onSelectModificationType={handleSelectModificationType}
         isDisabled={isAiModifying}
-        selectedModifications={selectedModifications}
+        selectedModifications={effectiveSelectedModifications}
       />
 
       <div className="p-4 border-t border-white/20">
