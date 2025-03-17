@@ -51,6 +51,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(true);
   const [leftPanelSize, setLeftPanelSize] = useState(4);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedModifications, setSelectedModifications] = useState<string[]>([]);
   
   // Get the active version to check if it's temporary
   const activeVersion = recipeVersions.find(v => v.id === activeVersionId);
@@ -90,11 +91,21 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   
   // Handle selecting a modification type
   const handleSelectModificationType = (type: string) => {
+    // Toggle selection of the modification type
+    setSelectedModifications(prev => 
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
+    
     // Set custom instructions based on the selected type
     setCustomInstructions(`Make this recipe ${type}`);
-    
-    // Start the modification process
-    handleStartModification(type);
+  };
+  
+  // Handle applying selected modifications
+  const handleApplyModifications = () => {
+    if (selectedModifications.length > 0) {
+      // Start the modification process with the selected types
+      handleStartModification(selectedModifications.join(", "));
+    }
   };
 
   // Guard against null recipe
@@ -148,6 +159,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               onCustomInstructionsChange={setCustomInstructions}
               onStartModification={startUnifiedModification}
               onSelectModificationType={handleSelectModificationType}
+              onApplyModifications={handleApplyModifications}
               isModified={isModified}
               resetToOriginal={resetToOriginal}
               onSaveChanges={handleSaveToDatabase}
@@ -155,6 +167,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               isSaving={isSaving}
               isActiveVersionTemporary={isActiveVersionTemporary}
               onTogglePanel={handleToggleModifyPanel}
+              selectedModifications={selectedModifications}
             />
           )}
         </ResizablePanel>
