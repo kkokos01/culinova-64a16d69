@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
@@ -5,7 +6,7 @@ import RecipeContent from "./RecipeContent";
 import RecipeVersionTabs from "./RecipeVersionTabs";
 import { useRecipe } from "@/context/recipe";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { ChevronLeft, ChevronRight, Wand2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wand2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import UnifiedModificationPanel from "./UnifiedModificationPanel";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -20,6 +21,7 @@ interface DesktopLayoutProps {
   handleAcceptChanges: () => void;
   setSelectedIngredient: (ingredient: Ingredient | null) => void;
   onSelectIngredient: (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => void;
+  isAiModifying?: boolean;
 }
 
 const DesktopLayout: React.FC<DesktopLayoutProps> = ({
@@ -32,6 +34,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   handleAcceptChanges,
   setSelectedIngredient,
   onSelectIngredient,
+  isAiModifying = false
 }) => {
   const { 
     selectedIngredients, 
@@ -41,11 +44,18 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     selectIngredientForModification, 
     removeIngredientSelection,
     setCustomInstructions,
-    addRecipeVersion
+    addRecipeVersion,
+    persistVersion,
+    activeVersionId
   } = useRecipe();
   
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(true);
   const [leftPanelSize, setLeftPanelSize] = useState(4);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Get the active version to check if it's temporary
+  const activeVersion = recipeVersions.find(v => v.id === activeVersionId);
+  const isActiveVersionTemporary = activeVersion?.isTemporary || false;
   
   useEffect(() => {
     setLeftPanelSize(leftPanelCollapsed ? 4 : 35);
@@ -59,9 +69,18 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     onSelectIngredient(ingredient, action);
   };
 
-  const handleAcceptModification = async () => {
-    if (recipe) {
-      await addRecipeVersion("Modified", recipe);
+  const handleSaveToDatabase = async () => {
+    if (isActiveVersionTemporary && activeVersionId) {
+      try {
+        setIsSaving(true);
+        await persistVersion(activeVersionId);
+        handleAcceptChanges();
+      } catch (error) {
+        console.error("Error saving to database:", error);
+      } finally {
+        setIsSaving(false);
+      }
+    } else {
       handleAcceptChanges();
     }
   };
@@ -136,7 +155,17 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                     customInstructions={customInstructions}
                     onCustomInstructionsChange={setCustomInstructions}
                     onStartModification={startUnifiedModification}
+                    isDisabled={isAiModifying}
                   />
+                  
+                  {isAiModifying && (
+                    <div className="mt-4 flex justify-center">
+                      <div className="flex items-center text-sage-800">
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        <span>AI is modifying recipe...</span>
+                      </div>
+                    </div>
+                  )}
                   
                   {isModified && (
                     <div className="mt-6 flex flex-col gap-2">
@@ -147,11 +176,22 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                       >
                         Reset to Original
                       </Button>
+                      
                       <Button 
-                        onClick={handleAcceptModification}
+                        onClick={handleSaveToDatabase}
+                        disabled={isSaving}
                         className="w-full bg-white text-sage-600 hover:bg-white/90 font-medium"
                       >
-                        Save as New Version
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            {isActiveVersionTemporary ? 'Save to Database' : 'Save as New Version'}
+                          </>
+                        )}
                       </Button>
                     </div>
                   )}
@@ -169,6 +209,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
                 isModified={isModified}
                 onModifyWithAI={handleToggleModifyPanel}
                 showModifyButton={leftPanelCollapsed}
+                isTemporary={isActiveVersionTemporary}
               />
 
               <RecipeVersionTabs />

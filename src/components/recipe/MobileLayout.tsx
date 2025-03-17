@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useRecipe } from "@/context/recipe";
 import ModificationPanel from "./ModificationPanel";
 import { usePanelState } from "@/hooks/usePanelState";
+import { Database, Loader2 } from "lucide-react";
 
 interface MobileLayoutProps {
   recipe: Recipe | null;
@@ -19,6 +20,7 @@ interface MobileLayoutProps {
   handleAcceptChanges: () => void;
   setSelectedIngredient: (ingredient: Ingredient | null) => void;
   onSelectIngredient: (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => void;
+  isAiModifying?: boolean;
 }
 
 const MobileLayout: React.FC<MobileLayoutProps> = ({
@@ -31,23 +33,47 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   handleAcceptChanges,
   setSelectedIngredient,
   onSelectIngredient,
+  isAiModifying = false
 }) => {
   const { 
     addRecipeVersion,
     selectedIngredients,
+    persistVersion,
+    activeVersionId,
+    recipeVersions
   } = useRecipe();
   
   const modificationPanel = usePanelState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+  
+  // Get the active version to check if it's temporary
+  const activeVersion = recipeVersions.find(v => v.id === activeVersionId);
+  const isActiveVersionTemporary = activeVersion?.isTemporary || false;
   
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
     onSelectIngredient(ingredient, action);
   };
 
-  const handleAcceptModification = () => {
-    if (recipe) {
-      addRecipeVersion("Modified", recipe);
+  const handleSaveToDatabase = async () => {
+    if (!recipe) return;
+    
+    try {
+      setIsSaving(true);
+      
+      if (isActiveVersionTemporary && activeVersionId) {
+        // Save temporary version to database
+        await persistVersion(activeVersionId);
+      } else {
+        // Create a new version in the database
+        await addRecipeVersion("Modified", recipe);
+      }
+      
       handleAcceptChanges();
       modificationPanel.close();
+    } catch (error) {
+      console.error("Error saving modifications:", error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -64,10 +90,13 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
           recipe={recipe}
           isModified={isModified}
           resetToOriginal={resetToOriginal}
-          onAcceptModification={handleAcceptModification}
+          onAcceptModification={handleSaveToDatabase}
           onStartModification={startUnifiedModification}
           closePanel={modificationPanel.close}
           isMobile={true}
+          isSaving={isSaving}
+          isTemporary={isActiveVersionTemporary}
+          isAiModifying={isAiModifying}
         />
       </div>
     );
@@ -82,6 +111,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
               recipe={recipe}
               isModified={isModified}
               onModifyWithAI={modificationPanel.open}
+              isTemporary={isActiveVersionTemporary}
             />
             <div className="px-1 mt-2"> {/* Reduced mt-4 to mt-2 */}
               <RecipeVersionTabs />
@@ -101,10 +131,23 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       
       <div className="fixed bottom-0 inset-x-0 p-3 bg-white border-t">
         <Button 
-          className="w-full bg-sage-500 hover:bg-sage-600 text-white font-medium shadow-md"
+          className="w-full bg-sage-500 hover:bg-sage-600 text-white font-medium shadow-md flex items-center justify-center"
           onClick={modificationPanel.open}
+          disabled={isAiModifying}
         >
-          Modify Recipe
+          {isAiModifying ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              AI Modifying Recipe...
+            </>
+          ) : (
+            <>
+              {isActiveVersionTemporary && (
+                <Database className="mr-2 h-4 w-4" />
+              )}
+              {isActiveVersionTemporary ? 'Modify Recipe (Temporary)' : 'Modify Recipe'}
+            </>
+          )}
         </Button>
       </div>
     </>

@@ -1,10 +1,10 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useRecipe } from "@/context/recipe";
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseRecipe } from "@/hooks/useSupabaseRecipe";
-import { Ingredient } from "@/types";
+import { Ingredient, Recipe } from "@/types";
 
 export const useRecipeDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,14 +23,20 @@ export const useRecipeDetail = () => {
     resetToOriginal,
     selectedIngredients,
     addRecipeVersion,
+    addTemporaryVersion,
+    persistVersion,
     recipeVersions,
     hasInitializedVersions,
     setHasInitializedVersions,
-    fetchVersionsFromDb
+    fetchVersionsFromDb,
+    recipe: currentRecipe
   } = useRecipe();
   
   // Use our Supabase recipe hook
   const { recipe: recipeData, loading: isLoading, error } = useSupabaseRecipe(id || "");
+  
+  // State to track if we're currently modifying with AI
+  const [isAiModifying, setIsAiModifying] = useState(false);
   
   // Redirect if recipe not found (after loading is complete)
   useEffect(() => {
@@ -104,39 +110,78 @@ export const useRecipeDetail = () => {
     // For desktop, the panel is already visible in the left panel
   };
   
-  const handleStartModification = (modificationType: string) => {
-    // Here we would normally call an AI API
-    // For now, we'll just simulate a modification
-    const ingredientActions = Array.from(selectedIngredients.entries())
-      .map(([_, { ingredient, action }]) => `${action} ${ingredient.food?.name}`)
-      .join(", ");
+  const handleStartModification = async (modificationType: string) => {
+    if (!currentRecipe) return;
     
-    const modificationMessage = ingredientActions 
-      ? `Starting ${modificationType} modification with changes: ${ingredientActions}`
-      : `Starting ${modificationType} modification...`;
+    setIsAiModifying(true);
     
-    toast({
-      title: "AI Modification Started",
-      description: modificationMessage,
-    });
-    
-    // Toggle modified status on (we would normally wait for the API response)
-    setTimeout(() => {
-      setIsModified(true);
-    }, 1500);
+    try {
+      // Here we would normally call an AI API
+      // For now, we'll just simulate a modification
+      const ingredientActions = Array.from(selectedIngredients.entries())
+        .map(([_, { ingredient, action }]) => `${action} ${ingredient.food?.name}`)
+        .join(", ");
+      
+      const modificationMessage = ingredientActions 
+        ? `Starting ${modificationType} modification with changes: ${ingredientActions}`
+        : `Starting ${modificationType} modification...`;
+      
+      toast({
+        title: "AI Modification Started",
+        description: modificationMessage,
+      });
+      
+      // Toggle modified status on (we would normally wait for the API response)
+      setTimeout(() => {
+        // Create a temporary version with the modifications
+        // In a real implementation, we would apply AI changes to the recipe
+        const modifiedRecipe = {
+          ...currentRecipe,
+          // In a real implementation, we would make actual AI modifications here
+          title: `${currentRecipe.title} (${modificationType})`
+        };
+        
+        // Create a temporary version (not saved to DB yet)
+        addTemporaryVersion(`${modificationType} Version`, modifiedRecipe);
+        
+        setIsModified(true);
+        setIsAiModifying(false);
+      }, 1500);
+    } catch (error) {
+      console.error("Error during AI modification:", error);
+      toast({
+        title: "Error",
+        description: "Failed to modify recipe with AI",
+        variant: "destructive"
+      });
+      setIsAiModifying(false);
+    }
   };
   
   const handleAcceptChanges = async () => {
-    if (recipeData) {
+    if (currentRecipe) {
       try {
-        // In the real implementation, we would save the changes to the database
-        // and create a new version with the modifications
-        await addRecipeVersion("Modified", recipeData);
+        // Find the active version (which should be temporary)
+        const activeVersion = recipeVersions.find(v => v.id === currentRecipe.id);
         
-        toast({
-          title: "Changes Accepted",
-          description: "The recipe version has been saved.",
-        });
+        if (activeVersion?.isTemporary) {
+          // Save the temporary version to the database
+          await persistVersion(activeVersion.id);
+          
+          toast({
+            title: "Changes Saved",
+            description: "The recipe version has been saved to the database.",
+          });
+        } else {
+          // Fall back to creating a new persisted version if needed
+          await addRecipeVersion("Modified", currentRecipe);
+          
+          toast({
+            title: "New Version Created",
+            description: "A new recipe version has been saved.",
+          });
+        }
+        
         setIsModified(false);
       } catch (error) {
         console.error("Error saving modifications:", error);
@@ -160,6 +205,7 @@ export const useRecipeDetail = () => {
     handleStartModification,
     handleAcceptChanges,
     setSelectedIngredient,
-    handleSelectIngredient
+    handleSelectIngredient,
+    isAiModifying
   };
 };

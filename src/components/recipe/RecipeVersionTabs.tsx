@@ -4,12 +4,15 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit2, Trash, Loader2 } from "lucide-react";
+import { MoreHorizontal, Edit2, Trash, Loader2, Save, Database } from "lucide-react";
 import { useRecipe } from "@/context/recipe";
 import { RecipeVersion } from "@/context/recipe/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 const RecipeVersionTabs = () => {
   const { 
@@ -18,11 +21,14 @@ const RecipeVersionTabs = () => {
     isLoadingVersions,
     setActiveVersion, 
     renameVersion, 
-    deleteVersion 
+    deleteVersion,
+    persistVersion
   } = useRecipe();
   
+  const { toast } = useToast();
   const [isRenaming, setIsRenaming] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
+  const [isSaving, setSaving] = useState<string | null>(null);
   
   // Handle initiating rename
   const handleStartRename = (version: RecipeVersion) => {
@@ -36,6 +42,27 @@ const RecipeVersionTabs = () => {
       await renameVersion(id, newName.trim());
     }
     setIsRenaming(null);
+  };
+  
+  // Handle persisting a temporary version
+  const handlePersistVersion = async (version: RecipeVersion) => {
+    try {
+      setSaving(version.id);
+      await persistVersion(version.id);
+      toast({
+        title: "Version Saved",
+        description: `"${version.name}" has been saved to the database.`,
+      });
+    } catch (error) {
+      console.error("Error saving version:", error);
+      toast({
+        title: "Error Saving Version",
+        description: error instanceof Error ? error.message : "Failed to save version",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(null);
+    }
   };
   
   // Handle key press in rename field
@@ -91,6 +118,16 @@ const RecipeVersionTabs = () => {
               >
                 {version.name}
                 
+                {/* Display temporary badge */}
+                {version.isTemporary && (
+                  <Badge 
+                    variant="outline" 
+                    className="ml-2 text-xs bg-amber-50 text-amber-800 border-amber-200"
+                  >
+                    Temporary
+                  </Badge>
+                )}
+                
                 {version.name !== "Original" && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -106,6 +143,24 @@ const RecipeVersionTabs = () => {
                         <Edit2 className="mr-2 h-4 w-4" />
                         <span>Rename</span>
                       </DropdownMenuItem>
+                      
+                      {/* Add save option for temporary versions */}
+                      {version.isTemporary && (
+                        <DropdownMenuItem 
+                          onClick={() => handlePersistVersion(version)}
+                          disabled={isSaving === version.id}
+                        >
+                          {isSaving === version.id ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Database className="mr-2 h-4 w-4" />
+                          )}
+                          <span>Save to Database</span>
+                        </DropdownMenuItem>
+                      )}
+                      
+                      {version.isTemporary && <DropdownMenuSeparator />}
+                      
                       <DropdownMenuItem 
                         onClick={() => deleteVersion(version.id)}
                         className="text-red-600 focus:text-red-600"

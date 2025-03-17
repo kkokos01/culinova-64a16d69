@@ -7,6 +7,7 @@ export interface RecipeVersion {
   name: string;
   recipe: Recipe;
   isActive: boolean;
+  isTemporary?: boolean; // Flag to indicate if version is temporary (not saved to DB)
 }
 
 // Define the context type
@@ -31,6 +32,8 @@ export interface RecipeContextType {
   // Fix: Update the return type to match the implementation
   fetchVersionsFromDb: (recipeId: string) => Promise<RecipeVersion[]>;
   addRecipeVersion: (name: string, recipe: Recipe) => Promise<RecipeVersion>;
+  addTemporaryVersion: (name: string, recipe: Recipe) => RecipeVersion; // New function for temporary versions
+  persistVersion: (versionId: string) => Promise<RecipeVersion>; // New function to persist temporary version
   setActiveVersion: (versionId: string) => Promise<void>;
   renameVersion: (versionId: string, newName: string) => Promise<void>;
   deleteVersion: (versionId: string) => Promise<void>;

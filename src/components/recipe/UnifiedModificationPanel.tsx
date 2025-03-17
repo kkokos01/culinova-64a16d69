@@ -1,23 +1,11 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Recipe, Ingredient } from "@/types";
-import { Check, Wand2 } from "lucide-react";
-import SelectedIngredientsPanel from "./SelectedIngredientsPanel";
-
-// List of common recipe modifications
-const MODIFICATION_OPTIONS = [
-  "Healthier",
-  "Simpler",
-  "Vegan",
-  "Quicker",
-  "Gluten-Free",
-  "Keto",
-  "Spicier",
-  "Budget"
-];
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { X, PlusCircle, MinusCircle, Trash, Wand2, Loader2 } from "lucide-react";
 
 interface UnifiedModificationPanelProps {
   recipe: Recipe | null;
@@ -26,6 +14,7 @@ interface UnifiedModificationPanelProps {
   customInstructions: string;
   onCustomInstructionsChange: (instructions: string) => void;
   onStartModification: () => void;
+  isDisabled?: boolean;
 }
 
 const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
@@ -34,98 +23,103 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
   onRemoveIngredientSelection,
   customInstructions,
   onCustomInstructionsChange,
-  onStartModification
+  onStartModification,
+  isDisabled = false
 }) => {
-  // Track which modification options are selected
-  const [selectedModifications, setSelectedModifications] = React.useState<string[]>([]);
+  const hasSelectedIngredients = selectedIngredients.size > 0;
+  const hasCustomInstructions = customInstructions.trim().length > 0;
+  const canModify = hasSelectedIngredients || hasCustomInstructions;
 
-  // Toggle a modification option
-  const toggleModification = (option: string) => {
-    setSelectedModifications(prev => {
-      if (prev.includes(option)) {
-        return prev.filter(item => item !== option);
-      } else {
-        return [...prev, option];
-      }
-    });
+  const getActionColor = (action: string) => {
+    switch (action) {
+      case "increase":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "decrease":
+        return "bg-amber-100 text-amber-800 border-amber-200";
+      case "remove":
+        return "bg-red-100 text-red-800 border-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  const getActionIcon = (action: string) => {
+    switch (action) {
+      case "increase":
+        return <PlusCircle className="h-4 w-4 text-green-600" />;
+      case "decrease":
+        return <MinusCircle className="h-4 w-4 text-amber-600" />;
+      case "remove":
+        return <Trash className="h-4 w-4 text-red-600" />;
+      default:
+        return null;
+    }
   };
 
   return (
-    <div className="h-full overflow-y-auto text-white">
-      <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-        <label htmlFor="custom-instructions" className="block text-sm font-medium text-gray-700 mb-2">
-          Custom Instructions
-        </label>
-        <Textarea
-          id="custom-instructions"
-          placeholder="Example: Make this recipe keto-friendly and reduce the cooking time"
-          value={customInstructions}
-          onChange={(e) => onCustomInstructionsChange(e.target.value)}
-          className="h-24 sm:h-28 text-sm bg-white border-gray-300 text-gray-700 placeholder-gray-400 focus-visible:ring-sage-500"
-        />
-      </div>
-      
-      {/* Common modification options */}
-      <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Quick Modifications
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {MODIFICATION_OPTIONS.map((option) => (
-            <Button
-              key={option}
-              variant="outline"
-              size="sm"
-              className={`rounded-full px-4 py-1 h-auto text-sm ${
-                selectedModifications.includes(option)
-                  ? "bg-sage-100 border-sage-300 text-sage-600 font-medium"
-                  : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400"
-              }`}
-              onClick={() => toggleModification(option)}
-            >
-              {selectedModifications.includes(option) && (
-                <Check className="mr-1 h-3.5 w-3.5 text-sage-600" />
-              )}
-              {option}
-            </Button>
-          ))}
-        </div>
-      </div>
-      
-      {/* Selected ingredients display */}
-      <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Ingredient Modifications
-          </label>
-          {selectedIngredients.size > 0 && (
-            <Badge variant="outline" className="text-xs px-2 bg-white border-gray-300 text-gray-700">
-              {selectedIngredients.size} selected
-            </Badge>
+    <div className="bg-white rounded-lg shadow">
+      <Card className="overflow-hidden">
+        <CardContent className="p-4">
+          <h3 className="text-lg font-medium text-gray-800 mb-3">Selected Ingredients</h3>
+          
+          {hasSelectedIngredients ? (
+            <ul className="space-y-2 mb-4">
+              {Array.from(selectedIngredients.entries()).map(([id, { ingredient, action }]) => (
+                <li key={id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md">
+                  <div className="flex items-center">
+                    {getActionIcon(action)}
+                    <span className="ml-2">{ingredient.food?.name}</span>
+                    <Badge variant="outline" className={`ml-2 ${getActionColor(action)}`}>
+                      {action}
+                    </Badge>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onRemoveIngredientSelection(id)}
+                    className="h-7 w-7 rounded-full"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-500 text-sm mb-4 italic">
+              Select ingredients from the recipe to modify them
+            </p>
           )}
-        </div>
-        
-        {selectedIngredients.size > 0 ? (
-          <SelectedIngredientsPanel
-            selectedIngredients={selectedIngredients}
-            onRemoveSelection={onRemoveIngredientSelection}
+          
+          <Separator className="my-4" />
+          
+          <h3 className="text-lg font-medium text-gray-800 mb-3">Custom Instructions</h3>
+          <textarea
+            value={customInstructions}
+            onChange={(e) => onCustomInstructionsChange(e.target.value)}
+            className="w-full h-24 px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-transparent"
+            placeholder="Add custom instructions for modifying this recipe..."
+            disabled={isDisabled}
           />
-        ) : (
-          <div className="text-sm text-gray-500 bg-gray-50 border border-dashed border-gray-300 rounded-md p-4 text-center">
-            Select ingredients from the recipe to modify their quantities or remove them
-          </div>
-        )}
-      </div>
-      
-      {/* Submit button with improved contrast */}
-      <Button 
-        className="w-full bg-white text-sage-600 hover:bg-gray-100 font-medium shadow-md flex items-center justify-center gap-2"
-        onClick={onStartModification}
-        disabled={selectedIngredients.size === 0 && selectedModifications.length === 0 && !customInstructions.trim()}
-      >
-        <Wand2 className="h-4 w-4" />
-        Generate Modified Recipe
-      </Button>
+          
+          <Button
+            onClick={onStartModification}
+            disabled={!canModify || isDisabled}
+            className="w-full mt-4 bg-sage-500 hover:bg-sage-600 text-white font-medium py-2 rounded-md flex items-center justify-center"
+          >
+            {isDisabled ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                AI is Modifying Recipe...
+              </>
+            ) : (
+              <>
+                <Wand2 className="h-4 w-4 mr-2" />
+                Modify with AI
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };
