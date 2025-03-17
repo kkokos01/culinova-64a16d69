@@ -15,14 +15,18 @@ export const useRecipeModification = (recipe: Recipe | null, addTemporaryVersion
 
   // Select an ingredient for modification
   const selectIngredientForModification = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
+    console.log("Selecting ingredient:", ingredient.id, action);
+    
     setSelectedIngredients(prev => {
       const newMap = new Map(prev);
       
       // If action is null, deselect the ingredient
       if (action === null) {
+        console.log("Removing ingredient selection:", ingredient.id);
         newMap.delete(ingredient.id);
       } else {
         // Otherwise, set the action
+        console.log("Setting ingredient action:", ingredient.id, action);
         newMap.set(ingredient.id, { ingredient, action });
       }
       
@@ -32,6 +36,8 @@ export const useRecipeModification = (recipe: Recipe | null, addTemporaryVersion
 
   // Remove an ingredient from the selection
   const removeIngredientSelection = (id: string) => {
+    console.log("Removing ingredient selection by ID:", id);
+    
     setSelectedIngredients(prev => {
       const newMap = new Map(prev);
       newMap.delete(id);
@@ -44,6 +50,8 @@ export const useRecipeModification = (recipe: Recipe | null, addTemporaryVersion
     if (!recipe) return;
     
     setIsAiModifying(true);
+    console.log("Starting modification with type:", modificationType);
+    console.log("Selected ingredients:", Array.from(selectedIngredients.entries()));
     
     try {
       // Here we would normally call an AI API

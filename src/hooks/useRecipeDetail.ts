@@ -25,14 +25,14 @@ export const useRecipeDetail = () => {
     recipeVersions,
     hasInitializedVersions,
     setHasInitializedVersions,
+    selectedIngredients, 
+    selectIngredientForModification
   } = useRecipe();
   
   // Use the modification hook
   const {
     selectedIngredient,
     setSelectedIngredient,
-    selectedIngredients,
-    selectIngredientForModification,
     removeIngredientSelection,
     customInstructions,
     setCustomInstructions,
@@ -83,6 +83,7 @@ export const useRecipeDetail = () => {
 
   // Function to handle ingredient selection
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
+    console.log("handleSelectIngredient called with:", ingredient.id, action);
     // Using the context function to update selected ingredients
     selectIngredientForModification(ingredient, action);
   };
@@ -130,6 +131,7 @@ export const useRecipeDetail = () => {
     isLoading: loading,
     error,
     selectedIngredient,
+    selectedIngredients,
     isModified,
     resetToOriginal,
     handleModifyWithAI,
@@ -137,6 +139,7 @@ export const useRecipeDetail = () => {
     handleAcceptChanges,
     setSelectedIngredient,
     handleSelectIngredient,
-    isAiModifying
+    isAiModifying,
+    removeIngredientSelection
   };
 };

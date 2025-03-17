@@ -37,7 +37,8 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
     customInstructions,
     setCustomInstructions,
     handleStartModification,
-    handleSaveChanges
+    handleSaveChanges,
+    selectIngredientForModification
   } = useRecipeModification(recipe, null);
 
   // Handle selecting a quick modification type

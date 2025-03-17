@@ -13,6 +13,7 @@ import { Database, Loader2 } from "lucide-react";
 interface MobileLayoutProps {
   recipe: Recipe | null;
   selectedIngredient: Ingredient | null;
+  selectedIngredients: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
   isModified: boolean;
   resetToOriginal: () => void;
   handleModifyWithAI: () => void;
@@ -21,11 +22,13 @@ interface MobileLayoutProps {
   setSelectedIngredient: (ingredient: Ingredient | null) => void;
   onSelectIngredient: (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => void;
   isAiModifying?: boolean;
+  removeIngredientSelection?: (id: string) => void;
 }
 
 const MobileLayout: React.FC<MobileLayoutProps> = ({
   recipe,
   selectedIngredient,
+  selectedIngredients,
   isModified,
   resetToOriginal,
   handleModifyWithAI,
@@ -33,11 +36,11 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   handleAcceptChanges,
   setSelectedIngredient,
   onSelectIngredient,
-  isAiModifying = false
+  isAiModifying = false,
+  removeIngredientSelection
 }) => {
   const { 
     addRecipeVersion,
-    selectedIngredients,
     persistVersion,
     activeVersionId,
     recipeVersions
@@ -51,6 +54,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   const isActiveVersionTemporary = activeVersion?.isTemporary || false;
   
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
+    console.log("MobileLayout handleSelectIngredient:", ingredient.id, action);
     onSelectIngredient(ingredient, action);
   };
 
@@ -104,7 +108,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 
   return (
     <>
-      <div className="container mx-auto py-3 px-3 pb-20"> {/* Reduced padding from py-4 px-4 */}
+      <div className="container mx-auto py-3 px-3 pb-20">
         {recipe && (
           <>
             <RecipeHeader
@@ -113,9 +117,9 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
               onModifyWithAI={modificationPanel.open}
               isTemporary={isActiveVersionTemporary}
             />
-            <div className="px-1 mt-2"> {/* Reduced mt-4 to mt-2 */}
+            <div className="px-1 mt-2">
               <RecipeVersionTabs />
-              <div className="mt-2"> {/* Reduced mt-3 to mt-2 */}
+              <div className="mt-2">
                 <RecipeContent 
                   recipe={recipe} 
                   selectedIngredients={selectedIngredients}
