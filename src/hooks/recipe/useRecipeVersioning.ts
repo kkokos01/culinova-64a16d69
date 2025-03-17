@@ -2,13 +2,6 @@
 import { useState } from "react";
 import { Recipe } from "@/types";
 import { RecipeVersion } from "@/context/recipe/types";
-import { 
-  fetchRecipeVersions, 
-  createRecipeVersion, 
-  setVersionActive, 
-  renameVersion, 
-  deleteVersion 
-} from "@/api/recipeVersions";
 import { useVersionFetching } from "./version/useVersionFetching";
 import { useTemporaryVersions } from "./version/useTemporaryVersions";
 import { useVersionManagement } from "./version/useVersionManagement";
@@ -41,6 +34,7 @@ export const useRecipeVersioning = (setRecipe: (recipe: Recipe) => void) => {
     recipeVersions,
     setRecipeVersions,
     setActiveVersionId,
+    activeVersionId, // Pass the activeVersionId to the hook
     setRecipe
   });
 

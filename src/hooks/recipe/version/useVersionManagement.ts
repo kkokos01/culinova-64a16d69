@@ -7,6 +7,7 @@ interface VersionManagementProps {
   recipeVersions: RecipeVersion[];
   setRecipeVersions: React.Dispatch<React.SetStateAction<RecipeVersion[]>>;
   setActiveVersionId: React.Dispatch<React.SetStateAction<string>>;
+  activeVersionId: string; // Add this parameter to access the current active version ID
   setRecipe: (recipe: Recipe) => void;
 }
 
@@ -14,6 +15,7 @@ export const useVersionManagement = ({
   recipeVersions,
   setRecipeVersions,
   setActiveVersionId,
+  activeVersionId, // Include in destructuring
   setRecipe
 }: VersionManagementProps) => {
   const addRecipeVersion = async (name: string, recipe: Recipe): Promise<RecipeVersion> => {
