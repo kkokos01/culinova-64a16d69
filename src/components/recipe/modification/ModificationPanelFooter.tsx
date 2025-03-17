@@ -68,7 +68,7 @@ const ModificationPanelFooter: React.FC<ModificationPanelFooterProps> = ({
       ) : (
         <>
           <Wand2 className="h-4 w-4 mr-2" />
-          Modify Recipe with AI
+          Apply Selected Modifications
         </>
       )}
     </Button>

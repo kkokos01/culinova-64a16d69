@@ -56,7 +56,7 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
   // Track selected quick modifications
   const [internalSelectedModifications, setInternalSelectedModifications] = useState<string[]>([]);
 
-  // Handle selecting a quick modification type
+  // Handle selecting a quick modification type (just toggles selection)
   const handleSelectModificationType = (type: string) => {
     if (onSelectModificationType) {
       onSelectModificationType(type);

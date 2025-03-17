@@ -54,7 +54,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     }
   };
 
-  // Function to handle selecting a modification type
+  // Function to handle selecting a modification type (just toggles selection)
   const handleSelectModificationType = (type: string) => {
     setSelectedModifications(prev => {
       if (prev.includes(type)) {
@@ -65,11 +65,11 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     });
   };
 
-  // Function to start modification and close drawer
+  // Separate function to start the AI modification with all selected modifications
   const handleStartModificationWithSelectedTypes = () => {
-    // Combine all selected modifications into a single instruction
-    const instructions = selectedModifications.join(", ");
-    if (instructions) {
+    // Only if we have selections, combine them into a single instruction
+    if (selectedModifications.length > 0) {
+      const instructions = selectedModifications.join(", ");
       handleStartModification(instructions);
     }
   };

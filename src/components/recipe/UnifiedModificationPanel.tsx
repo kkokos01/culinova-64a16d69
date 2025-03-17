@@ -16,6 +16,7 @@ interface UnifiedModificationPanelProps {
   onStartModification: () => void;
   onSelectModificationType: (type: string) => void;
   isDisabled?: boolean;
+  selectedModifications?: string[];
 }
 
 const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
@@ -26,11 +27,13 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
   onCustomInstructionsChange,
   onStartModification,
   onSelectModificationType,
-  isDisabled = false
+  isDisabled = false,
+  selectedModifications = []
 }) => {
   const hasSelectedIngredients = selectedIngredients.size > 0;
   const hasCustomInstructions = customInstructions.trim().length > 0;
-  const canModify = hasSelectedIngredients || hasCustomInstructions;
+  const hasSelectedModifications = selectedModifications && selectedModifications.length > 0;
+  const canModify = hasSelectedIngredients || hasCustomInstructions || hasSelectedModifications;
 
   const getActionColor = (action: string) => {
     switch (action) {
@@ -68,6 +71,10 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
     { id: "spicier", label: "Spicier" },
     { id: "budget", label: "Budget" }
   ];
+
+  const isSelected = (id: string) => {
+    return selectedModifications && selectedModifications.includes(id);
+  };
 
   return (
     <div className="bg-white rounded-lg shadow">
@@ -121,10 +128,12 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
             {modificationType.map((type) => (
               <Button
                 key={type.id}
-                variant="outline"
+                variant={isSelected(type.id) ? "default" : "outline"}
                 onClick={() => onSelectModificationType(type.id)}
                 disabled={isDisabled}
-                className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                className={isSelected(type.id) 
+                  ? "bg-sage-500 text-white hover:bg-sage-600" 
+                  : "border-gray-300 text-gray-700 hover:bg-gray-100"}
               >
                 {type.label}
               </Button>
@@ -144,7 +153,7 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
             ) : (
               <>
                 <Wand2 className="h-4 w-4 mr-2" />
-                Modify with AI
+                Apply Modifications
               </>
             )}
           </Button>
