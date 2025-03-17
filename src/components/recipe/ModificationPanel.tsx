@@ -8,6 +8,12 @@ interface ModificationPanelProps {
   closePanel: () => void;
   isMobile?: boolean;
   isSaving?: boolean;
+  isModified?: boolean;
+  resetToOriginal?: () => void;
+  onAcceptModification?: () => void;
+  onStartModification?: () => void;
+  isTemporary?: boolean;
+  isAiModifying?: boolean;
 }
 
 const ModificationPanel: React.FC<ModificationPanelProps> = ({
@@ -15,6 +21,12 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
   closePanel,
   isMobile = false,
   isSaving = false,
+  isModified = false,
+  resetToOriginal,
+  onAcceptModification,
+  onStartModification,
+  isTemporary = false,
+  isAiModifying = false
 }) => {
   return (
     <ModificationPanelContainer
@@ -22,6 +34,12 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
       closePanel={closePanel}
       isMobile={isMobile}
       isSaving={isSaving}
+      isModified={isModified}
+      resetToOriginal={resetToOriginal}
+      onAcceptModification={onAcceptModification}
+      onStartModification={onStartModification}
+      isTemporary={isTemporary}
+      isAiModifying={isAiModifying}
     />
   );
 };

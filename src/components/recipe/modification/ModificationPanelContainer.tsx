@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Recipe } from "@/types";
 import { Loader2 } from "lucide-react";
 import ModificationPanelHeader from "./ModificationPanelHeader";
@@ -12,23 +12,30 @@ interface ModificationPanelContainerProps {
   closePanel: () => void;
   isMobile?: boolean;
   isSaving?: boolean;
+  isModified?: boolean;
+  resetToOriginal?: () => void;
+  onAcceptModification?: () => void;
+  onStartModification?: () => void;
   isTemporary?: boolean;
+  isAiModifying?: boolean;
 }
 
 const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
   recipe,
   closePanel,
   isMobile = false,
-  isSaving = false
+  isSaving = false,
+  isModified = false,
+  resetToOriginal,
+  onAcceptModification,
+  onStartModification,
+  isAiModifying = false
 }) => {
   const {
-    isModified,
-    resetToOriginal,
     selectedIngredients,
     removeIngredientSelection,
     customInstructions,
     setCustomInstructions,
-    isAiModifying,
     handleStartModification,
     handleSaveChanges
   } = useRecipeModification(recipe, null);
@@ -72,10 +79,10 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
 
       <div className="p-4 border-t border-white/20">
         <ModificationPanelFooter
-          isModified={isModified}
-          onReset={resetToOriginal}
-          onSave={handleSaveChanges}
-          onStartModification={() => handleStartModification(customInstructions)}
+          isModified={isModified || false}
+          onReset={resetToOriginal || (() => {})}
+          onSave={onAcceptModification || handleSaveChanges}
+          onStartModification={onStartModification || (() => handleStartModification(customInstructions))}
           isSaving={isSaving}
           isAiModifying={isAiModifying}
           canModify={canModify}

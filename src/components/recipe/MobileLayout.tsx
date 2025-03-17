@@ -88,13 +88,13 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       <div className="fixed inset-0 bg-sage-400 text-white z-50 overflow-hidden">
         <ModificationPanel
           recipe={recipe}
+          closePanel={modificationPanel.close}
+          isMobile={true}
+          isSaving={isSaving}
           isModified={isModified}
           resetToOriginal={resetToOriginal}
           onAcceptModification={handleSaveToDatabase}
           onStartModification={startUnifiedModification}
-          closePanel={modificationPanel.close}
-          isMobile={true}
-          isSaving={isSaving}
           isTemporary={isActiveVersionTemporary}
           isAiModifying={isAiModifying}
         />
