@@ -102,17 +102,17 @@ async function constructVersionObject(dbVersion: any, recipeData: any): Promise<
     const versionRecipe: Recipe = {
       ...recipeData,
       ingredients: ingredientsData ? ingredientsData.map(ing => {
-        // Ensure food and unit are not arrays before using them
+        // Fix: Properly handle food and unit which can be arrays or objects
+        // First determine if food is an array or object and handle accordingly
         let foodObj = ing.food;
-        let unitObj = ing.unit;
-        
-        // Handle possible array cases
-        if (foodObj && Array.isArray(foodObj)) {
-          foodObj = foodObj[0] || null;
+        if (Array.isArray(foodObj)) {
+          foodObj = foodObj.length > 0 ? foodObj[0] : null;
         }
         
-        if (unitObj && Array.isArray(unitObj)) {
-          unitObj = unitObj[0] || null;
+        // Then determine if unit is an array or object and handle accordingly
+        let unitObj = ing.unit;
+        if (Array.isArray(unitObj)) {
+          unitObj = unitObj.length > 0 ? unitObj[0] : null;
         }
         
         return {
