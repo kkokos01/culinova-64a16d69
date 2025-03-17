@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChefHat, Search, User, ShoppingCart, Calendar, LogOut, Database } from 'lucide-react';
+import { Menu, X, ChefHat, Search, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -42,9 +42,8 @@ const Navbar = () => {
   
   const navLinks = [
     { path: '/', label: 'Home' },
-    { path: '/recipes', label: 'Recipes' },
-    { path: '/shopping-lists', label: 'Shopping Lists' },
-    { path: '/meal-plans', label: 'Meal Plans' }
+    { path: '/recipes', label: 'Recipes' }
+    // Shopping Lists and Meal Plans removed as requested
   ];
   
   const isActive = (path: string) => {
@@ -97,36 +96,6 @@ const Navbar = () => {
           >
             <Search className="h-5 w-5" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white hover:text-sage-400 hover:bg-slate-700"
-            aria-label="Shopping Lists"
-          >
-            <ShoppingCart className="h-5 w-5" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white hover:text-sage-400 hover:bg-slate-700"
-            aria-label="Meal Plans"
-          >
-            <Calendar className="h-5 w-5" />
-          </Button>
-          
-          {user && (
-            <Button 
-              variant="ghost"
-              size="icon" 
-              className="text-white hover:text-sage-400 hover:bg-slate-700"
-              aria-label="Database Test"
-              asChild
-            >
-              <Link to="/auth/test">
-                <Database className="h-5 w-5" />
-              </Link>
-            </Button>
-          )}
           
           {user ? (
             <DropdownMenu>
@@ -147,12 +116,6 @@ const Navbar = () => {
                   <Link to="/profile">
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/auth/test">
-                    <Database className="mr-2 h-4 w-4" />
-                    <span>Database Test</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -223,30 +186,6 @@ const Navbar = () => {
               <Search className="h-5 w-5" />
               <span>Search</span>
             </Link>
-            <Link 
-              to="/shopping-lists" 
-              className="flex items-center space-x-2 text-white hover:text-sage-400"
-            >
-              <ShoppingCart className="h-5 w-5" />
-              <span>Shopping Lists</span>
-            </Link>
-            <Link 
-              to="/meal-plans" 
-              className="flex items-center space-x-2 text-white hover:text-sage-400"
-            >
-              <Calendar className="h-5 w-5" />
-              <span>Meal Plans</span>
-            </Link>
-            
-            {user && (
-              <Link 
-                to="/auth/test" 
-                className="flex items-center space-x-2 text-white hover:text-sage-400"
-              >
-                <Database className="h-5 w-5" />
-                <span>Database Test</span>
-              </Link>
-            )}
             
             {user ? (
               <>
