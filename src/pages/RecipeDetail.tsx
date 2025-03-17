@@ -77,10 +77,16 @@ const RecipeDetail = () => {
         // Access first ingredient's food and unit correctly with singular naming
         let firstIngredientInfo = "None";
         if (ingredientsData && ingredientsData.length > 0) {
-          const firstIng = ingredientsData[0] as IngredientData;
-          const foodName = firstIng.food ? firstIng.food.name : "None";
+          // Fix: Cast to unknown first, then to IngredientData to avoid TypeScript error
+          // or handle the possible array structure explicitly
+          const firstIng = ingredientsData[0] as any;
+          const foodName = firstIng.food ? 
+            (Array.isArray(firstIng.food) ? firstIng.food[0]?.name : firstIng.food.name) || "None" : 
+            "None";
           const amount = firstIng.amount || 0;
-          const unitAbbr = firstIng.unit ? firstIng.unit.abbreviation : "";
+          const unitAbbr = firstIng.unit ? 
+            (Array.isArray(firstIng.unit) ? firstIng.unit[0]?.abbreviation : firstIng.unit.abbreviation) || "" : 
+            "";
           
           firstIngredientInfo = `${foodName} - ${amount} ${unitAbbr}`;
         }
@@ -164,11 +170,21 @@ const RecipeDetail = () => {
                   <div className="mt-1">
                     <strong>Ingredients:</strong> 
                     <ul className="pl-4">
-                      {debugInfo.ingredients?.map((ing: any) => (
-                        <li key={ing.id}>
-                          {ing.food?.name || 'Unknown'} - {ing.amount} {ing.unit?.abbreviation || ''}
-                        </li>
-                      ))}
+                      {debugInfo.ingredients?.map((ing: any) => {
+                        // Handle possible array structure for food and unit
+                        const foodName = ing.food ? 
+                          (Array.isArray(ing.food) ? ing.food[0]?.name : ing.food.name) || 'Unknown' : 
+                          'Unknown';
+                        const unitAbbr = ing.unit ? 
+                          (Array.isArray(ing.unit) ? ing.unit[0]?.abbreviation : ing.unit.abbreviation) || '' : 
+                          '';
+                          
+                        return (
+                          <li key={ing.id}>
+                            {foodName} - {ing.amount} {unitAbbr}
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 </div>
