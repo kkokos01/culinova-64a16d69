@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import SearchFilters from "@/components/recipes/SearchFilters";
@@ -13,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSupabaseRecipes } from "@/hooks/useSupabaseRecipes";
 import { useSeedRecipes } from "@/utils/seedRecipes";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 const Recipes = () => {
@@ -27,23 +26,19 @@ const Recipes = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [findingTikka, setFindingTikka] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   
-  // Use the Supabase recipes hook instead of mock data
   const { recipes, loading: isLoading, error, refreshRecipes } = useSupabaseRecipes();
-  
-  // Get the seed recipes function
   const { seedRecipes } = useSeedRecipes();
   
-  // Find Tikka Masala recipe if we have no recipes
   useEffect(() => {
-    const findTikkaMasala = async () => {
+    const findDefaultRecipe = async () => {
       if (!findingTikka && recipes.length === 0 && !isLoading && user) {
         setFindingTikka(true);
         
         try {
-          console.log("Looking for Tikka Masala recipe...");
+          console.log("Looking for a default recipe...");
           
-          // Search for any recipe with 'tikka masala' in the title
           const { data, error } = await supabase
             .from('recipes')
             .select('id, title')
@@ -55,19 +50,18 @@ const Recipes = () => {
           }
           
           if (data && data.length > 0) {
-            console.log("Found Tikka Masala recipe:", data[0]);
+            console.log("Found recipe:", data[0]);
             
             toast({
               title: "Recipe Found",
               description: `Found "${data[0].title}". Navigating to recipe.`
             });
             
-            // Navigate to the Tikka Masala recipe detail page
-            navigate(`/recipes/${data[0].id}`);
+            searchParams.set('findRecipe', 'tikka masala');
+            setSearchParams(searchParams);
           } else {
-            console.log("No Tikka Masala recipe found");
+            console.log("No default recipe found");
             
-            // If no Tikka Masala recipe found and we have a seed function, suggest adding sample recipes
             toast({
               title: "No Recipes Found",
               description: "Try adding sample recipes by clicking the button above.",
@@ -75,17 +69,16 @@ const Recipes = () => {
             });
           }
         } catch (err) {
-          console.error("Error finding Tikka Masala:", err);
+          console.error("Error finding default recipe:", err);
         } finally {
           setFindingTikka(false);
         }
       }
     };
     
-    findTikkaMasala();
-  }, [recipes, isLoading, user, navigate, toast, findingTikka]);
+    findDefaultRecipe();
+  }, [recipes, isLoading, user, navigate, toast, findingTikka, searchParams, setSearchParams]);
   
-  // Show error toast if there's an error fetching recipes
   useEffect(() => {
     if (error) {
       toast({
@@ -106,7 +99,6 @@ const Recipes = () => {
   );
   
   const handleTagToggle = (tag: string) => {
-    // If tag is empty string, clear all tags
     if (tag === '') {
       setSelectedTags([]);
       return;
@@ -151,11 +143,9 @@ const Recipes = () => {
     console.log("Seed result:", result);
     
     if (result) {
-      // Refresh the recipes list to show the new recipes
       console.log("Refreshing recipes after seeding...");
       refreshRecipes();
       
-      // Check if we have a Tikka Masala recipe now
       const { data } = await supabase
         .from('recipes')
         .select('id')
@@ -169,9 +159,8 @@ const Recipes = () => {
           duration: 5000
         });
         
-        setTimeout(() => {
-          navigate(`/recipes/${data[0].id}`);
-        }, 1500);
+        searchParams.set('findRecipe', 'tikka masala');
+        setSearchParams(searchParams);
       }
     }
   };

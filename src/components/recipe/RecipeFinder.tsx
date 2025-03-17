@@ -4,54 +4,55 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { recipeService } from "@/services/supabase/recipeService";
 
-interface TikkaMasalaFinderProps {
+interface RecipeFinderProps {
   currentRecipeId: string | undefined;
 }
 
-const TikkaMasalaFinder: React.FC<TikkaMasalaFinderProps> = ({ currentRecipeId }) => {
+const RecipeFinder: React.FC<RecipeFinderProps> = ({ currentRecipeId }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(false);
 
-  // Check for the 'findTikka' query parameter on component mount
+  // Check for the 'findRecipe' query parameter on component mount
   React.useEffect(() => {
-    if (searchParams.get('findTikka') === 'true') {
-      findTikkaMasala();
+    const recipeName = searchParams.get('findRecipe');
+    if (recipeName) {
+      findRecipeByName(recipeName);
     }
   }, [searchParams]);
 
-  const findTikkaMasala = async () => {
+  const findRecipeByName = async (recipeName: string) => {
     setLoading(true);
     try {
       // Use our service to find the recipe
-      const tikkaMasala = await recipeService.findRecipeByName('tikka masala');
+      const recipe = await recipeService.findRecipeByName(recipeName);
       
-      if (tikkaMasala) {
+      if (recipe) {
         // Remove the query param
-        searchParams.delete('findTikka');
+        searchParams.delete('findRecipe');
         setSearchParams(searchParams);
         
         // Navigate to the specific recipe
-        if (currentRecipeId !== tikkaMasala.id) {
+        if (currentRecipeId !== recipe.id) {
           toast({
-            title: "Tikka Masala Recipe Found",
-            description: "Navigating to the authentic recipe"
+            title: `${recipe.title} Recipe Found`,
+            description: "Navigating to the recipe"
           });
-          navigate(`/recipes/${tikkaMasala.id}`);
+          navigate(`/recipes/${recipe.id}`);
         }
       } else {
         toast({
           title: "Recipe Not Found",
-          description: "Could not locate the Tikka Masala recipe",
+          description: `Could not locate a recipe matching "${recipeName}"`,
           variant: "destructive"
         });
       }
     } catch (error) {
-      console.error("Error finding Tikka Masala:", error);
+      console.error(`Error finding recipe "${recipeName}":`, error);
       toast({
         title: "Error",
-        description: "Failed to search for Tikka Masala recipe",
+        description: `Failed to search for "${recipeName}" recipe`,
         variant: "destructive"
       });
     } finally {
@@ -63,4 +64,4 @@ const TikkaMasalaFinder: React.FC<TikkaMasalaFinderProps> = ({ currentRecipeId }
   return null;
 };
 
-export default TikkaMasalaFinder;
+export default RecipeFinder;
