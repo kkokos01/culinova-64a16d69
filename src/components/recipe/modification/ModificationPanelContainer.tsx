@@ -81,7 +81,7 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
           isModified={isModified}
           onReset={resetToOriginal}
           onSave={handleSaveChanges}
-          onStartModification={startModification}
+          onStartModification={() => startModification(customInstructions)}
           isSaving={isSaving}
           isAiModifying={isAiModifying}
           canModify={canModify}
