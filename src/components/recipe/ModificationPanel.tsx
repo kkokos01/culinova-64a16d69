@@ -16,6 +16,8 @@ interface ModificationPanelProps {
   isAiModifying?: boolean;
   selectedIngredients?: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
   removeIngredientSelection?: (id: string) => void;
+  selectedModifications?: string[];
+  onSelectModificationType?: (type: string) => void;
 }
 
 const ModificationPanel: React.FC<ModificationPanelProps> = ({
@@ -30,7 +32,9 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
   isTemporary = false,
   isAiModifying = false,
   selectedIngredients,
-  removeIngredientSelection
+  removeIngredientSelection,
+  selectedModifications = [],
+  onSelectModificationType
 }) => {
   return (
     <ModificationPanelContainer
@@ -46,6 +50,8 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
       isAiModifying={isAiModifying}
       selectedIngredients={selectedIngredients}
       removeIngredientSelection={removeIngredientSelection}
+      selectedModifications={selectedModifications}
+      onSelectModificationType={onSelectModificationType}
     />
   );
 };

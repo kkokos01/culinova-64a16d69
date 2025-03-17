@@ -21,6 +21,19 @@ export interface MobileLayoutProps {
   removeIngredientSelection: (id: string) => void;
 }
 
+export interface DesktopLayoutProps {
+  recipe: Recipe;
+  selectedIngredient: Ingredient | null;
+  setSelectedIngredient: (ingredient: Ingredient | null) => void;
+  onSelectIngredient: (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => void;
+  isModified: boolean;
+  resetToOriginal: () => void;
+  handleModifyWithAI: () => void;
+  handleStartModification: (modificationType: string) => void;
+  handleAcceptChanges: () => Promise<void>;
+  isAiModifying: boolean;
+}
+
 const RecipeDetailContainer: React.FC = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   
@@ -74,7 +87,7 @@ const RecipeDetailContainer: React.FC = () => {
       handleStartModification={handleStartModification}
       handleAcceptChanges={handleAcceptChanges}
       setSelectedIngredient={setSelectedIngredient}
-      handleSelectIngredient={handleSelectIngredient}
+      onSelectIngredient={handleSelectIngredient}
       isAiModifying={isAiModifying}
     />
   );

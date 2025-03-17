@@ -27,6 +27,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedModifications, setSelectedModifications] = useState<string[]>([]);
   
   const openModificationPanel = () => {
     setIsDrawerOpen(true);
@@ -48,24 +49,40 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     }
   };
 
+  // Function to handle selecting a modification type
+  const handleSelectModificationType = (type: string) => {
+    setSelectedModifications(prev => {
+      if (prev.includes(type)) {
+        return prev.filter(t => t !== type);
+      } else {
+        return [...prev, type];
+      }
+    });
+  };
+
   // Function to start modification and close drawer
-  const handleStartModificationAndCloseDrawer = (instructions: string) => {
-    handleStartModification(instructions);
-    // Don't close the drawer yet; we'll leave it open to show the "Modifying..." status
+  const handleStartModificationWithSelectedTypes = () => {
+    // Combine all selected modifications into a single instruction
+    const instructions = selectedModifications.join(", ");
+    if (instructions) {
+      handleStartModification(instructions);
+    }
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <RecipeHeader
-        title={recipe.title}
+        recipe={recipe}
         isModified={isModified}
+        onModifyWithAI={handleModifyWithAI}
+        showModifyButton={false}
       />
       
       {/* Main Recipe Content */}
       <div className="flex-grow overflow-y-auto">
         <RecipeContent
           recipe={recipe}
-          selectedIngredient={selectedIngredient}
+          selectedIngredients={selectedIngredients}
           onSelectIngredient={handleSelectIngredient}
         />
       </div>
@@ -90,7 +107,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
               isModified={isModified}
               resetToOriginal={resetToOriginal}
               onAcceptModification={handleSaveChanges}
-              onStartModification={handleStartModificationAndCloseDrawer}
+              onStartModification={handleStartModificationWithSelectedTypes}
               closePanel={closeModificationPanel}
               isMobile={true}
               isSaving={isSaving}
@@ -98,6 +115,8 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
               isAiModifying={isAiModifying}
               selectedIngredients={selectedIngredients}
               removeIngredientSelection={removeIngredientSelection}
+              selectedModifications={selectedModifications}
+              onSelectModificationType={handleSelectModificationType}
             />
           </div>
         </Drawer.Content>
