@@ -14,7 +14,11 @@ const SelectedIngredientsPanel: React.FC<SelectedIngredientsPanelProps> = ({
   onRemoveSelection 
 }) => {
   if (selectedIngredients.size === 0) {
-    return null;
+    return (
+      <p className="text-white/70 text-sm italic">
+        Select ingredients from the recipe to modify them
+      </p>
+    );
   }
   
   // Helper function to get badge styling based on action
@@ -48,21 +52,21 @@ const SelectedIngredientsPanel: React.FC<SelectedIngredientsPanelProps> = ({
   return (
     <div className="space-y-2">
       {Array.from(selectedIngredients.entries()).map(([id, { ingredient, action }]) => (
-        <div key={id} className="flex items-start justify-between bg-gray-50 p-2 rounded border border-gray-200 text-sm">
+        <div key={id} className="flex items-start justify-between bg-white/10 p-2 rounded border border-white/20 text-sm text-white">
           <div className="flex items-start gap-2 min-w-0 flex-grow mr-2">
             <Badge className={`shrink-0 mt-0.5 ${getBadgeStyles(action)}`}>
               {action === "increase" ? <Plus className="h-3 w-3" /> : 
                action === "decrease" ? <Minus className="h-3 w-3" /> : 
                <X className="h-3 w-3" />}
             </Badge>
-            <span className="break-words text-gray-700">
+            <span className="break-words">
               <span className="font-medium">{getActionText(action)}</span>{" "}
               {ingredient.food?.name}
             </span>
           </div>
           <button 
             onClick={() => onRemoveSelection(id)}
-            className="ml-2 text-gray-500 hover:text-gray-700 flex-shrink-0"
+            className="ml-2 text-white/70 hover:text-white flex-shrink-0"
             aria-label="Remove selection"
           >
             <Trash2 className="h-4 w-4" />

@@ -28,18 +28,18 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
     switch (selectedAction) {
       case "increase":
         return {
-          container: "border-primary bg-green-50/70",
-          text: "font-medium"
+          container: "border-green-400 bg-green-50",
+          text: "font-medium text-green-700"
         };
       case "decrease":
         return {
-          container: "border-amber-400 bg-amber-50/70",
-          text: "font-medium"
+          container: "border-amber-400 bg-amber-50",
+          text: "font-medium text-amber-700"
         };
       case "remove":
         return {
-          container: "border-red-400 bg-red-50/70",
-          text: "line-through opacity-75"
+          container: "border-red-400 bg-red-50",
+          text: "line-through opacity-75 text-red-700"
         };
       default:
         return {
@@ -69,7 +69,7 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
 
   return (
     <div 
-      className={`flex items-center p-2 rounded-md border transition-colors ${styles.container} cursor-pointer h-full`}
+      className={`flex items-center p-2 rounded-md border-2 transition-colors ${styles.container} cursor-pointer h-full`}
       onClick={handleIngredientClick}
     >
       <div className="flex-1 min-w-0">
@@ -92,8 +92,8 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
           onClick={() => onSelectIngredient(ingredient, "increase")}
           className={`p-1 rounded-full ${
             selectedAction === "increase" 
-              ? "bg-green-100 text-green-700" 
-              : "hover:bg-gray-200 text-green-600"
+              ? "bg-green-500 text-white" 
+              : "hover:bg-green-100 text-green-600 hover:text-green-700"
           }`}
           aria-label="Increase ingredient"
         >
@@ -103,8 +103,8 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
           onClick={() => onSelectIngredient(ingredient, "decrease")}
           className={`p-1 rounded-full ${
             selectedAction === "decrease" 
-              ? "bg-amber-100 text-amber-700" 
-              : "hover:bg-gray-200 text-amber-600"
+              ? "bg-amber-500 text-white" 
+              : "hover:bg-amber-100 text-amber-600 hover:text-amber-700"
           }`}
           aria-label="Decrease ingredient"
         >
@@ -114,8 +114,8 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
           onClick={() => onSelectIngredient(ingredient, "remove")}
           className={`p-1 rounded-full ${
             selectedAction === "remove" 
-              ? "bg-red-100 text-red-700" 
-              : "hover:bg-gray-200 text-red-600"
+              ? "bg-red-500 text-white" 
+              : "hover:bg-red-100 text-red-600 hover:text-red-700"
           }`}
           aria-label="Remove ingredient"
         >

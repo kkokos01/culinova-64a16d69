@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import ModificationPanelHeader from "./ModificationPanelHeader";
 import ModificationPanelContent from "./ModificationPanelContent";
 import ModificationPanelFooter from "./ModificationPanelFooter";
-import { useModificationPanel } from "@/hooks/recipe/useModificationPanel";
+import { useRecipeModification } from "@/hooks/recipe/useRecipeModification";
 
 interface ModificationPanelContainerProps {
   recipe: Recipe | null;
@@ -19,8 +19,7 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
   recipe,
   closePanel,
   isMobile = false,
-  isSaving = false,
-  isTemporary = false
+  isSaving = false
 }) => {
   const {
     isModified,
@@ -30,18 +29,14 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
     customInstructions,
     setCustomInstructions,
     isAiModifying,
-    startModification,
-    handleSaveChanges,
-    isActiveVersionTemporary
-  } = useModificationPanel();
+    handleStartModification,
+    handleSaveChanges
+  } = useRecipeModification(recipe, null);
 
   // Handle selecting a quick modification type
   const handleSelectModificationType = (type: string) => {
     // Set custom instructions based on the selected modification type
     setCustomInstructions(`Make this recipe ${type}`);
-    
-    // Start modification with the selected type
-    startModification(type);
   };
 
   // Determine if modification can be started
@@ -64,7 +59,6 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
       <ModificationPanelHeader 
         onClose={closePanel}
         isMobile={isMobile}
-        isTemporary={isTemporary || isActiveVersionTemporary}
       />
 
       <ModificationPanelContent
@@ -81,11 +75,10 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
           isModified={isModified}
           onReset={resetToOriginal}
           onSave={handleSaveChanges}
-          onStartModification={() => startModification(customInstructions)}
+          onStartModification={() => handleStartModification(customInstructions)}
           isSaving={isSaving}
           isAiModifying={isAiModifying}
           canModify={canModify}
-          isTemporary={isTemporary || isActiveVersionTemporary}
         />
       </div>
     </div>

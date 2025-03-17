@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, Save, Loader2 } from "lucide-react";
+import { RotateCcw, Save, Loader2, Wand2 } from "lucide-react";
 
 interface ModificationPanelFooterProps {
   isModified: boolean;
@@ -11,7 +11,6 @@ interface ModificationPanelFooterProps {
   isSaving?: boolean;
   isAiModifying?: boolean;
   canModify: boolean;
-  isTemporary?: boolean;
 }
 
 const ModificationPanelFooter: React.FC<ModificationPanelFooterProps> = ({
@@ -21,8 +20,7 @@ const ModificationPanelFooter: React.FC<ModificationPanelFooterProps> = ({
   onStartModification,
   isSaving = false,
   isAiModifying = false,
-  canModify,
-  isTemporary = false
+  canModify
 }) => {
   if (isModified) {
     return (
@@ -48,7 +46,7 @@ const ModificationPanelFooter: React.FC<ModificationPanelFooterProps> = ({
           ) : (
             <>
               <Save className="h-4 w-4 mr-2" />
-              {isTemporary ? "Save to Database" : "Save as New Version"}
+              Save Modifications
             </>
           )}
         </Button>
@@ -68,7 +66,10 @@ const ModificationPanelFooter: React.FC<ModificationPanelFooterProps> = ({
           Modifying Recipe...
         </>
       ) : (
-        "Modify Recipe with AI"
+        <>
+          <Wand2 className="h-4 w-4 mr-2" />
+          Modify Recipe with AI
+        </>
       )}
     </Button>
   );

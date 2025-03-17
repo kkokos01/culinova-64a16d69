@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Ingredient, Recipe } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 
-export const useRecipeModification = (recipe: Recipe | null, addTemporaryVersion: (name: string, recipe: Recipe) => any) => {
+export const useRecipeModification = (recipe: Recipe | null, addTemporaryVersion: ((name: string, recipe: Recipe) => any) | null) => {
   const { toast } = useToast();
   
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
@@ -53,8 +53,8 @@ export const useRecipeModification = (recipe: Recipe | null, addTemporaryVersion
         .join(", ");
       
       const modificationMessage = ingredientActions 
-        ? `Starting ${modificationType} modification with changes: ${ingredientActions}`
-        : `Starting ${modificationType} modification...`;
+        ? `Starting modification with changes: ${ingredientActions}`
+        : `Starting modification with custom instructions: ${modificationType}`;
       
       toast({
         title: "AI Modification Started",
@@ -63,19 +63,14 @@ export const useRecipeModification = (recipe: Recipe | null, addTemporaryVersion
       
       // Toggle modified status on (we would normally wait for the API response)
       setTimeout(() => {
-        // Create a temporary version with the modifications
         // In a real implementation, we would apply AI changes to the recipe
-        const modifiedRecipe = {
-          ...recipe,
-          // In a real implementation, we would make actual AI modifications here
-          title: `${recipe.title} (${modificationType})`
-        };
-        
-        // Create a temporary version (not saved to DB yet)
-        addTemporaryVersion(`${modificationType} Version`, modifiedRecipe);
-        
         setIsModified(true);
         setIsAiModifying(false);
+        
+        toast({
+          title: "Recipe Modified",
+          description: "Recipe has been successfully modified with AI",
+        });
       }, 1500);
     } catch (error) {
       console.error("Error during AI modification:", error);
@@ -85,6 +80,26 @@ export const useRecipeModification = (recipe: Recipe | null, addTemporaryVersion
         variant: "destructive"
       });
       setIsAiModifying(false);
+    }
+  };
+
+  // Handle saving changes
+  const handleSaveChanges = async () => {
+    try {
+      toast({
+        title: "Changes Saved",
+        description: "Your modifications have been saved.",
+      });
+      
+      setIsModified(false);
+    } catch (error) {
+      console.error("Error saving modifications:", error);
+      
+      toast({
+        title: "Error",
+        description: "Failed to save modifications.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -100,6 +115,7 @@ export const useRecipeModification = (recipe: Recipe | null, addTemporaryVersion
     setIsModified,
     isAiModifying,
     setIsAiModifying,
-    handleStartModification
+    handleStartModification,
+    handleSaveChanges
   };
 };

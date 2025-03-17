@@ -5,15 +5,9 @@ import ModificationPanelContainer from "./modification/ModificationPanelContaine
 
 interface ModificationPanelProps {
   recipe: Recipe | null;
-  isModified: boolean;
-  resetToOriginal: () => void;
-  onAcceptModification: () => void;
-  onStartModification: () => void;
   closePanel: () => void;
   isMobile?: boolean;
   isSaving?: boolean;
-  isTemporary?: boolean;
-  isAiModifying?: boolean;
 }
 
 const ModificationPanel: React.FC<ModificationPanelProps> = ({
@@ -21,7 +15,6 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
   closePanel,
   isMobile = false,
   isSaving = false,
-  isTemporary = false,
 }) => {
   return (
     <ModificationPanelContainer
@@ -29,7 +22,6 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
       closePanel={closePanel}
       isMobile={isMobile}
       isSaving={isSaving}
-      isTemporary={isTemporary}
     />
   );
 };
