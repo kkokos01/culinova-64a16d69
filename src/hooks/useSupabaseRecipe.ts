@@ -30,6 +30,9 @@ export const useSupabaseRecipe = (recipeId: string) => {
         // Normalize ingredients using our helper functions
         if (recipeData?.ingredients) {
           recipeData.ingredients = recipeData.ingredients.map(ing => {
+            // Convert the raw food and unit to the expected format
+            // This is a type assertion - we know that the resulting objects will
+            // satisfy the Food and Unit types after normalization
             return {
               ...ing,
               food: normalizeFood(ing.food),

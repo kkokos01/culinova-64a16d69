@@ -1,10 +1,13 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Recipe } from "@/types";
 import { RecipeVersion } from "@/context/recipe/types";
 import { 
   RawVersionIngredient, 
   RawVersionStep, 
-  normalizeVersionIngredient 
+  normalizeVersionIngredient,
+  normalizeFood,
+  normalizeUnit
 } from "./types/supabaseTypes";
 
 // Fetch versions from the database for a specific recipe
@@ -85,7 +88,7 @@ async function constructVersionObject(dbVersion: any, recipeData: any): Promise<
     const { data: ingredientsData, error: ingredientsError } = await supabase
       .from('recipe_version_ingredients')
       .select(`
-        id, amount, order_index,
+        id, amount, order_index, food_id, unit_id, version_id,
         food:food_id(id, name, description, category_id, properties),
         unit:unit_id(id, name, abbreviation, plural_name)
       `)
@@ -105,18 +108,20 @@ async function constructVersionObject(dbVersion: any, recipeData: any): Promise<
     // Create recipe object for this version - using original recipe data as the base
     const versionRecipe: Recipe = {
       ...recipeData,
-      ingredients: ingredientsData ? ingredientsData.map((ing: RawVersionIngredient) => {
-        // Use our normalization function to handle both array and object cases
-        const normalizedIngredient = normalizeVersionIngredient(ing);
-        
-        return {
-          id: normalizedIngredient.id,
-          food_id: normalizedIngredient.food_id,
-          unit_id: normalizedIngredient.unit_id,
-          amount: normalizedIngredient.amount,
-          food: normalizedIngredient.food,
-          unit: normalizedIngredient.unit
+      ingredients: ingredientsData ? ingredientsData.map((ing: any) => {
+        // Transform the raw data into our expected format
+        // Make sure we have food_id and unit_id explicitly
+        const normalizedIngredient = {
+          id: ing.id,
+          food_id: ing.food_id,
+          unit_id: ing.unit_id,
+          amount: ing.amount,
+          order_index: ing.order_index,
+          food: normalizeFood(ing.food),
+          unit: normalizeUnit(ing.unit)
         };
+        
+        return normalizedIngredient;
       }) : [],
       steps: steps || []
     };

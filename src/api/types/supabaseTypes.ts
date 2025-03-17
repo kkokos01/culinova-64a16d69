@@ -8,6 +8,12 @@ export interface RawFood {
   description?: string;
   category_id?: string;
   properties?: Record<string, any>;
+  // Additional fields to match the Food type
+  space_id?: string;
+  is_active?: boolean;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface RawUnit {
