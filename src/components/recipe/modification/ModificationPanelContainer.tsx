@@ -1,11 +1,10 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Recipe } from "@/types";
 import { Loader2 } from "lucide-react";
 import ModificationPanelHeader from "./ModificationPanelHeader";
 import ModificationPanelContent from "./ModificationPanelContent";
 import ModificationPanelFooter from "./ModificationPanelFooter";
-import { useRecipeModification } from "@/hooks/recipe/useRecipeModification";
 
 interface ModificationPanelContainerProps {
   recipe: Recipe | null;
@@ -15,13 +14,13 @@ interface ModificationPanelContainerProps {
   isModified?: boolean;
   resetToOriginal?: () => void;
   onAcceptModification?: () => void;
-  onStartModification?: (instructions: string) => void;
+  onSelectModificationType: (type: string) => void;
+  onApplyModifications: () => void;
   isTemporary?: boolean;
   isAiModifying?: boolean;
   selectedIngredients?: Map<string, any>;
   removeIngredientSelection?: (id: string) => void;
-  selectedModifications?: string[];
-  onSelectModificationType?: (type: string) => void;
+  selectedModifications: string[];
 }
 
 const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
@@ -32,82 +31,21 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
   isModified = false,
   resetToOriginal,
   onAcceptModification,
-  onStartModification,
+  onSelectModificationType,
+  onApplyModifications,
   isAiModifying = false,
-  selectedIngredients: externalSelectedIngredients,
-  removeIngredientSelection: externalRemoveIngredientSelection,
-  selectedModifications = [],
-  onSelectModificationType
+  selectedIngredients,
+  removeIngredientSelection,
+  selectedModifications
 }) => {
-  const {
-    selectedIngredients: internalSelectedIngredients,
-    removeIngredientSelection: internalRemoveIngredientSelection,
-    customInstructions,
-    setCustomInstructions,
-    handleStartModification,
-    handleSaveChanges,
-    selectIngredientForModification
-  } = useRecipeModification(recipe, null);
-
-  // Use either external or internal state based on what's provided
-  const selectedIngredients = externalSelectedIngredients || internalSelectedIngredients;
-  const removeIngredientSelection = externalRemoveIngredientSelection || internalRemoveIngredientSelection;
-
-  // Track selected quick modifications
-  const [internalSelectedModifications, setInternalSelectedModifications] = useState<string[]>([]);
-
-  // Handle selecting a quick modification type (just toggles selection)
-  const handleSelectModificationType = (type: string) => {
-    if (onSelectModificationType) {
-      onSelectModificationType(type);
-    } else {
-      setInternalSelectedModifications(prev => {
-        // If already selected, remove it; otherwise, add it
-        if (prev.includes(type)) {
-          return prev.filter(item => item !== type);
-        } else {
-          return [...prev, type];
-        }
-      });
-    }
-  };
-
-  // Use either external or internal selected modifications
-  const effectiveSelectedModifications = onSelectModificationType ? selectedModifications : internalSelectedModifications;
-
-  // Create modification instructions with selected types and custom instructions
-  const createModificationInstructions = () => {
-    let instructions = customInstructions;
-    
-    if (effectiveSelectedModifications.length > 0) {
-      // Add selected modifications at the beginning of instructions
-      const modificationText = `Make this recipe ${effectiveSelectedModifications.join(', ')}`;
-      
-      if (instructions.trim()) {
-        instructions = `${modificationText}. ${instructions}`;
-      } else {
-        instructions = modificationText;
-      }
-    }
-    
-    return instructions;
-  };
+  // Custom instructions state - can stay here as it's not part of the selection/application flow
+  const [customInstructions, setCustomInstructions] = React.useState("");
 
   // Determine if modification can be started
-  const hasSelectedIngredients = selectedIngredients.size > 0;
+  const hasSelectedIngredients = selectedIngredients?.size > 0;
   const hasCustomInstructions = customInstructions.trim().length > 0;
-  const hasSelectedModifications = effectiveSelectedModifications.length > 0;
+  const hasSelectedModifications = selectedModifications.length > 0;
   const canModify = hasSelectedIngredients || hasCustomInstructions || hasSelectedModifications;
-
-  // Handle starting the modification
-  const handleStartModificationWithOptions = () => {
-    const instructions = createModificationInstructions();
-    if (onStartModification) {
-      onStartModification(instructions);
-    } else {
-      handleStartModification(instructions);
-    }
-  };
 
   // If no recipe data is available, show loading state
   if (!recipe) {
@@ -127,21 +65,21 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
       />
 
       <ModificationPanelContent
-        selectedIngredients={selectedIngredients}
-        onRemoveIngredientSelection={removeIngredientSelection}
+        selectedIngredients={selectedIngredients || new Map()}
+        onRemoveIngredientSelection={removeIngredientSelection || (() => {})}
         customInstructions={customInstructions}
         onCustomInstructionsChange={setCustomInstructions}
-        onSelectModificationType={handleSelectModificationType}
+        onSelectModificationType={onSelectModificationType}
         isDisabled={isAiModifying}
-        selectedModifications={effectiveSelectedModifications}
+        selectedModifications={selectedModifications}
       />
 
       <div className="p-4 border-t border-white/20">
         <ModificationPanelFooter
           isModified={isModified || false}
           onReset={resetToOriginal || (() => {})}
-          onSave={onAcceptModification || handleSaveChanges}
-          onStartModification={handleStartModificationWithOptions}
+          onSave={onAcceptModification || (() => {})}
+          onApplyModifications={onApplyModifications}
           isSaving={isSaving}
           isAiModifying={isAiModifying}
           canModify={canModify}

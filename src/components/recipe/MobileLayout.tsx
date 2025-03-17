@@ -54,20 +54,15 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
     }
   };
 
-  // Function to handle selecting a modification type (just toggles selection)
+  // Function to handle selecting a modification type (only toggles selection)
   const handleSelectModificationType = (type: string) => {
-    setSelectedModifications(prev => {
-      if (prev.includes(type)) {
-        return prev.filter(t => t !== type);
-      } else {
-        return [...prev, type];
-      }
-    });
+    setSelectedModifications(prev => 
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
   };
 
-  // Separate function to start the AI modification with all selected modifications
-  const handleStartModificationWithSelectedTypes = () => {
-    // Only if we have selections, combine them into a single instruction
+  // Separate function to apply the selected modifications
+  const handleApplyModifications = () => {
     if (selectedModifications.length > 0) {
       const instructions = selectedModifications.join(", ");
       handleStartModification(instructions);
@@ -114,7 +109,8 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
                 isModified={isModified}
                 resetToOriginal={resetToOriginal}
                 onAcceptModification={handleSaveChanges}
-                onStartModification={handleStartModificationWithSelectedTypes}
+                onSelectModificationType={handleSelectModificationType}
+                onApplyModifications={handleApplyModifications}
                 closePanel={closeModificationPanel}
                 isMobile={true}
                 isSaving={isSaving}
@@ -123,7 +119,6 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
                 selectedIngredients={selectedIngredients}
                 removeIngredientSelection={removeIngredientSelection}
                 selectedModifications={selectedModifications}
-                onSelectModificationType={handleSelectModificationType}
               />
             </div>
           </DrawerContent>

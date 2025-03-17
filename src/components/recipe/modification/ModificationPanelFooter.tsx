@@ -7,7 +7,7 @@ interface ModificationPanelFooterProps {
   isModified: boolean;
   onReset: () => void;
   onSave: () => void;
-  onStartModification: () => void;
+  onApplyModifications: () => void;
   isSaving?: boolean;
   isAiModifying?: boolean;
   canModify: boolean;
@@ -17,7 +17,7 @@ const ModificationPanelFooter: React.FC<ModificationPanelFooterProps> = ({
   isModified,
   onReset,
   onSave,
-  onStartModification,
+  onApplyModifications,
   isSaving = false,
   isAiModifying = false,
   canModify
@@ -56,7 +56,7 @@ const ModificationPanelFooter: React.FC<ModificationPanelFooterProps> = ({
 
   return (
     <Button
-      onClick={onStartModification}
+      onClick={onApplyModifications}
       disabled={!canModify || isAiModifying}
       className="w-full bg-white text-sage-600 hover:bg-white/90"
     >

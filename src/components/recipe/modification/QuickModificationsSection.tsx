@@ -11,7 +11,7 @@ interface QuickModificationsSectionProps {
 const QuickModificationsSection: React.FC<QuickModificationsSectionProps> = ({
   onSelectModificationType,
   disabled = false,
-  selectedModifications = []
+  selectedModifications
 }) => {
   const modificationType = [
     { id: "healthier", label: "Healthier" },

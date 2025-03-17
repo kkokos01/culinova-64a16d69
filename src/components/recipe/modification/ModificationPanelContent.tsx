@@ -23,7 +23,7 @@ const ModificationPanelContent: React.FC<ModificationPanelContentProps> = ({
   onCustomInstructionsChange,
   onSelectModificationType,
   isDisabled = false,
-  selectedModifications = []
+  selectedModifications
 }) => {
   return (
     <div className="flex-grow overflow-y-auto p-4">

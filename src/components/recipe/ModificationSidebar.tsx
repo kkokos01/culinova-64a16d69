@@ -21,6 +21,7 @@ interface ModificationSidebarProps {
   isSaving?: boolean;
   isActiveVersionTemporary?: boolean;
   onTogglePanel: () => void;
+  selectedModifications: string[];
 }
 
 const ModificationSidebar: React.FC<ModificationSidebarProps> = ({
@@ -37,7 +38,8 @@ const ModificationSidebar: React.FC<ModificationSidebarProps> = ({
   isDisabled = false,
   isSaving = false,
   isActiveVersionTemporary = false,
-  onTogglePanel
+  onTogglePanel,
+  selectedModifications = []
 }) => {
   return (
     <div className="overflow-y-auto h-full">
@@ -64,9 +66,10 @@ const ModificationSidebar: React.FC<ModificationSidebarProps> = ({
           onRemoveIngredientSelection={onRemoveIngredientSelection}
           customInstructions={customInstructions}
           onCustomInstructionsChange={onCustomInstructionsChange}
-          onStartModification={onStartModification}
+          onApplyModifications={onStartModification}
           onSelectModificationType={onSelectModificationType}
           isDisabled={isDisabled}
+          selectedModifications={selectedModifications}
         />
         
         {isDisabled && (

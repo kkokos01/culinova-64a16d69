@@ -11,13 +11,13 @@ interface ModificationPanelProps {
   isModified?: boolean;
   resetToOriginal?: () => void;
   onAcceptModification?: () => void;
-  onStartModification?: (instructions: string) => void;
+  onSelectModificationType: (type: string) => void;
+  onApplyModifications: () => void;
   isTemporary?: boolean;
   isAiModifying?: boolean;
   selectedIngredients?: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
   removeIngredientSelection?: (id: string) => void;
-  selectedModifications?: string[];
-  onSelectModificationType?: (type: string) => void;
+  selectedModifications: string[];
 }
 
 const ModificationPanel: React.FC<ModificationPanelProps> = ({
@@ -28,13 +28,13 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
   isModified = false,
   resetToOriginal,
   onAcceptModification,
-  onStartModification,
+  onSelectModificationType,
+  onApplyModifications,
   isTemporary = false,
   isAiModifying = false,
   selectedIngredients,
   removeIngredientSelection,
-  selectedModifications = [],
-  onSelectModificationType
+  selectedModifications
 }) => {
   return (
     <ModificationPanelContainer
@@ -45,13 +45,13 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
       isModified={isModified}
       resetToOriginal={resetToOriginal}
       onAcceptModification={onAcceptModification}
-      onStartModification={onStartModification}
+      onSelectModificationType={onSelectModificationType}
+      onApplyModifications={onApplyModifications}
       isTemporary={isTemporary}
       isAiModifying={isAiModifying}
       selectedIngredients={selectedIngredients}
       removeIngredientSelection={removeIngredientSelection}
       selectedModifications={selectedModifications}
-      onSelectModificationType={onSelectModificationType}
     />
   );
 };

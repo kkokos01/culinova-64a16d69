@@ -13,10 +13,10 @@ interface UnifiedModificationPanelProps {
   onRemoveIngredientSelection: (id: string) => void;
   customInstructions: string;
   onCustomInstructionsChange: (instructions: string) => void;
-  onStartModification: () => void;
+  onApplyModifications: () => void;
   onSelectModificationType: (type: string) => void;
   isDisabled?: boolean;
-  selectedModifications?: string[];
+  selectedModifications: string[];
 }
 
 const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
@@ -25,14 +25,14 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
   onRemoveIngredientSelection,
   customInstructions,
   onCustomInstructionsChange,
-  onStartModification,
+  onApplyModifications,
   onSelectModificationType,
   isDisabled = false,
   selectedModifications = []
 }) => {
   const hasSelectedIngredients = selectedIngredients.size > 0;
   const hasCustomInstructions = customInstructions.trim().length > 0;
-  const hasSelectedModifications = selectedModifications && selectedModifications.length > 0;
+  const hasSelectedModifications = selectedModifications.length > 0;
   const canModify = hasSelectedIngredients || hasCustomInstructions || hasSelectedModifications;
 
   const getActionColor = (action: string) => {
@@ -73,7 +73,7 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
   ];
 
   const isSelected = (id: string) => {
-    return selectedModifications && selectedModifications.includes(id);
+    return selectedModifications.includes(id);
   };
 
   return (
@@ -141,7 +141,7 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
           </div>
           
           <Button
-            onClick={onStartModification}
+            onClick={onApplyModifications}
             disabled={!canModify || isDisabled}
             className="w-full mt-4 bg-sage-500 hover:bg-sage-600 text-white font-medium py-2 rounded-md flex items-center justify-center"
           >
