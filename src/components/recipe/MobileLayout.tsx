@@ -3,7 +3,12 @@ import React, { useState } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
 import RecipeContent from "./RecipeContent";
-import { Drawer } from "@/components/ui/drawer";
+import { 
+  Drawer,
+  DrawerContent,
+  DrawerOverlay,
+  DrawerPortal
+} from "@/components/ui/drawer";
 import ModificationPanel from "./ModificationPanel";
 import { Button } from "@/components/ui/button";
 import { Wand2 } from "lucide-react";
@@ -100,9 +105,9 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       
       {/* Modification Drawer */}
       <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <Drawer.Portal>
-          <Drawer.Overlay />
-          <Drawer.Content className="bg-sage-700 text-white">
+        <DrawerPortal>
+          <DrawerOverlay />
+          <DrawerContent className="bg-sage-700 text-white">
             <div className="h-[85vh]">
               <ModificationPanel
                 recipe={recipe}
@@ -121,8 +126,8 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
                 onSelectModificationType={handleSelectModificationType}
               />
             </div>
-          </Drawer.Content>
-        </Drawer.Portal>
+          </DrawerContent>
+        </DrawerPortal>
       </Drawer>
     </div>
   );
