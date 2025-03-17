@@ -30,6 +30,22 @@ const RecipeVersionTabs = () => {
   const [newName, setNewName] = useState("");
   const [isSaving, setSaving] = useState<string | null>(null);
   
+  // Deduplicate versions for display based on name
+  const displayVersions = recipeVersions.reduce((acc: RecipeVersion[], version) => {
+    // Check if we already have a version with this name
+    const existingVersionIndex = acc.findIndex(v => v.name === version.name);
+    
+    if (existingVersionIndex === -1) {
+      // If no version with this name exists, add it
+      acc.push(version);
+    } else if (version.isActive) {
+      // If this version is active, replace the existing one
+      acc[existingVersionIndex] = version;
+    }
+    
+    return acc;
+  }, []);
+  
   // Handle initiating rename
   const handleStartRename = (version: RecipeVersion) => {
     setIsRenaming(version.id);
@@ -74,6 +90,21 @@ const RecipeVersionTabs = () => {
     }
   };
   
+  // Handle version selection
+  const handleSelectVersion = async (version: RecipeVersion) => {
+    console.log("Selecting version:", version.id, version.name);
+    try {
+      await setActiveVersion(version.id);
+    } catch (error) {
+      console.error("Error setting active version:", error);
+      toast({
+        title: "Error",
+        description: "Failed to switch version",
+        variant: "destructive"
+      });
+    }
+  };
+  
   if (isLoadingVersions) {
     return (
       <div className="border-b mb-6">
@@ -86,14 +117,14 @@ const RecipeVersionTabs = () => {
   }
   
   // Don't render if there's only 1 or 0 versions
-  if (recipeVersions.length <= 1) {
+  if (displayVersions.length <= 1) {
     return null;
   }
   
   return (
     <div className="border-b mb-6">
       <div className="flex items-center overflow-x-auto pb-1 hide-scrollbar">
-        {recipeVersions.map((version) => (
+        {displayVersions.map((version) => (
           <div key={version.id} className="flex-shrink-0">
             {isRenaming === version.id ? (
               <div className="flex items-center px-3 py-2">
@@ -109,7 +140,7 @@ const RecipeVersionTabs = () => {
               </div>
             ) : (
               <button
-                onClick={() => setActiveVersion(version.id)}
+                onClick={() => handleSelectVersion(version)}
                 className={`flex items-center px-3 py-2 text-sm font-medium border-b-2 rounded-t-md whitespace-nowrap ${
                   version.id === activeVersionId
                     ? "border-primary text-primary"

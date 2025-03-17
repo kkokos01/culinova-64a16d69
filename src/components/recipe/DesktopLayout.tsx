@@ -9,6 +9,7 @@ import { ChevronRight, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ModificationSidebar from "./ModificationSidebar";
 import VersionManagement from "./VersionManagement";
+import { useToast } from "@/hooks/use-toast";
 
 interface DesktopLayoutProps {
   recipe: Recipe | null;
@@ -48,6 +49,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     activeVersionId
   } = useRecipe();
   
+  const { toast } = useToast();
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(true);
   const [leftPanelSize, setLeftPanelSize] = useState(4);
   const [isSaving, setIsSaving] = useState(false);
@@ -76,17 +78,23 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     try {
       if (isActiveVersionTemporary && activeVersionId) {
         await persistVersion(activeVersionId);
+        toast({
+          title: "Version Saved",
+          description: "Recipe version has been saved to the database.",
+        });
+      } else {
+        await handleAcceptChanges();
       }
-      await handleAcceptChanges();
     } catch (error) {
       console.error("Error saving to database:", error);
+      toast({
+        title: "Error Saving Version",
+        description: error instanceof Error ? error.message : "Failed to save version",
+        variant: "destructive"
+      });
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const startUnifiedModification = () => {
-    handleStartModification("unified");
   };
   
   // Handle selecting a modification type
@@ -102,9 +110,21 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   
   // Handle applying selected modifications
   const handleApplyModifications = () => {
-    if (selectedModifications.length > 0) {
-      // Start the modification process with the selected types
-      handleStartModification(selectedModifications.join(", "));
+    try {
+      if (selectedModifications.length > 0) {
+        // Start the modification process with the selected types
+        handleStartModification(selectedModifications.join(", "));
+      } else if (customInstructions.trim()) {
+        // Use custom instructions if no modifications are selected
+        handleStartModification("custom");
+      }
+    } catch (error) {
+      console.error("Error applying modifications:", error);
+      toast({
+        title: "Error",
+        description: "Failed to apply modifications",
+        variant: "destructive"
+      });
     }
   };
 
@@ -157,7 +177,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               onRemoveIngredientSelection={removeIngredientSelection}
               customInstructions={customInstructions}
               onCustomInstructionsChange={setCustomInstructions}
-              onStartModification={startUnifiedModification}
+              onStartModification={handleStartModification}
               onSelectModificationType={handleSelectModificationType}
               onApplyModifications={handleApplyModifications}
               isModified={isModified}

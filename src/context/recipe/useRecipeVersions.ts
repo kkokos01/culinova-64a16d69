@@ -22,6 +22,7 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
       // Set the active version
       const activeVersion = versions.find(v => v.isActive);
       if (activeVersion) {
+        console.log("Setting active version from fetch:", activeVersion.id, activeVersion.name);
         setActiveVersionId(activeVersion.id);
         setRecipe(activeVersion.recipe);
       }
@@ -50,19 +51,14 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
       isTemporary: true
     };
     
-    // Add the new version to our state
-    setRecipeVersions(prev => [...prev, newVersion]);
+    // Update versions array - make all other versions inactive
+    setRecipeVersions(prev => prev.map(v => ({
+      ...v,
+      isActive: false
+    })).concat(newVersion));
     
-    // Set this as the active version
     setActiveVersionId(newVersion.id);
-    
-    // Update active status in other versions
-    setRecipeVersions(prev => 
-      prev.map(v => ({
-        ...v,
-        isActive: v.id === newVersion.id
-      }))
-    );
+    setRecipe(recipe);
     
     return newVersion;
   };
@@ -116,19 +112,15 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
       const userId = recipe.user_id;
       const newVersion = await createRecipeVersion(name, recipe, userId);
       
-      // Add the new version to our state
-      setRecipeVersions(prev => [...prev, newVersion]);
+      // Add the new version to our state and deactivate others
+      setRecipeVersions(prev => prev.map(v => ({
+        ...v,
+        isActive: false
+      })).concat(newVersion));
       
       // Set this as the active version
       setActiveVersionId(newVersion.id);
-      
-      // Update active status in other versions
-      setRecipeVersions(prev => 
-        prev.map(v => ({
-          ...v,
-          isActive: v.id === newVersion.id
-        }))
-      );
+      setRecipe(newVersion.recipe);
       
       return newVersion;
     } catch (error) {
@@ -145,6 +137,8 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
       if (!version) {
         throw new Error("Version not found");
       }
+      
+      console.log("Setting active version:", version.id, version.name, "Recipe:", version.recipe.title);
       
       // If this is a temporary version, we just update the state
       if (version.isTemporary) {

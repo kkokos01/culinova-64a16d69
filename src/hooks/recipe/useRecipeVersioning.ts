@@ -22,6 +22,7 @@ export const useRecipeVersioning = (setRecipe: (recipe: Recipe) => void) => {
       // Set the active version
       const activeVersion = versions.find(v => v.isActive);
       if (activeVersion) {
+        console.log("Setting active version from fetch:", activeVersion.id, activeVersion.name);
         setActiveVersionId(activeVersion.id);
         setRecipe(activeVersion.recipe);
       }
@@ -50,7 +51,7 @@ export const useRecipeVersioning = (setRecipe: (recipe: Recipe) => void) => {
       isTemporary: true
     };
     
-    // Update versions and set this as active
+    // Update versions array - make all other versions inactive
     setRecipeVersions(prev => prev.map(v => ({
       ...v,
       isActive: false
@@ -140,6 +141,8 @@ export const useRecipeVersioning = (setRecipe: (recipe: Recipe) => void) => {
       if (!version) {
         throw new Error("Version not found");
       }
+      
+      console.log("Setting active version:", version.id, version.name, "Recipe:", version.recipe.title);
       
       // If this is a temporary version, we just update the state
       if (version.isTemporary) {
