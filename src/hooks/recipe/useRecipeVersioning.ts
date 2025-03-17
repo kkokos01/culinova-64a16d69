@@ -144,11 +144,14 @@ export const useRecipeVersioning = (setRecipe: (recipe: Recipe) => void) => {
       
       console.log("Setting active version:", version.id, version.name, "Recipe:", version.recipe.title);
       
+      // IMPORTANT: We need to set the recipe data from the version BEFORE updating state
+      // This ensures the UI is updated with the correct recipe content
+      setRecipe(version.recipe);
+      
       // If this is a temporary version, we just update the state
       if (version.isTemporary) {
         // Update local state
         setActiveVersionId(versionId);
-        setRecipe(version.recipe);
         
         // Update active status in versions
         setRecipeVersions(prev => 
@@ -164,7 +167,6 @@ export const useRecipeVersioning = (setRecipe: (recipe: Recipe) => void) => {
         
         // Update local state
         setActiveVersionId(versionId);
-        setRecipe(version.recipe);
         
         // Update active status in versions
         setRecipeVersions(prev => 

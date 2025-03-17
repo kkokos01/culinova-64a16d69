@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   DropdownMenu,
@@ -22,7 +21,8 @@ const RecipeVersionTabs = () => {
     setActiveVersion, 
     renameVersion, 
     deleteVersion,
-    persistVersion
+    persistVersion,
+    recipe
   } = useRecipe();
   
   const { toast } = useToast();
@@ -45,6 +45,14 @@ const RecipeVersionTabs = () => {
     
     return acc;
   }, []);
+  
+  // Add effect to log current state for debugging
+  useEffect(() => {
+    if (recipe) {
+      console.log("Current active recipe in tabs:", recipe.title);
+    }
+    console.log("Current active version ID:", activeVersionId);
+  }, [recipe, activeVersionId]);
   
   // Handle initiating rename
   const handleStartRename = (version: RecipeVersion) => {
@@ -92,9 +100,25 @@ const RecipeVersionTabs = () => {
   
   // Handle version selection
   const handleSelectVersion = async (version: RecipeVersion) => {
+    if (version.id === activeVersionId) {
+      console.log("Version already active, skipping:", version.name);
+      return;
+    }
+    
     console.log("Selecting version:", version.id, version.name);
     try {
+      toast({
+        title: "Switching version",
+        description: `Loading "${version.name}" version...`,
+      });
+      
       await setActiveVersion(version.id);
+      
+      // Confirm switch was successful
+      toast({
+        title: "Version loaded",
+        description: `Now viewing "${version.name}" version`,
+      });
     } catch (error) {
       console.error("Error setting active version:", error);
       toast({
