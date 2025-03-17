@@ -2,14 +2,21 @@
 import React, { useEffect } from "react";
 import { useRecipe } from "@/context/recipe";
 import RecipeVersionTabs from "./RecipeVersionTabs";
+import { Recipe } from "@/types";
 
 interface RecipeHeaderProps {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   prepTime?: number;
   cookTime?: number;
   servings?: number;
   difficulty?: string;
+  // Add new props to match what's being passed in Desktop and Mobile layouts
+  recipe?: Recipe;
+  isModified?: boolean;
+  onModifyWithAI?: () => void;
+  showModifyButton?: boolean;
+  isTemporary?: boolean;
 }
 
 const RecipeHeader: React.FC<RecipeHeaderProps> = ({
@@ -19,23 +26,33 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   cookTime,
   servings,
   difficulty,
+  recipe: propRecipe,
+  isModified,
+  onModifyWithAI,
+  showModifyButton,
+  isTemporary,
 }) => {
-  const { recipe } = useRecipe();
+  const { recipe: contextRecipe } = useRecipe();
   
   // Log for debugging
   useEffect(() => {
-    if (recipe) {
-      console.log("RecipeHeader rendering with recipe:", recipe.title);
+    if (contextRecipe) {
+      console.log("RecipeHeader rendering with recipe:", contextRecipe.title);
+    } else if (propRecipe) {
+      console.log("RecipeHeader rendering with prop recipe:", propRecipe.title);
     }
-  }, [recipe]);
+  }, [contextRecipe, propRecipe]);
+  
+  // Use recipe from context if available, then prop recipe, then fallback to individual props
+  const recipeToUse = contextRecipe || propRecipe;
   
   // Use recipe from context if available to ensure we're showing the latest version
-  const displayTitle = recipe?.title || title;
-  const displayDescription = recipe?.description || description;
-  const displayPrepTime = recipe?.prep_time_minutes || prepTime;
-  const displayCookTime = recipe?.cook_time_minutes || cookTime;
-  const displayServings = recipe?.servings || servings;
-  const displayDifficulty = recipe?.difficulty || difficulty;
+  const displayTitle = recipeToUse?.title || title;
+  const displayDescription = recipeToUse?.description || description;
+  const displayPrepTime = recipeToUse?.prep_time_minutes || prepTime;
+  const displayCookTime = recipeToUse?.cook_time_minutes || cookTime;
+  const displayServings = recipeToUse?.servings || servings;
+  const displayDifficulty = recipeToUse?.difficulty || difficulty;
   
   return (
     <div className="mb-8">
