@@ -84,6 +84,7 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
         )}
       </div>
 
+      {/* Only render version tabs once, here in the header */}
       <RecipeVersionTabs />
     </div>
   );

@@ -23,6 +23,11 @@ export const useVersionFetching = ({
       console.log("Fetching versions from DB for recipe:", recipeId);
       const versions = await fetchRecipeVersions(recipeId);
       
+      // Log the versions for debugging
+      console.log(`Retrieved ${versions.length} versions from database:`, 
+        versions.map(v => ({ id: v.id, name: v.name, isActive: v.isActive })));
+      
+      // Set the versions in state
       setRecipeVersions(versions);
       
       // Set the active version
@@ -31,6 +36,7 @@ export const useVersionFetching = ({
         console.log("Setting active version from fetch:", activeVersion.id, activeVersion.name);
         
         // IMPORTANT: Set recipe data first before updating UI state
+        console.log("Setting recipe to:", activeVersion.recipe.title);
         setRecipe(activeVersion.recipe);
         setActiveVersionId(activeVersion.id);
       }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useRecipe } from "@/context/recipe";
 import { RecipeVersion } from "@/context/recipe/types";
@@ -25,12 +24,12 @@ const RecipeVersionTabs = () => {
   const [isSaving, setSaving] = useState<string | null>(null);
   const [isSwitching, setIsSwitching] = useState<string | null>(null);
   
-  // Deduplicate versions for display based on name and id
-  // This ensures we don't show duplicate tabs with the same name
+  // Deduplicate versions for display based on id
   const displayVersions = React.useMemo(() => {
+    // Use a Map to ensure we only keep one version per ID
     const uniqueVersionMap = new Map<string, RecipeVersion>();
     
-    // First pass: Add all versions to a map keyed by their ID
+    // Add all versions to the map, keyed by ID
     recipeVersions.forEach(version => {
       uniqueVersionMap.set(version.id, version);
     });
