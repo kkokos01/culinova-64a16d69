@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 interface QuickModificationsSectionProps {
   onSelectModificationType: (type: string) => void;
   disabled?: boolean;
+  selectedModifications: string[];
 }
 
 const QuickModificationsSection: React.FC<QuickModificationsSectionProps> = ({
   onSelectModificationType,
-  disabled = false
+  disabled = false,
+  selectedModifications = []
 }) => {
   const modificationType = [
     { id: "healthier", label: "Healthier" },
@@ -22,6 +24,8 @@ const QuickModificationsSection: React.FC<QuickModificationsSectionProps> = ({
     { id: "budget", label: "Budget" }
   ];
 
+  const isSelected = (id: string) => selectedModifications.includes(id);
+
   return (
     <div className="mb-6">
       <h3 className="text-lg font-medium text-white mb-2">Quick Modifications</h3>
@@ -29,10 +33,12 @@ const QuickModificationsSection: React.FC<QuickModificationsSectionProps> = ({
         {modificationType.map((type) => (
           <Button
             key={type.id}
-            variant="outline"
+            variant={isSelected(type.id) ? "default" : "outline"}
             onClick={() => onSelectModificationType(type.id)}
             disabled={disabled}
-            className="border-white/30 text-white hover:bg-white/10"
+            className={isSelected(type.id) 
+              ? "bg-sage-500 text-white hover:bg-sage-600" 
+              : "border-white/30 text-white hover:bg-white/10"}
           >
             {type.label}
           </Button>

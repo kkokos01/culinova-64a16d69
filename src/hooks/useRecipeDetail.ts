@@ -25,15 +25,18 @@ export const useRecipeDetail = () => {
     recipeVersions,
     hasInitializedVersions,
     setHasInitializedVersions,
-    selectedIngredients, 
-    selectIngredientForModification
+    selectedIngredients: contextSelectedIngredients, 
+    selectIngredientForModification: contextSelectIngredientForModification,
+    removeIngredientSelection: contextRemoveIngredientSelection
   } = useRecipe();
   
   // Use the modification hook
   const {
     selectedIngredient,
     setSelectedIngredient,
-    removeIngredientSelection,
+    selectedIngredients: hookSelectedIngredients,
+    selectIngredientForModification: hookSelectIngredientForModification,
+    removeIngredientSelection: hookRemoveIngredientSelection,
     customInstructions,
     setCustomInstructions,
     isModified,
@@ -42,6 +45,11 @@ export const useRecipeDetail = () => {
     setIsAiModifying,
     handleStartModification: startModification
   } = useRecipeModification(recipe, addTemporaryVersion);
+  
+  // Use either context or hook implementation based on what's available
+  const selectedIngredients = contextSelectedIngredients || hookSelectedIngredients;
+  const selectIngredientForModificationImpl = contextSelectIngredientForModification || hookSelectIngredientForModification;
+  const removeIngredientSelectionImpl = contextRemoveIngredientSelection || hookRemoveIngredientSelection;
   
   // Set recipe in context when data is loaded
   useEffect(() => {
@@ -84,8 +92,8 @@ export const useRecipeDetail = () => {
   // Function to handle ingredient selection
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
     console.log("handleSelectIngredient called with:", ingredient.id, action);
-    // Using the context function to update selected ingredients
-    selectIngredientForModification(ingredient, action);
+    // Using the implementation function to update selected ingredients
+    selectIngredientForModificationImpl(ingredient, action);
   };
 
   const handleModifyWithAI = () => {
@@ -93,8 +101,9 @@ export const useRecipeDetail = () => {
     // For desktop, the panel is already visible in the left panel
   };
   
-  // Pass the actual handler to the modification hook
+  // Handle starting modification with instructions
   const handleStartModification = (modificationType: string) => {
+    console.log("Starting modification with type:", modificationType);
     startModification(modificationType);
   };
   
@@ -140,6 +149,6 @@ export const useRecipeDetail = () => {
     setSelectedIngredient,
     handleSelectIngredient,
     isAiModifying,
-    removeIngredientSelection
+    removeIngredientSelection: removeIngredientSelectionImpl
   };
 };

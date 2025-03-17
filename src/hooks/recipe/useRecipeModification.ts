@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Ingredient, Recipe } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +16,7 @@ export const useRecipeModification = (recipe: Recipe | null, addTemporaryVersion
 
   // Select an ingredient for modification
   const selectIngredientForModification = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
-    console.log("Selecting ingredient:", ingredient.id, action);
+    console.log("Selecting ingredient in useRecipeModification:", ingredient.id, action);
     
     setSelectedIngredients(prev => {
       const newMap = new Map(prev);
@@ -36,7 +37,7 @@ export const useRecipeModification = (recipe: Recipe | null, addTemporaryVersion
 
   // Remove an ingredient from the selection
   const removeIngredientSelection = (id: string) => {
-    console.log("Removing ingredient selection by ID:", id);
+    console.log("Removing ingredient selection by ID in useRecipeModification:", id);
     
     setSelectedIngredients(prev => {
       const newMap = new Map(prev);
@@ -49,9 +50,10 @@ export const useRecipeModification = (recipe: Recipe | null, addTemporaryVersion
   const handleStartModification = async (modificationType: string) => {
     if (!recipe) return;
     
-    setIsAiModifying(true);
-    console.log("Starting modification with type:", modificationType);
+    console.log("Starting modification with instructions:", modificationType);
     console.log("Selected ingredients:", Array.from(selectedIngredients.entries()));
+    
+    setIsAiModifying(true);
     
     try {
       // Here we would normally call an AI API

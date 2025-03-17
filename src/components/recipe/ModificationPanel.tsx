@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Recipe } from "@/types";
+import { Recipe, Ingredient } from "@/types";
 import ModificationPanelContainer from "./modification/ModificationPanelContainer";
 
 interface ModificationPanelProps {
@@ -11,9 +11,11 @@ interface ModificationPanelProps {
   isModified?: boolean;
   resetToOriginal?: () => void;
   onAcceptModification?: () => void;
-  onStartModification?: () => void;
+  onStartModification?: (instructions: string) => void;
   isTemporary?: boolean;
   isAiModifying?: boolean;
+  selectedIngredients?: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
+  removeIngredientSelection?: (id: string) => void;
 }
 
 const ModificationPanel: React.FC<ModificationPanelProps> = ({
@@ -26,7 +28,9 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
   onAcceptModification,
   onStartModification,
   isTemporary = false,
-  isAiModifying = false
+  isAiModifying = false,
+  selectedIngredients,
+  removeIngredientSelection
 }) => {
   return (
     <ModificationPanelContainer
@@ -40,6 +44,8 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
       onStartModification={onStartModification}
       isTemporary={isTemporary}
       isAiModifying={isAiModifying}
+      selectedIngredients={selectedIngredients}
+      removeIngredientSelection={removeIngredientSelection}
     />
   );
 };

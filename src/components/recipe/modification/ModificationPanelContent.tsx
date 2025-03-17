@@ -13,6 +13,7 @@ interface ModificationPanelContentProps {
   onCustomInstructionsChange: (instructions: string) => void;
   onSelectModificationType: (type: string) => void;
   isDisabled?: boolean;
+  selectedModifications: string[];
 }
 
 const ModificationPanelContent: React.FC<ModificationPanelContentProps> = ({
@@ -21,7 +22,8 @@ const ModificationPanelContent: React.FC<ModificationPanelContentProps> = ({
   customInstructions,
   onCustomInstructionsChange,
   onSelectModificationType,
-  isDisabled = false
+  isDisabled = false,
+  selectedModifications = []
 }) => {
   return (
     <div className="flex-grow overflow-y-auto p-4">
@@ -43,6 +45,7 @@ const ModificationPanelContent: React.FC<ModificationPanelContentProps> = ({
       <QuickModificationsSection
         onSelectModificationType={onSelectModificationType}
         disabled={isDisabled}
+        selectedModifications={selectedModifications}
       />
     </div>
   );

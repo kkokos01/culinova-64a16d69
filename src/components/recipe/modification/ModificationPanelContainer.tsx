@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Recipe } from "@/types";
 import { Loader2 } from "lucide-react";
 import ModificationPanelHeader from "./ModificationPanelHeader";
@@ -15,9 +15,11 @@ interface ModificationPanelContainerProps {
   isModified?: boolean;
   resetToOriginal?: () => void;
   onAcceptModification?: () => void;
-  onStartModification?: () => void;
+  onStartModification?: (instructions: string) => void;
   isTemporary?: boolean;
   isAiModifying?: boolean;
+  selectedIngredients?: Map<string, any>;
+  removeIngredientSelection?: (id: string) => void;
 }
 
 const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
@@ -29,11 +31,13 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
   resetToOriginal,
   onAcceptModification,
   onStartModification,
-  isAiModifying = false
+  isAiModifying = false,
+  selectedIngredients: externalSelectedIngredients,
+  removeIngredientSelection: externalRemoveIngredientSelection
 }) => {
   const {
-    selectedIngredients,
-    removeIngredientSelection,
+    selectedIngredients: internalSelectedIngredients,
+    removeIngredientSelection: internalRemoveIngredientSelection,
     customInstructions,
     setCustomInstructions,
     handleStartModification,
@@ -41,16 +45,58 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
     selectIngredientForModification
   } = useRecipeModification(recipe, null);
 
+  // Use either external or internal state based on what's provided
+  const selectedIngredients = externalSelectedIngredients || internalSelectedIngredients;
+  const removeIngredientSelection = externalRemoveIngredientSelection || internalRemoveIngredientSelection;
+
+  // Track selected quick modifications
+  const [selectedModifications, setSelectedModifications] = useState<string[]>([]);
+
   // Handle selecting a quick modification type
   const handleSelectModificationType = (type: string) => {
-    // Set custom instructions based on the selected modification type
-    setCustomInstructions(`Make this recipe ${type}`);
+    setSelectedModifications(prev => {
+      // If already selected, remove it; otherwise, add it
+      if (prev.includes(type)) {
+        return prev.filter(item => item !== type);
+      } else {
+        return [...prev, type];
+      }
+    });
+  };
+
+  // Create modification instructions with selected types and custom instructions
+  const createModificationInstructions = () => {
+    let instructions = customInstructions;
+    
+    if (selectedModifications.length > 0) {
+      // Add selected modifications at the beginning of instructions
+      const modificationText = `Make this recipe ${selectedModifications.join(', ')}`;
+      
+      if (instructions.trim()) {
+        instructions = `${modificationText}. ${instructions}`;
+      } else {
+        instructions = modificationText;
+      }
+    }
+    
+    return instructions;
   };
 
   // Determine if modification can be started
   const hasSelectedIngredients = selectedIngredients.size > 0;
   const hasCustomInstructions = customInstructions.trim().length > 0;
-  const canModify = hasSelectedIngredients || hasCustomInstructions;
+  const hasSelectedModifications = selectedModifications.length > 0;
+  const canModify = hasSelectedIngredients || hasCustomInstructions || hasSelectedModifications;
+
+  // Handle starting the modification
+  const handleStartModificationWithOptions = () => {
+    const instructions = createModificationInstructions();
+    if (onStartModification) {
+      onStartModification(instructions);
+    } else {
+      handleStartModification(instructions);
+    }
+  };
 
   // If no recipe data is available, show loading state
   if (!recipe) {
@@ -76,6 +122,7 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
         onCustomInstructionsChange={setCustomInstructions}
         onSelectModificationType={handleSelectModificationType}
         isDisabled={isAiModifying}
+        selectedModifications={selectedModifications}
       />
 
       <div className="p-4 border-t border-white/20">
@@ -83,7 +130,7 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
           isModified={isModified || false}
           onReset={resetToOriginal || (() => {})}
           onSave={onAcceptModification || handleSaveChanges}
-          onStartModification={onStartModification || (() => handleStartModification(customInstructions))}
+          onStartModification={handleStartModificationWithOptions}
           isSaving={isSaving}
           isAiModifying={isAiModifying}
           canModify={canModify}

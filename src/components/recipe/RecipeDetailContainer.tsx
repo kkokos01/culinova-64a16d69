@@ -1,18 +1,35 @@
 
-import React from "react";
-import { useRecipeDetail } from "@/hooks/useRecipeDetail";
-import { useIsMobile } from "@/hooks/use-mobile";
+import React, { useState } from "react";
+import { Recipe, Ingredient } from "@/types";
+import { useMediaQuery } from "@/hooks/use-mobile";
 import DesktopLayout from "./DesktopLayout";
 import MobileLayout from "./MobileLayout";
-import RecipeDetailSkeleton from "./RecipeDetailSkeleton";
-import Navbar from "@/components/Navbar";
+import { useRecipeDetail } from "@/hooks/useRecipeDetail";
+
+export interface MobileLayoutProps {
+  recipe: Recipe;
+  selectedIngredient: Ingredient | null;
+  setSelectedIngredient: (ingredient: Ingredient | null) => void;
+  handleSelectIngredient: (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => void;
+  isModified: boolean;
+  resetToOriginal: () => void;
+  handleModifyWithAI: () => void;
+  handleStartModification: (modificationType: string) => void;
+  handleAcceptChanges: () => Promise<void>;
+  isAiModifying: boolean;
+  selectedIngredients: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
+  removeIngredientSelection: (id: string) => void;
+}
 
 const RecipeDetailContainer: React.FC = () => {
-  const isMobile = useIsMobile();
-  const { 
-    recipeData, 
-    isLoading, 
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  
+  const {
+    recipeData: recipe,
+    isLoading,
+    error,
     selectedIngredient,
+    selectedIngredients,
     isModified,
     resetToOriginal,
     handleModifyWithAI,
@@ -20,46 +37,46 @@ const RecipeDetailContainer: React.FC = () => {
     handleAcceptChanges,
     setSelectedIngredient,
     handleSelectIngredient,
-    isAiModifying
+    isAiModifying,
+    removeIngredientSelection
   } = useRecipeDetail();
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      {isLoading ? (
-        <RecipeDetailSkeleton />
-      ) : (
-        <div className="pt-16"> {/* Add padding top to account for fixed navbar */}
-          {isMobile ? (
-            <MobileLayout 
-              recipe={recipeData}
-              selectedIngredient={selectedIngredient}
-              isModified={isModified}
-              resetToOriginal={resetToOriginal}
-              handleModifyWithAI={handleModifyWithAI}
-              handleStartModification={handleStartModification}
-              handleAcceptChanges={handleAcceptChanges}
-              setSelectedIngredient={setSelectedIngredient}
-              onSelectIngredient={handleSelectIngredient}
-              isAiModifying={isAiModifying}
-            />
-          ) : (
-            <DesktopLayout 
-              recipe={recipeData}
-              selectedIngredient={selectedIngredient}
-              isModified={isModified}
-              resetToOriginal={resetToOriginal}
-              handleModifyWithAI={handleModifyWithAI}
-              handleStartModification={handleStartModification}
-              handleAcceptChanges={handleAcceptChanges}
-              setSelectedIngredient={setSelectedIngredient}
-              onSelectIngredient={handleSelectIngredient}
-              isAiModifying={isAiModifying}
-            />
-          )}
-        </div>
-      )}
-    </div>
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error || !recipe) {
+    return <div>Error loading recipe</div>;
+  }
+
+  return isMobile ? (
+    <MobileLayout
+      recipe={recipe}
+      selectedIngredient={selectedIngredient}
+      isModified={isModified}
+      resetToOriginal={resetToOriginal}
+      handleModifyWithAI={handleModifyWithAI}
+      handleStartModification={handleStartModification}
+      handleAcceptChanges={handleAcceptChanges}
+      setSelectedIngredient={setSelectedIngredient}
+      handleSelectIngredient={handleSelectIngredient}
+      isAiModifying={isAiModifying}
+      selectedIngredients={selectedIngredients}
+      removeIngredientSelection={removeIngredientSelection}
+    />
+  ) : (
+    <DesktopLayout
+      recipe={recipe}
+      selectedIngredient={selectedIngredient}
+      isModified={isModified}
+      resetToOriginal={resetToOriginal}
+      handleModifyWithAI={handleModifyWithAI}
+      handleStartModification={handleStartModification}
+      handleAcceptChanges={handleAcceptChanges}
+      setSelectedIngredient={setSelectedIngredient}
+      handleSelectIngredient={handleSelectIngredient}
+      isAiModifying={isAiModifying}
+    />
   );
 };
 
