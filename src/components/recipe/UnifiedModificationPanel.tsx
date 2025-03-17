@@ -14,6 +14,7 @@ interface UnifiedModificationPanelProps {
   customInstructions: string;
   onCustomInstructionsChange: (instructions: string) => void;
   onStartModification: () => void;
+  onSelectModificationType: (type: string) => void;
   isDisabled?: boolean;
 }
 
@@ -24,6 +25,7 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
   customInstructions,
   onCustomInstructionsChange,
   onStartModification,
+  onSelectModificationType,
   isDisabled = false
 }) => {
   const hasSelectedIngredients = selectedIngredients.size > 0;
@@ -55,6 +57,17 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
         return null;
     }
   };
+
+  const modificationType = [
+    { id: "healthier", label: "Healthier" },
+    { id: "simpler", label: "Simpler" },
+    { id: "vegan", label: "Vegan" },
+    { id: "quicker", label: "Quicker" },
+    { id: "gluten-free", label: "Gluten-Free" },
+    { id: "keto", label: "Keto" },
+    { id: "spicier", label: "Spicier" },
+    { id: "budget", label: "Budget" }
+  ];
 
   return (
     <div className="bg-white rounded-lg shadow">
@@ -100,6 +113,23 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
             placeholder="Add custom instructions for modifying this recipe..."
             disabled={isDisabled}
           />
+          
+          <Separator className="my-4" />
+          
+          <h3 className="text-lg font-medium text-gray-800 mb-3">Quick Modifications</h3>
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {modificationType.map((type) => (
+              <Button
+                key={type.id}
+                variant="outline"
+                onClick={() => onSelectModificationType(type.id)}
+                disabled={isDisabled}
+                className="border-gray-300 text-gray-700 hover:bg-gray-100"
+              >
+                {type.label}
+              </Button>
+            ))}
+          </div>
           
           <Button
             onClick={onStartModification}

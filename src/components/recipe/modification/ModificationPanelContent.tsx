@@ -4,12 +4,14 @@ import { Ingredient } from "@/types";
 import { Separator } from "@/components/ui/separator";
 import IngredientSelectionSection from "./IngredientSelectionSection";
 import CustomInstructionsSection from "./CustomInstructionsSection";
+import QuickModificationsSection from "./QuickModificationsSection";
 
 interface ModificationPanelContentProps {
   selectedIngredients: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
   onRemoveIngredientSelection: (id: string) => void;
   customInstructions: string;
   onCustomInstructionsChange: (instructions: string) => void;
+  onSelectModificationType: (type: string) => void;
   isDisabled?: boolean;
 }
 
@@ -18,6 +20,7 @@ const ModificationPanelContent: React.FC<ModificationPanelContentProps> = ({
   onRemoveIngredientSelection,
   customInstructions,
   onCustomInstructionsChange,
+  onSelectModificationType,
   isDisabled = false
 }) => {
   return (
@@ -32,6 +35,13 @@ const ModificationPanelContent: React.FC<ModificationPanelContentProps> = ({
       <CustomInstructionsSection
         value={customInstructions}
         onChange={onCustomInstructionsChange}
+        disabled={isDisabled}
+      />
+
+      <Separator className="bg-white/20 my-6" />
+
+      <QuickModificationsSection
+        onSelectModificationType={onSelectModificationType}
         disabled={isDisabled}
       />
     </div>

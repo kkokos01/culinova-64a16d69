@@ -13,6 +13,7 @@ interface ModificationSidebarProps {
   customInstructions: string;
   onCustomInstructionsChange: (instructions: string) => void;
   onStartModification: () => void;
+  onSelectModificationType: (type: string) => void;
   isModified: boolean;
   resetToOriginal: () => void;
   onSaveChanges: () => Promise<void>;
@@ -29,6 +30,7 @@ const ModificationSidebar: React.FC<ModificationSidebarProps> = ({
   customInstructions,
   onCustomInstructionsChange,
   onStartModification,
+  onSelectModificationType,
   isModified,
   resetToOriginal,
   onSaveChanges,
@@ -63,6 +65,7 @@ const ModificationSidebar: React.FC<ModificationSidebarProps> = ({
           customInstructions={customInstructions}
           onCustomInstructionsChange={onCustomInstructionsChange}
           onStartModification={onStartModification}
+          onSelectModificationType={onSelectModificationType}
           isDisabled={isDisabled}
         />
         

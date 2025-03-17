@@ -87,6 +87,15 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const startUnifiedModification = () => {
     handleStartModification("unified");
   };
+  
+  // Handle selecting a modification type
+  const handleSelectModificationType = (type: string) => {
+    // Set custom instructions based on the selected type
+    setCustomInstructions(`Make this recipe ${type}`);
+    
+    // Start the modification process
+    handleStartModification(type);
+  };
 
   // Guard against null recipe
   if (!recipe) return null;
@@ -138,6 +147,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               customInstructions={customInstructions}
               onCustomInstructionsChange={setCustomInstructions}
               onStartModification={startUnifiedModification}
+              onSelectModificationType={handleSelectModificationType}
               isModified={isModified}
               resetToOriginal={resetToOriginal}
               onSaveChanges={handleSaveToDatabase}

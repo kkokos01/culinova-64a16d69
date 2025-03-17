@@ -35,6 +35,15 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
     isActiveVersionTemporary
   } = useModificationPanel();
 
+  // Handle selecting a quick modification type
+  const handleSelectModificationType = (type: string) => {
+    // Set custom instructions based on the selected modification type
+    setCustomInstructions(`Make this recipe ${type}`);
+    
+    // Start modification with the selected type
+    startModification(type);
+  };
+
   // Determine if modification can be started
   const hasSelectedIngredients = selectedIngredients.size > 0;
   const hasCustomInstructions = customInstructions.trim().length > 0;
@@ -63,6 +72,7 @@ const ModificationPanelContainer: React.FC<ModificationPanelContainerProps> = ({
         onRemoveIngredientSelection={removeIngredientSelection}
         customInstructions={customInstructions}
         onCustomInstructionsChange={setCustomInstructions}
+        onSelectModificationType={handleSelectModificationType}
         isDisabled={isAiModifying}
       />
 
