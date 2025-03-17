@@ -29,7 +29,6 @@ export interface RecipeContextType {
   recipeVersions: RecipeVersion[];
   activeVersionId: string;
   isLoadingVersions: boolean;
-  // Fix: Update the return type to match the implementation
   fetchVersionsFromDb: (recipeId: string) => Promise<RecipeVersion[]>;
   addRecipeVersion: (name: string, recipe: Recipe) => Promise<RecipeVersion>;
   addTemporaryVersion: (name: string, recipe: Recipe) => RecipeVersion; // New function for temporary versions
@@ -39,4 +38,7 @@ export interface RecipeContextType {
   deleteVersion: (versionId: string) => Promise<void>;
   hasInitializedVersions: boolean;
   setHasInitializedVersions: (initialized: boolean) => void;
+  isAiModifying: boolean;
+  setIsAiModifying: (isModifying: boolean) => void;
+  handleStartModification: (modificationType: string) => void;
 }

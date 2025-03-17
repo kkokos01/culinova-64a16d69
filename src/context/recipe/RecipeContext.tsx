@@ -1,5 +1,5 @@
 
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Recipe, Ingredient } from "@/types";
 import { useRecipeState } from "./useRecipeState";
 import { useIngredientSelection } from "./useIngredientSelection";
@@ -8,6 +8,7 @@ import { RecipeContextType } from "./types";
 import { RecipeDataProvider } from "./RecipeDataContext";
 import { ModificationProvider } from "./ModificationContext";
 import { VersionProvider } from "./VersionContext";
+import { useToast } from "@/hooks/use-toast";
 
 // Create the context with default values
 const RecipeContext = React.createContext<RecipeContextType | undefined>(undefined);
@@ -22,12 +23,68 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const ingredientSelection = useIngredientSelection();
   
   const versionState = useRecipeVersioning(recipeState.setRecipe);
+  
+  // Add AI modification state
+  const [isAiModifying, setIsAiModifying] = useState(false);
+  const { toast } = useToast();
+
+  // Handle starting an AI-based modification
+  const handleStartModification = async (modificationType: string) => {
+    if (!recipeState.recipe) return;
+    
+    setIsAiModifying(true);
+    
+    try {
+      // Here we would normally call an AI API
+      // For now, we'll just simulate a modification
+      const ingredientActions = Array.from(ingredientSelection.selectedIngredients.entries())
+        .map(([_, { ingredient, action }]) => `${action} ${ingredient.food?.name}`)
+        .join(", ");
+      
+      const modificationMessage = ingredientActions 
+        ? `Starting ${modificationType} modification with changes: ${ingredientActions}`
+        : `Starting ${modificationType} modification...`;
+      
+      toast({
+        title: "AI Modification Started",
+        description: modificationMessage,
+      });
+      
+      // Toggle modified status on (we would normally wait for the API response)
+      setTimeout(() => {
+        // Create a temporary version with the modifications
+        // In a real implementation, we would apply AI changes to the recipe
+        const modifiedRecipe = {
+          ...recipeState.recipe!,
+          // In a real implementation, we would make actual AI modifications here
+          title: `${recipeState.recipe!.title} (${modificationType})`
+        };
+        
+        // Create a temporary version (not saved to DB yet)
+        versionState.addTemporaryVersion(`${modificationType} Version`, modifiedRecipe);
+        
+        recipeState.setIsModified(true);
+        setIsAiModifying(false);
+      }, 1500);
+    } catch (error) {
+      console.error("Error during AI modification:", error);
+      toast({
+        title: "Error",
+        description: "Failed to modify recipe with AI",
+        variant: "destructive"
+      });
+      setIsAiModifying(false);
+    }
+  };
 
   // Combine all the state and functions into a single context value
   const value: RecipeContextType = {
     ...recipeState,
     ...ingredientSelection,
     ...versionState,
+    isAiModifying,
+    setIsAiModifying,
+    handleStartModification
   };
 
   // Reset to original recipe function
@@ -57,8 +114,9 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     removeIngredientSelection: ingredientSelection.removeIngredientSelection,
     customInstructions: ingredientSelection.customInstructions,
     setCustomInstructions: ingredientSelection.setCustomInstructions,
-    isAiModifying: false, // We'll add this functionality in the combined hook
-    handleStartModification: () => {} // Placeholder, will be implemented in the combined hook
+    isAiModifying,
+    setIsAiModifying,
+    handleStartModification
   };
 
   // Still provide the combined context for backward compatibility

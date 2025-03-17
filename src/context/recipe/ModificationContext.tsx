@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, ReactNode } from "react";
+import React, { createContext, useContext, ReactNode, useState } from "react";
 import { Ingredient } from "@/types";
 
 export interface ModificationContextType {
@@ -11,6 +11,7 @@ export interface ModificationContextType {
   customInstructions: string;
   setCustomInstructions: (instructions: string) => void;
   isAiModifying: boolean;
+  setIsAiModifying: (isModifying: boolean) => void;
   handleStartModification: (modificationType: string) => void;
 }
 
