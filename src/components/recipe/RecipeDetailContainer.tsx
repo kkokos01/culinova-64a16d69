@@ -5,6 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import DesktopLayout from "./DesktopLayout";
 import MobileLayout from "./MobileLayout";
 import RecipeDetailSkeleton from "./RecipeDetailSkeleton";
+import Navbar from "@/components/Navbar";
 
 const RecipeDetailContainer: React.FC = () => {
   const isMobile = useIsMobile();
@@ -22,40 +23,43 @@ const RecipeDetailContainer: React.FC = () => {
     isAiModifying
   } = useRecipeDetail();
 
-  if (isLoading) {
-    return <RecipeDetailSkeleton />;
-  }
-
   return (
-    <>
-      {isMobile ? (
-        <MobileLayout 
-          recipe={recipeData}
-          selectedIngredient={selectedIngredient}
-          isModified={isModified}
-          resetToOriginal={resetToOriginal}
-          handleModifyWithAI={handleModifyWithAI}
-          handleStartModification={handleStartModification}
-          handleAcceptChanges={handleAcceptChanges}
-          setSelectedIngredient={setSelectedIngredient}
-          onSelectIngredient={handleSelectIngredient}
-          isAiModifying={isAiModifying}
-        />
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      {isLoading ? (
+        <RecipeDetailSkeleton />
       ) : (
-        <DesktopLayout 
-          recipe={recipeData}
-          selectedIngredient={selectedIngredient}
-          isModified={isModified}
-          resetToOriginal={resetToOriginal}
-          handleModifyWithAI={handleModifyWithAI}
-          handleStartModification={handleStartModification}
-          handleAcceptChanges={handleAcceptChanges}
-          setSelectedIngredient={setSelectedIngredient}
-          onSelectIngredient={handleSelectIngredient}
-          isAiModifying={isAiModifying}
-        />
+        <div className="pt-16"> {/* Add padding top to account for fixed navbar */}
+          {isMobile ? (
+            <MobileLayout 
+              recipe={recipeData}
+              selectedIngredient={selectedIngredient}
+              isModified={isModified}
+              resetToOriginal={resetToOriginal}
+              handleModifyWithAI={handleModifyWithAI}
+              handleStartModification={handleStartModification}
+              handleAcceptChanges={handleAcceptChanges}
+              setSelectedIngredient={setSelectedIngredient}
+              onSelectIngredient={handleSelectIngredient}
+              isAiModifying={isAiModifying}
+            />
+          ) : (
+            <DesktopLayout 
+              recipe={recipeData}
+              selectedIngredient={selectedIngredient}
+              isModified={isModified}
+              resetToOriginal={resetToOriginal}
+              handleModifyWithAI={handleModifyWithAI}
+              handleStartModification={handleStartModification}
+              handleAcceptChanges={handleAcceptChanges}
+              setSelectedIngredient={setSelectedIngredient}
+              onSelectIngredient={handleSelectIngredient}
+              isAiModifying={isAiModifying}
+            />
+          )}
+        </div>
       )}
-    </>
+    </div>
   );
 };
 

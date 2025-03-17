@@ -1,13 +1,11 @@
 
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import Navbar from "@/components/Navbar";
 
 const RecipeDetailSkeleton: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="container mx-auto px-4 py-16">
+    <div className="pt-16"> {/* Add padding top to account for fixed navbar */}
+      <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <Skeleton className="h-8 sm:h-10 w-3/4 mb-2" />
           <Skeleton className="h-4 sm:h-5 w-full mb-4" />
