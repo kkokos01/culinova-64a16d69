@@ -11,15 +11,25 @@ export const useRecipeData = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [recipe, setRecipe] = useState<Recipe | null>(null);
+  const [recipe, setRecipeState] = useState<Recipe | null>(null);
   const [originalRecipe, setOriginalRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   // Create a memoized recipe setter that includes proper logging
-  const updateRecipe = useCallback((newRecipe: Recipe) => {
+  const setRecipe = useCallback((newRecipe: Recipe) => {
     console.log("useRecipeData: Updating recipe to:", newRecipe.title);
-    setRecipe(newRecipe);
+    
+    // Ensure ingredients are normalized
+    if (newRecipe?.ingredients) {
+      newRecipe.ingredients = newRecipe.ingredients.map(ing => ({
+        ...ing,
+        food: normalizeFood(ing.food),
+        unit: normalizeUnit(ing.unit)
+      })) as Recipe['ingredients'];
+    }
+    
+    setRecipeState(newRecipe);
   }, []);
 
   // Fetch recipe data from Supabase
@@ -30,7 +40,7 @@ export const useRecipeData = () => {
         
         if (!id) {
           console.warn("No recipe ID provided to useRecipeData");
-          setRecipe(null);
+          setRecipeState(null);
           setLoading(false);
           return;
         }
@@ -48,7 +58,7 @@ export const useRecipeData = () => {
         }
         
         console.log("useRecipeData: Fetched recipe:", recipeData?.title);
-        updateRecipe(recipeData);
+        setRecipe(recipeData);
         setOriginalRecipe(recipeData);
         setLoading(false);
       } catch (err) {
@@ -69,7 +79,7 @@ export const useRecipeData = () => {
     } else {
       setLoading(false);
     }
-  }, [id, toast, updateRecipe]);
+  }, [id, toast, setRecipe]);
 
   // Handle recipe not found scenario
   useEffect(() => {
@@ -93,7 +103,7 @@ export const useRecipeData = () => {
     recipe,
     loading,
     error,
-    setRecipe: updateRecipe,
+    setRecipe,
     originalRecipe,
     setOriginalRecipe
   };

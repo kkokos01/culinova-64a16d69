@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { Recipe, Ingredient } from "@/types";
 import IngredientsSection from "./IngredientsSection";
 import StepsSection from "./StepsSection";
@@ -16,10 +16,10 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
   selectedIngredients, 
   onSelectIngredient 
 }) => {
-  useEffect(() => {
-    // Debug log for recipe ingredients with proper field names
+  // Log recipe changes for debugging
+  const logRecipeDetails = useCallback(() => {
     console.log("RecipeContent rendering with recipe title:", recipe.title);
-    console.log("RecipeContent rendering with ingredients:", recipe.ingredients);
+    console.log("RecipeContent rendering with ingredients:", recipe.ingredients?.length || 0);
     
     // Validate ingredient data structure
     if (recipe.ingredients) {
@@ -38,7 +38,11 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
         });
       });
     }
-  }, [recipe, recipe.title, recipe.ingredients]);
+  }, [recipe]);
+
+  useEffect(() => {
+    logRecipeDetails();
+  }, [recipe, logRecipeDetails]);
 
   // Make sure we have the ingredients and steps arrays
   const ingredients = recipe.ingredients || [];
@@ -57,11 +61,34 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
   );
 };
 
+// Use a deep equality check for the recipe to ensure re-rendering when content changes
 export default React.memo(RecipeContent, (prevProps, nextProps) => {
-  // Only re-render if the recipe ID changes or if the recipe title changes
-  // This ensures we update the component when switching between versions
-  return (
-    prevProps.recipe.id === nextProps.recipe.id &&
-    prevProps.recipe.title === nextProps.recipe.title
-  );
+  // Always re-render if the recipe ID changes
+  if (prevProps.recipe.id !== nextProps.recipe.id) {
+    return false;
+  }
+  
+  // Also re-render if the title or description changes
+  if (prevProps.recipe.title !== nextProps.recipe.title ||
+      prevProps.recipe.description !== nextProps.recipe.description) {
+    return false;
+  }
+  
+  // Check if ingredients or steps have changed
+  const prevIngredientsLength = prevProps.recipe.ingredients?.length || 0;
+  const nextIngredientsLength = nextProps.recipe.ingredients?.length || 0;
+  
+  if (prevIngredientsLength !== nextIngredientsLength) {
+    return false;
+  }
+  
+  const prevStepsLength = prevProps.recipe.steps?.length || 0;
+  const nextStepsLength = nextProps.recipe.steps?.length || 0;
+  
+  if (prevStepsLength !== nextStepsLength) {
+    return false;
+  }
+  
+  // Return true to prevent re-rendering if no significant changes
+  return true;
 });

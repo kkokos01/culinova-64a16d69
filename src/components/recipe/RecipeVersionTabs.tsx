@@ -1,18 +1,11 @@
 
 import React, { useState, useEffect } from "react";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit2, Trash, Loader2, Save, Database } from "lucide-react";
 import { useRecipe } from "@/context/recipe";
 import { RecipeVersion } from "@/context/recipe/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import VersionTab from "./version/VersionTab";
+import RenameVersionField from "./version/RenameVersionField";
 
 const RecipeVersionTabs = () => {
   const { 
@@ -138,7 +131,7 @@ const RecipeVersionTabs = () => {
         
         // Clear loading state
         setIsSwitching(null);
-      }, 100);
+      }, 300); // Increased delay for more reliable state updates
     } catch (error) {
       console.error("Error setting active version:", error);
       toast({
@@ -172,86 +165,23 @@ const RecipeVersionTabs = () => {
         {displayVersions.map((version) => (
           <div key={version.id} className="flex-shrink-0">
             {isRenaming === version.id ? (
-              <div className="flex items-center px-3 py-2">
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  onBlur={() => handleSubmitRename(version.id)}
-                  onKeyDown={(e) => handleKeyDown(e, version.id)}
-                  className="border rounded px-2 py-1 text-sm w-[120px]"
-                  autoFocus
-                />
-              </div>
+              <RenameVersionField
+                newName={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onBlur={() => handleSubmitRename(version.id)}
+                onKeyDown={(e) => handleKeyDown(e, version.id)}
+              />
             ) : (
-              <button
-                onClick={() => handleSelectVersion(version)}
-                disabled={isSwitching !== null}
-                className={`flex items-center px-3 py-2 text-sm font-medium border-b-2 rounded-t-md whitespace-nowrap ${
-                  version.id === activeVersionId
-                    ? "border-primary text-primary"
-                    : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300"
-                } ${isSwitching === version.id ? "opacity-70" : ""}`}
-              >
-                {isSwitching === version.id ? (
-                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                ) : null}
-                {version.name}
-                
-                {/* Display temporary badge */}
-                {version.isTemporary && (
-                  <Badge 
-                    variant="outline" 
-                    className="ml-2 text-xs bg-amber-50 text-amber-800 border-amber-200"
-                  >
-                    Temporary
-                  </Badge>
-                )}
-                
-                {version.name !== "Original" && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        onClick={(e) => e.stopPropagation()}
-                        className="ml-2 text-gray-400 hover:text-gray-600"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[160px]">
-                      <DropdownMenuItem onClick={() => handleStartRename(version)}>
-                        <Edit2 className="mr-2 h-4 w-4" />
-                        <span>Rename</span>
-                      </DropdownMenuItem>
-                      
-                      {/* Add save option for temporary versions */}
-                      {version.isTemporary && (
-                        <DropdownMenuItem 
-                          onClick={() => handlePersistVersion(version)}
-                          disabled={isSaving === version.id}
-                        >
-                          {isSaving === version.id ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                            <Database className="mr-2 h-4 w-4" />
-                          )}
-                          <span>Save to Database</span>
-                        </DropdownMenuItem>
-                      )}
-                      
-                      {version.isTemporary && <DropdownMenuSeparator />}
-                      
-                      <DropdownMenuItem 
-                        onClick={() => deleteVersion(version.id)}
-                        className="text-red-600 focus:text-red-600"
-                      >
-                        <Trash className="mr-2 h-4 w-4" />
-                        <span>Delete</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </button>
+              <VersionTab
+                version={version}
+                isActive={version.id === activeVersionId}
+                isSwitching={isSwitching === version.id}
+                onSelectVersion={handleSelectVersion}
+                onStartRename={handleStartRename}
+                onDelete={deleteVersion}
+                onPersist={handlePersistVersion}
+                isSaving={isSaving === version.id}
+              />
             )}
           </div>
         ))}
