@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Recipe } from "@/types";
 import { X, ArrowLeft, RotateCcw, Save, Loader2, Database } from "lucide-react";
@@ -81,7 +80,7 @@ const ModificationPanel: React.FC<ModificationPanelProps> = ({
           <h3 className="text-lg font-medium text-white mb-2">Selected Ingredients</h3>
           <SelectedIngredientsPanel
             selectedIngredients={selectedIngredients}
-            onRemoveIngredient={removeIngredientSelection}
+            onRemoveSelection={removeIngredientSelection}
           />
         </div>
 

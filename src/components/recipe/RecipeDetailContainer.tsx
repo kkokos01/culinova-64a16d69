@@ -1,13 +1,13 @@
 
 import React from "react";
 import { useRecipeDetail } from "@/hooks/useRecipeDetail";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import DesktopLayout from "./DesktopLayout";
 import MobileLayout from "./MobileLayout";
 import RecipeDetailSkeleton from "./RecipeDetailSkeleton";
 
 const RecipeDetailContainer: React.FC = () => {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const { 
     recipeData, 
     isLoading, 
