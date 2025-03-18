@@ -60,8 +60,7 @@ export async function fetchRecipeVersions(recipeId: string): Promise<RecipeVersi
         return await constructVersionObject(dbVersion, recipeData);
       }));
       
-      // Ensure unique display names for the frontend by adding a number suffix if needed
-      return deduplicateVersionNames(versions);
+      return versions;
     }
     
     // If RPC worked, use its results
@@ -74,66 +73,11 @@ export async function fetchRecipeVersions(recipeId: string): Promise<RecipeVersi
       return await constructVersionObject(dbVersion, recipeData);
     }));
     
-    // Ensure unique display names for the frontend by adding a number suffix if needed
-    return deduplicateVersionNames(versions);
+    return versions;
   } catch (error) {
     console.error("Error in fetchRecipeVersions:", error);
     throw error;
   }
-}
-
-// Ensure unique version names for display in the frontend
-function deduplicateVersionNames(versions: RecipeVersion[]): RecipeVersion[] {
-  const nameMap = new Map<string, number>();
-  
-  return versions.map(version => {
-    const originalName = version.name;
-    
-    // If name is already unique, keep it as is
-    if (!nameMap.has(originalName)) {
-      nameMap.set(originalName, 1);
-      return version;
-    }
-    
-    // For duplicate names, add a number suffix
-    const count = nameMap.get(originalName)! + 1;
-    nameMap.set(originalName, count);
-    
-    // Only add suffix to duplicates after the first occurrence
-    if (count > 1) {
-      // Special case for "Original" - if we find more than one, rename duplicates to "Vegetarian Version"
-      // This is specifically to handle our SQL update case where we renamed one Original to Mild and the other to Vegetarian
-      if (originalName === "Original" && count === 3) {
-        // This is the third "Original" which should actually be "Vegetarian Version"
-        return {
-          ...version,
-          name: "Vegetarian Version",
-          recipe: {
-            ...version.recipe,
-            title: `Vegetarian Version ${version.recipe.title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '')}`
-          }
-        };
-      } else if (originalName === "Original" && count === 2) {
-        // This is the second "Original" which should actually be "Mild Version"
-        return {
-          ...version,
-          name: "Mild Version",
-          recipe: {
-            ...version.recipe,
-            title: `Mild Version ${version.recipe.title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '')}`
-          }
-        };
-      } else {
-        // General case for other duplicates
-        return {
-          ...version,
-          name: `${originalName} ${count}`
-        };
-      }
-    }
-    
-    return version;
-  });
 }
 
 // Helper function to construct version objects
