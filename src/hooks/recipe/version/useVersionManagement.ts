@@ -18,20 +18,37 @@ export const useVersionManagement = ({
   activeVersionId,
   setRecipe
 }: VersionManagementProps) => {
+  
+  // Helper to get clean title without version prefix
+  const getCleanTitle = (title: string): string => {
+    return title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '');
+  };
+
   const addRecipeVersion = async (name: string, recipe: Recipe): Promise<RecipeVersion> => {
     try {
       console.log("Creating new recipe version:", name);
       const userId = recipe.user_id;
       const newVersion = await createRecipeVersion(name, recipe, userId);
       
-      // Set the recipe data first
-      setRecipe(newVersion.recipe);
+      // Clean the title from any existing version prefixes
+      const cleanTitle = getCleanTitle(recipe.title);
+      
+      // Set the recipe data first with the appropriate title
+      const updatedRecipe = {
+        ...newVersion.recipe,
+        title: name !== "Original" ? `${name} ${cleanTitle}` : cleanTitle
+      };
+      
+      setRecipe(updatedRecipe);
       
       // Add the new version to our state and deactivate others
       setRecipeVersions(prev => prev.map(v => ({
         ...v,
         isActive: false
-      })).concat(newVersion));
+      })).concat({
+        ...newVersion,
+        recipe: updatedRecipe
+      }));
       
       // Set this as the active version
       setActiveVersionId(newVersion.id);
@@ -54,12 +71,13 @@ export const useVersionManagement = ({
       
       console.log("Setting active version:", version.id, version.name, "Recipe:", version.recipe.title);
       
+      // Clean the title from any existing version prefixes
+      const cleanTitle = getCleanTitle(version.recipe.title);
+      
       // Create an updated recipe object with version-specific title
       const updatedRecipe = {
         ...version.recipe,
-        title: version.name !== "Original" ? 
-          `${version.name} ${version.recipe.title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '')}` : 
-          version.recipe.title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '')
+        title: version.name !== "Original" ? `${version.name} ${cleanTitle}` : cleanTitle
       };
       
       // CRITICAL: Set the recipe data FIRST before updating state
@@ -129,11 +147,11 @@ export const useVersionManagement = ({
       if (versionId === activeVersionId) {
         const version = recipeVersions.find(v => v.id === versionId);
         if (version) {
-          const baseTitle = version.recipe.title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '');
+          const cleanTitle = getCleanTitle(version.recipe.title);
           
           const updatedRecipe = {
             ...version.recipe,
-            title: newName !== "Original" ? `${newName} ${baseTitle}` : baseTitle
+            title: newName !== "Original" ? `${newName} ${cleanTitle}` : cleanTitle
           };
           
           setRecipe(updatedRecipe);
