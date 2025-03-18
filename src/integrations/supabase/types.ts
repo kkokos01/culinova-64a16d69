@@ -1024,6 +1024,12 @@ export type Database = {
         }
         Returns: string
       }
+      is_admin: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
       is_member_of_space: {
         Args: {
           _user_id: string

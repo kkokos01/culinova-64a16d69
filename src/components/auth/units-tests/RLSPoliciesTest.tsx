@@ -25,11 +25,16 @@ export const useRLSPoliciesTest = (updateResult: (result: any) => void, index: n
         .select("*")
         .limit(1);
       
-      if (standardError) throw standardError;
+      if (standardError) {
+        console.error("Error reading standard units:", standardError);
+        throw new Error(`Could not read standard units: ${standardError.message}`);
+      }
       
       if (!standardUnits || standardUnits.length === 0) {
         throw new Error("Could not retrieve any standard units");
       }
+      
+      console.log("Successfully read standard units with RLS enabled:", standardUnits[0]);
       
       // 2. Try to modify a standard unit (this should fail due to RLS)
       let hasExpectedError = false;
@@ -41,7 +46,7 @@ export const useRLSPoliciesTest = (updateResult: (result: any) => void, index: n
         
         // If we didn't get an error, the RLS policy might not be working
         if (!updateError) {
-          throw new Error("Was able to update a global unit, which should be protected");
+          throw new Error("Was able to update a global unit, which should be protected by RLS");
         } else {
           // We got the expected error, which means RLS is working
           hasExpectedError = true;
@@ -63,7 +68,10 @@ export const useRLSPoliciesTest = (updateResult: (result: any) => void, index: n
         .select("*")
         .eq("unit_type", "volume");
       
-      if (baseUnitError) throw baseUnitError;
+      if (baseUnitError) {
+        console.error("Error fetching base units:", baseUnitError);
+        throw baseUnitError;
+      }
       
       if (!baseUnits || baseUnits.length === 0) {
         throw new Error("Could not find any volume units");
@@ -90,6 +98,7 @@ export const useRLSPoliciesTest = (updateResult: (result: any) => void, index: n
         conversion_to_base: 500
       };
       
+      // 4. Try to create a custom unit (this should work with proper space_id)
       const { data: insertedUnit, error: insertError } = await supabase
         .from("custom_units")
         .insert(testUnit)
@@ -97,7 +106,7 @@ export const useRLSPoliciesTest = (updateResult: (result: any) => void, index: n
       
       if (insertError) {
         console.error("Error inserting custom unit:", insertError);
-        throw insertError;
+        throw new Error(`Failed to insert custom unit: ${insertError.message}`);
       }
       
       if (!insertedUnit || insertedUnit.length === 0) {
@@ -114,7 +123,7 @@ export const useRLSPoliciesTest = (updateResult: (result: any) => void, index: n
       
       if (fetchError) {
         console.error("Error fetching custom unit:", fetchError);
-        throw fetchError;
+        throw new Error(`Failed to fetch custom unit: ${fetchError.message}`);
       }
       
       if (!customUnits || customUnits.length === 0) {
@@ -124,7 +133,13 @@ export const useRLSPoliciesTest = (updateResult: (result: any) => void, index: n
       updateResult({
         status: "success",
         message: "RLS policies appear to be working correctly",
-        data: { rlsTestPassed: true, testUnit: insertedUnit[0] }
+        data: { 
+          rlsTestPassed: true, 
+          testUnit: insertedUnit[0],
+          standardUnitsReadable: true,
+          standardUnitsNotModifiable: true,
+          customUnitsAccessible: true
+        }
       });
       return true;
     } catch (error: any) {
