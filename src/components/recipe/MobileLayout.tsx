@@ -13,6 +13,7 @@ import ModificationPanel from "./ModificationPanel";
 import { Button } from "@/components/ui/button";
 import { Wand2 } from "lucide-react";
 import VersionManagement from "./VersionManagement";
+import { useRecipe } from "@/context/recipe";
 
 // Use props from RecipeDetailContainer
 import { MobileLayoutProps } from "./RecipeDetailContainer";
@@ -34,6 +35,13 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedModifications, setSelectedModifications] = useState<string[]>([]);
+  
+  // Get recipeVersions and activeVersionId from context to check if version is temporary
+  const { recipeVersions, activeVersionId } = useRecipe();
+  
+  // Find the active version to check if it's temporary
+  const activeVersion = recipeVersions.find(v => v.id === activeVersionId);
+  const isActiveVersionTemporary = activeVersion?.isTemporary || false;
   
   const openModificationPanel = () => {
     setIsDrawerOpen(true);
@@ -83,7 +91,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       {recipe && (
         <div className="px-4">
           <VersionManagement 
-            isActiveVersionTemporary={recipe.isTemporary || false}
+            isActiveVersionTemporary={isActiveVersionTemporary}
             onSaveToDatabase={handleAcceptChanges}
           />
         </div>
@@ -125,7 +133,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
                 closePanel={closeModificationPanel}
                 isMobile={true}
                 isSaving={isSaving}
-                isTemporary={true}
+                isTemporary={isActiveVersionTemporary}
                 isAiModifying={isAiModifying}
                 selectedIngredients={selectedIngredients}
                 removeIngredientSelection={removeIngredientSelection}
