@@ -35,9 +35,8 @@ export const useVersionFetching = ({
       if (activeVersion) {
         console.log("Setting active version from fetch:", activeVersion.id, activeVersion.name);
         
-        // IMPORTANT: Set recipe data first before updating UI state
         // Get the clean recipe title without any version prefixes
-        const cleanTitle = activeVersion.recipe.title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '');
+        const cleanTitle = getCleanTitle(activeVersion.recipe.title);
         
         // Prepare the recipe with the appropriate title based on version name
         const updatedRecipe = {
@@ -59,6 +58,11 @@ export const useVersionFetching = ({
       setIsLoadingVersions(false);
       return [];
     }
+  };
+
+  // Helper to get clean title without version prefix
+  const getCleanTitle = (title: string): string => {
+    return title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '');
   };
 
   return {

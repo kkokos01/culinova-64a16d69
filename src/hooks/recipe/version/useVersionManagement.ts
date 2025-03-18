@@ -7,7 +7,7 @@ interface VersionManagementProps {
   recipeVersions: RecipeVersion[];
   setRecipeVersions: React.Dispatch<React.SetStateAction<RecipeVersion[]>>;
   setActiveVersionId: React.Dispatch<React.SetStateAction<string>>;
-  activeVersionId: string; // Access the current active version ID
+  activeVersionId: string;
   setRecipe: (recipe: Recipe) => void;
 }
 
