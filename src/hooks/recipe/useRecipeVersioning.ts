@@ -34,7 +34,7 @@ export const useRecipeVersioning = (setRecipe: (recipe: Recipe) => void) => {
     recipeVersions,
     setRecipeVersions,
     setActiveVersionId,
-    activeVersionId, // Pass the activeVersionId to the hook
+    activeVersionId,
     setRecipe
   });
 

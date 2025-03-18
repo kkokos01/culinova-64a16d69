@@ -23,17 +23,25 @@ export const useTemporaryVersions = ({
     // Generate a temporary ID with a prefix to distinguish from DB IDs
     const tempId = `temp-${uuidv4()}`;
     
+    // Update recipe title to include version name if not "Original"
+    const updatedRecipe = {
+      ...recipe,
+      title: name !== "Original" ? 
+        `${name} ${recipe.title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '')}` : 
+        recipe.title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '')
+    };
+    
     // Create the new temporary version object
     const newVersion: RecipeVersion = {
       id: tempId,
       name: name,
-      recipe: recipe,
+      recipe: updatedRecipe,
       isActive: true,
       isTemporary: true
     };
     
     // Set recipe data first
-    setRecipe(recipe);
+    setRecipe(updatedRecipe);
     
     // Update versions array - make all other versions inactive
     setRecipeVersions(prev => prev.map(v => ({
@@ -66,12 +74,22 @@ export const useTemporaryVersions = ({
       // Create a new version in the database
       const persistedVersion = await createRecipeVersion(tempVersion.name, tempVersion.recipe, userId);
       
-      // Set recipe data first
-      setRecipe(persistedVersion.recipe);
+      // Set recipe data first - ensure title includes version name
+      const updatedRecipe = {
+        ...persistedVersion.recipe,
+        title: persistedVersion.name !== "Original" ? 
+          `${persistedVersion.name} ${persistedVersion.recipe.title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '')}` : 
+          persistedVersion.recipe.title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '')
+      };
+      
+      setRecipe(updatedRecipe);
       
       // Remove the temporary version from state and add the persisted one
       setRecipeVersions(prev => 
-        prev.filter(v => v.id !== versionId).concat(persistedVersion)
+        prev.filter(v => v.id !== versionId).concat({
+          ...persistedVersion,
+          recipe: updatedRecipe
+        })
       );
       
       // Set this as the active version

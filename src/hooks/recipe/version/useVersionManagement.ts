@@ -7,7 +7,7 @@ interface VersionManagementProps {
   recipeVersions: RecipeVersion[];
   setRecipeVersions: React.Dispatch<React.SetStateAction<RecipeVersion[]>>;
   setActiveVersionId: React.Dispatch<React.SetStateAction<string>>;
-  activeVersionId: string; // Add this parameter to access the current active version ID
+  activeVersionId: string; // Access the current active version ID
   setRecipe: (recipe: Recipe) => void;
 }
 
@@ -15,7 +15,7 @@ export const useVersionManagement = ({
   recipeVersions,
   setRecipeVersions,
   setActiveVersionId,
-  activeVersionId, // Include in destructuring
+  activeVersionId,
   setRecipe
 }: VersionManagementProps) => {
   const addRecipeVersion = async (name: string, recipe: Recipe): Promise<RecipeVersion> => {
@@ -54,11 +54,19 @@ export const useVersionManagement = ({
       
       console.log("Setting active version:", version.id, version.name, "Recipe:", version.recipe.title);
       
+      // Create an updated recipe object with version-specific title
+      const updatedRecipe = {
+        ...version.recipe,
+        title: version.name !== "Original" ? 
+          `${version.name} ${version.recipe.title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '')}` : 
+          version.recipe.title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '')
+      };
+      
       // CRITICAL: Set the recipe data FIRST before updating state
       // This ensures the UI is updated with the correct recipe content
-      setRecipe(version.recipe);
+      setRecipe(updatedRecipe);
       
-      console.log("Recipe set to:", version.recipe.title);
+      console.log("Recipe set to:", updatedRecipe.title);
       
       // If this is a temporary version, we just update the state
       if (version.isTemporary) {
@@ -115,6 +123,21 @@ export const useVersionManagement = ({
         setRecipeVersions(prev => 
           prev.map(v => v.id === versionId ? { ...v, name: newName } : v)
         );
+      }
+      
+      // If this is the active version, update the recipe title
+      if (versionId === activeVersionId) {
+        const version = recipeVersions.find(v => v.id === versionId);
+        if (version) {
+          const baseTitle = version.recipe.title.replace(/^(Mild Version|Vegetarian Version|Spicy Coconut Chicken Tikka Masala)\s+/, '');
+          
+          const updatedRecipe = {
+            ...version.recipe,
+            title: newName !== "Original" ? `${newName} ${baseTitle}` : baseTitle
+          };
+          
+          setRecipe(updatedRecipe);
+        }
       }
     } catch (error) {
       console.error("Error renaming version:", error);

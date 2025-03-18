@@ -37,7 +37,16 @@ export const useVersionFetching = ({
         
         // IMPORTANT: Set recipe data first before updating UI state
         console.log("Setting recipe to:", activeVersion.recipe.title);
-        setRecipe(activeVersion.recipe);
+        
+        // Make a deep copy of the recipe to ensure changes are reflected
+        const updatedRecipe = {
+          ...activeVersion.recipe,
+          title: activeVersion.name !== "Original" ? 
+            `${activeVersion.name} ${activeVersion.recipe.title}` : 
+            activeVersion.recipe.title
+        };
+        
+        setRecipe(updatedRecipe);
         setActiveVersionId(activeVersion.id);
       }
       
