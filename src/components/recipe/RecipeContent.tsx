@@ -38,7 +38,16 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
         });
       });
     }
-  }, [recipe]);
+    
+    // Log selected ingredients for debugging
+    console.log("Selected ingredients:", 
+      Array.from(selectedIngredients.entries()).map(([id, data]) => ({
+        id,
+        action: data.action,
+        name: normalizeFood(data.ingredient.food)?.name
+      }))
+    );
+  }, [recipe, selectedIngredients]);
 
   useEffect(() => {
     logRecipeDetails();
@@ -86,6 +95,11 @@ export default React.memo(RecipeContent, (prevProps, nextProps) => {
   const nextStepsLength = nextProps.recipe.steps?.length || 0;
   
   if (prevStepsLength !== nextStepsLength) {
+    return false;
+  }
+  
+  // Also re-render if selectedIngredients has changed
+  if (prevProps.selectedIngredients !== nextProps.selectedIngredients) {
     return false;
   }
   
