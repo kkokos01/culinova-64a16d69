@@ -54,7 +54,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [selectedModifications, setSelectedModifications] = useState<string[]>([]);
   
-  // Get the active version to check if it's temporary
   const activeVersion = recipeVersions.find(v => v.id === activeVersionId);
   const isActiveVersionTemporary = activeVersion?.isTemporary || false;
   
@@ -96,25 +95,19 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     }
   };
   
-  // Handle selecting a modification type
   const handleSelectModificationType = (type: string) => {
-    // Toggle selection of the modification type
     setSelectedModifications(prev => 
       prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
     );
     
-    // Set custom instructions based on the selected type
     setCustomInstructions(`Make this recipe ${type}`);
   };
   
-  // Handle applying selected modifications
   const handleApplyModifications = () => {
     try {
       if (selectedModifications.length > 0) {
-        // Start the modification process with the selected types
         handleStartModification(selectedModifications.join(", "));
       } else if (customInstructions.trim()) {
-        // Use custom instructions if no modifications are selected
         handleStartModification("custom");
       }
     } catch (error) {
@@ -127,7 +120,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     }
   };
 
-  // Guard against null recipe
   if (!recipe) return null;
 
   return (

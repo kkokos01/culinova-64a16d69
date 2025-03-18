@@ -1,7 +1,6 @@
 
 import React, { useEffect } from "react";
 import { useRecipe } from "@/context/recipe";
-import RecipeVersionTabs from "./RecipeVersionTabs";
 import { Recipe } from "@/types";
 
 interface RecipeHeaderProps {
@@ -84,8 +83,7 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
         )}
       </div>
 
-      {/* Only render version tabs once, here in the header */}
-      <RecipeVersionTabs />
+      {/* Removed RecipeVersionTabs from here - it's now only in VersionManagement */}
     </div>
   );
 };

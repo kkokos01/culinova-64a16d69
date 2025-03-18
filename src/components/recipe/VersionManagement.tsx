@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { RecipeVersion } from "@/context/recipe/types";
 import RecipeVersionTabs from "./RecipeVersionTabs";
@@ -29,6 +28,7 @@ const VersionManagement: React.FC<VersionManagementProps> = ({
   
   return (
     <div className="mb-6">
+      {/* Keep the version tabs here, as the single source of truth */}
       <RecipeVersionTabs />
       
       {isActiveVersionTemporary && (

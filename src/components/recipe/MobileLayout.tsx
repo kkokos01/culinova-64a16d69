@@ -12,6 +12,7 @@ import {
 import ModificationPanel from "./ModificationPanel";
 import { Button } from "@/components/ui/button";
 import { Wand2 } from "lucide-react";
+import VersionManagement from "./VersionManagement";
 
 // Use props from RecipeDetailContainer
 import { MobileLayoutProps } from "./RecipeDetailContainer";
@@ -78,8 +79,18 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
         showModifyButton={false}
       />
       
+      {/* Add VersionManagement component here to ensure version tabs are shown on mobile */}
+      {recipe && (
+        <div className="px-4">
+          <VersionManagement 
+            isActiveVersionTemporary={recipe.isTemporary || false}
+            onSaveToDatabase={handleAcceptChanges}
+          />
+        </div>
+      )}
+      
       {/* Main Recipe Content */}
-      <div className="flex-grow overflow-y-auto">
+      <div className="flex-grow overflow-y-auto px-4">
         <RecipeContent
           recipe={recipe}
           selectedIngredients={selectedIngredients}
