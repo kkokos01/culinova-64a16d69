@@ -173,7 +173,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               onApplyModifications={handleApplyModifications}
               isModified={isModified}
               resetToOriginal={resetToOriginal}
-              onSaveChanges={handleSaveToDatabase}
               isDisabled={isAiModifying}
               isSaving={isSaving}
               isActiveVersionTemporary={isActiveVersionTemporary}

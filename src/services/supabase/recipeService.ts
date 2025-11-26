@@ -1,6 +1,5 @@
-
-import { supabase } from "@/integrations/supabase/client";
-import { Recipe, Ingredient } from "@/types";
+import { supabase } from '@/integrations/supabase/client';
+import { Recipe, RecipeCreate, RecipeUpdate, Ingredient, IngredientCreate, Step, Space, User } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 
 /**
@@ -63,6 +62,8 @@ export const recipeService = {
           recipe_id,
           food_id,
           unit_id,
+          food_name,
+          unit_name,
           amount,
           order_index,
           food:food_id(id, name, description, is_validated, confidence_score, source),
@@ -185,6 +186,316 @@ export const recipeService = {
       return null;
     } catch (error) {
       console.error("Error in recipeService.findRecipeByName:", error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Create a new recipe with ingredients and steps
+   */
+  async createRecipe(recipeData: RecipeCreate): Promise<Recipe> {
+    try {
+      console.log('Creating recipe with data:', recipeData);
+      
+      // Start a transaction by creating the recipe first
+      const { data: recipe, error: recipeError } = await supabase
+        .from('recipes')
+        .insert({
+          title: recipeData.title,
+          description: recipeData.description,
+          image_url: recipeData.image_url || null,
+          prep_time_minutes: recipeData.prep_time_minutes,
+          cook_time_minutes: recipeData.cook_time_minutes,
+          servings: recipeData.servings,
+          difficulty: recipeData.difficulty,
+          is_public: recipeData.is_public || false,
+          privacy_level: recipeData.privacy_level || 'private',
+          space_id: recipeData.space_id || null,
+          user_id: recipeData.user_id,
+        })
+        .select()
+        .single();
+        
+      if (recipeError) {
+        throw new Error(`Failed to create recipe: ${recipeError.message}`);
+      }
+      
+      // Create ingredients if provided
+      if (recipeData.ingredients && recipeData.ingredients.length > 0) {
+        const ingredientsWithRecipeId: IngredientCreate[] = recipeData.ingredients.map(ingredient => ({
+          recipe_id: recipe.id,
+          food_id: ingredient.food_id || null,
+          unit_id: ingredient.unit_id || null,
+          food_name: ingredient.food_name || null,
+          unit_name: ingredient.unit_name || null,
+          amount: ingredient.amount,
+        }));
+        
+        // Insert all ingredients with text fallbacks
+        const { error: ingredientsError } = await supabase
+          .from('ingredients')
+          .insert(ingredientsWithRecipeId);
+          
+        if (ingredientsError) {
+          // Rollback recipe creation if ingredients fail
+          await supabase.from('recipes').delete().eq('id', recipe.id);
+          throw new Error(`Failed to create ingredients: ${ingredientsError.message}`);
+        }
+        
+        console.log(`Successfully inserted ${ingredientsWithRecipeId.length} ingredients`);
+      }
+      
+      // Create steps if provided
+      if (recipeData.steps && recipeData.steps.length > 0) {
+        const stepsWithRecipeId = recipeData.steps.map(step => ({
+          recipe_id: recipe.id,
+          order_number: step.order_number,
+          instruction: step.instruction,
+          duration_minutes: step.duration_minutes || null,
+        }));
+        
+        const { error: stepsError } = await supabase
+          .from('steps')
+          .insert(stepsWithRecipeId);
+          
+        if (stepsError) {
+          // Rollback recipe and ingredients if steps fail
+          await supabase.from('ingredients').delete().eq('recipe_id', recipe.id);
+          await supabase.from('recipes').delete().eq('id', recipe.id);
+          throw new Error(`Failed to create steps: ${stepsError.message}`);
+        }
+      }
+      
+      // Return the complete recipe with ingredients and steps
+      return await this.getRecipe(recipe.id);
+      
+    } catch (error) {
+      console.error('Error in recipeService.createRecipe:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Update an existing recipe with ingredients and steps
+   */
+  async updateRecipe(recipeId: string, recipeData: RecipeUpdate): Promise<Recipe> {
+    try {
+      console.log('Updating recipe:', recipeId, 'with data:', recipeData);
+      
+      // Update basic recipe fields (excluding ingredients and steps for now)
+      const { data: recipe, error: recipeError } = await supabase
+        .from('recipes')
+        .update({
+          title: recipeData.title,
+          description: recipeData.description,
+          image_url: recipeData.image_url,
+          prep_time_minutes: recipeData.prep_time_minutes,
+          cook_time_minutes: recipeData.cook_time_minutes,
+          servings: recipeData.servings,
+          difficulty: recipeData.difficulty,
+          is_public: recipeData.is_public,
+          privacy_level: recipeData.privacy_level,
+          tags: recipeData.tags,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', recipeId)
+        .select()
+        .single();
+        
+      if (recipeError) {
+        throw new Error(`Failed to update recipe: ${recipeError.message}`);
+      }
+      
+      // Handle ingredients update if provided
+      if (recipeData.ingredients !== undefined) {
+        // Delete existing ingredients
+        await supabase.from('ingredients').delete().eq('recipe_id', recipeId);
+        
+        // Create new ingredients if any
+        if (recipeData.ingredients.length > 0) {
+          const ingredientsWithRecipeId: IngredientCreate[] = recipeData.ingredients.map(ingredient => ({
+            recipe_id: recipeId,
+            food_id: ingredient.food_id || null,
+            unit_id: ingredient.unit_id || null,
+            food_name: ingredient.food_name || null,
+            unit_name: ingredient.unit_name || null,
+            amount: ingredient.amount,
+          }));
+          
+          const { error: ingredientsError } = await supabase
+            .from('ingredients')
+            .insert(ingredientsWithRecipeId);
+            
+          if (ingredientsError) {
+            throw new Error(`Failed to update ingredients: ${ingredientsError.message}`);
+          }
+        }
+      }
+      
+      // Handle steps update if provided
+      if (recipeData.steps !== undefined) {
+        // Delete existing steps
+        await supabase.from('steps').delete().eq('recipe_id', recipeId);
+        
+        // Create new steps if any
+        if (recipeData.steps.length > 0) {
+          const stepsWithRecipeId = recipeData.steps.map(step => ({
+            recipe_id: recipeId,
+            order_number: step.order_number,
+            instruction: step.instruction,
+            duration_minutes: step.duration_minutes || null,
+          }));
+          
+          const { error: stepsError } = await supabase
+            .from('steps')
+            .insert(stepsWithRecipeId);
+            
+          if (stepsError) {
+            throw new Error(`Failed to update steps: ${stepsError.message}`);
+          }
+        }
+      }
+      
+      // Return the updated complete recipe
+      return await this.getRecipe(recipeId);
+      
+    } catch (error) {
+      console.error('Error in recipeService.updateRecipe:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Delete a recipe and its associated ingredients and steps
+   */
+  async deleteRecipe(recipeId: string): Promise<void> {
+    try {
+      console.log('Deleting recipe:', recipeId);
+      
+      // Delete ingredients first (foreign key dependency)
+      const { error: ingredientsError } = await supabase
+        .from('ingredients')
+        .delete()
+        .eq('recipe_id', recipeId);
+        
+      if (ingredientsError) {
+        throw new Error(`Failed to delete ingredients: ${ingredientsError.message}`);
+      }
+      
+      // Delete steps
+      const { error: stepsError } = await supabase
+        .from('steps')
+        .delete()
+        .eq('recipe_id', recipeId);
+        
+      if (stepsError) {
+        throw new Error(`Failed to delete steps: ${stepsError.message}`);
+      }
+      
+      // Delete the recipe itself
+      const { error: recipeError } = await supabase
+        .from('recipes')
+        .delete()
+        .eq('id', recipeId);
+        
+      if (recipeError) {
+        throw new Error(`Failed to delete recipe: ${recipeError.message}`);
+      }
+      
+      console.log('Recipe deleted successfully:', recipeId);
+      
+    } catch (error) {
+      console.error('Error in recipeService.deleteRecipe:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get user's recipes with optional limit
+   * @param userId - The user ID to fetch recipes for
+   * @param limit - Optional limit on number of recipes to return
+   * @returns Array of user's recipes
+   */
+  async getUserRecipes(userId: string, limit?: number): Promise<Recipe[]> {
+    try {
+      let query = supabase
+        .from('recipes')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (limit) {
+        query = query.limit(limit);
+      }
+
+      const { data: recipesData, error: recipesError } = await query;
+
+      if (recipesError) {
+        throw new Error(`Failed to fetch user recipes: ${recipesError.message}`);
+      }
+
+      if (!recipesData || recipesData.length === 0) {
+        return [];
+      }
+
+      // Fetch ingredients and steps for each recipe separately (like getRecipe method)
+      const recipes: Recipe[] = [];
+      
+      for (const recipeData of recipesData) {
+        // Fetch ingredients for this recipe
+        const { data: ingredientsData, error: ingredientsError } = await supabase
+          .from('ingredients')
+          .select(`
+            id, 
+            recipe_id,
+            food_id,
+            unit_id,
+            food_name,
+            unit_name,
+            amount,
+            order_index,
+            food:food_id(id, name, description, is_validated, confidence_score, source),
+            unit:unit_id(id, name, abbreviation)
+          `)
+          .eq('recipe_id', recipeData.id);
+
+        if (ingredientsError) {
+          console.error(`Failed to fetch ingredients for recipe ${recipeData.id}:`, ingredientsError);
+          continue; // Skip this recipe but continue with others
+        }
+
+        // Fetch steps for this recipe
+        const { data: stepsData, error: stepsError } = await supabase
+          .from('steps')
+          .select('*')
+          .eq('recipe_id', recipeData.id)
+          .order('order_number');
+
+        if (stepsError) {
+          console.error(`Failed to fetch steps for recipe ${recipeData.id}:`, stepsError);
+          continue; // Skip this recipe but continue with others
+        }
+
+        // Construct the recipe object
+        const recipe: Recipe = {
+          ...recipeData,
+          ingredients: ingredientsData?.map(normalizeIngredient) || [],
+          steps: stepsData || [],
+          user: {
+            id: recipeData.user_id,
+            email: '',
+            name: '',
+            avatar_url: null,
+          }
+        };
+
+        recipes.push(recipe);
+      }
+
+      return recipes;
+
+    } catch (error) {
+      console.error('Error in recipeService.getUserRecipes:', error);
       throw error;
     }
   }

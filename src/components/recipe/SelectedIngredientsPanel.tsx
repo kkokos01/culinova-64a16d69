@@ -61,7 +61,7 @@ const SelectedIngredientsPanel: React.FC<SelectedIngredientsPanelProps> = ({
             </Badge>
             <span className="break-words">
               <span className="font-medium">{getActionText(action)}</span>{" "}
-              {ingredient.food?.name}
+              {ingredient.food_name || "Unknown ingredient"}
             </span>
           </div>
           <button 

@@ -38,7 +38,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Here we would normally call an AI API
       // For now, we'll just simulate a modification
       const ingredientActions = Array.from(ingredientSelection.selectedIngredients.entries())
-        .map(([_, { ingredient, action }]) => `${action} ${ingredient.food?.name}`)
+        .map(([_, { ingredient, action }]) => `${action} ${ingredient.food_name || 'Unknown ingredient'}`)
         .join(", ");
       
       const modificationMessage = ingredientActions 

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { ChevronLeft, Wand2, Loader2 } from "lucide-react";
 import UnifiedModificationPanel from "./UnifiedModificationPanel";
+import AILoadingProgress from "@/components/ui/AILoadingProgress";
 
 interface ModificationSidebarProps {
   recipe: Recipe;
@@ -12,12 +13,12 @@ interface ModificationSidebarProps {
   onRemoveIngredientSelection: (id: string) => void;
   customInstructions: string;
   onCustomInstructionsChange: (instructions: string) => void;
-  onStartModification: () => void; // Changed to expect no arguments
+  onStartModification: () => void;
   onSelectModificationType: (type: string) => void;
+  selectedQuickModifications?: string[];
   onApplyModifications: () => void;
   isModified: boolean;
   resetToOriginal: () => void;
-  onSaveChanges: () => Promise<void>;
   isDisabled?: boolean;
   isSaving?: boolean;
   isActiveVersionTemporary?: boolean;
@@ -33,10 +34,10 @@ const ModificationSidebar: React.FC<ModificationSidebarProps> = ({
   onCustomInstructionsChange,
   onStartModification,
   onSelectModificationType,
+  selectedQuickModifications = [],
   onApplyModifications,
   isModified,
   resetToOriginal,
-  onSaveChanges,
   isDisabled = false,
   isSaving = false,
   isActiveVersionTemporary = false,
@@ -71,46 +72,14 @@ const ModificationSidebar: React.FC<ModificationSidebarProps> = ({
           onApplyModifications={onApplyModifications}
           onSelectModificationType={onSelectModificationType}
           isDisabled={isDisabled}
-          selectedModifications={selectedModifications}
+          selectedModifications={selectedQuickModifications}
         />
         
-        {isDisabled && (
-          <div className="mt-4 flex justify-center">
-            <div className="flex items-center text-sage-800">
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              <span>AI is modifying recipe...</span>
-            </div>
-          </div>
-        )}
-        
-        {isModified && (
-          <div className="mt-6 flex flex-col gap-2">
-            <Button 
-              variant="outline"
-              onClick={resetToOriginal}
-              className="w-full border-white/30 text-white hover:bg-sage-600 hover:text-white"
-            >
-              Reset to Original
-            </Button>
-            
-            <Button 
-              onClick={onSaveChanges}
-              disabled={isSaving}
-              className="w-full bg-white text-sage-600 hover:bg-white/90 font-medium"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  {isActiveVersionTemporary ? 'Save to Database' : 'Save as New Version'}
-                </>
-              )}
-            </Button>
-          </div>
-        )}
+        <AILoadingProgress
+          isLoading={isDisabled}
+          message="AI is modifying recipe..."
+          className="mt-4"
+        />
       </div>
     </div>
   );

@@ -139,7 +139,7 @@ const Navbar = () => {
               className="bg-sage-400 hover:bg-sage-500 text-white"
               asChild
             >
-              <Link to="/create-recipe">Create Recipe</Link>
+              <Link to="/recipes/create">Create Recipe</Link>
             </Button>
           )}
         </div>
@@ -220,7 +220,7 @@ const Navbar = () => {
               className="mt-6 bg-sage-400 hover:bg-sage-500 text-white w-full"
               asChild
             >
-              <Link to="/create-recipe">Create Recipe</Link>
+              <Link to="/recipes/create">Create Recipe</Link>
             </Button>
           )}
         </nav>

@@ -88,7 +88,7 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
                 <li key={id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md">
                   <div className="flex items-center">
                     {getActionIcon(action)}
-                    <span className="ml-2">{ingredient.food?.name}</span>
+                    <span className="ml-2">{ingredient.food_name || "Unknown ingredient"}</span>
                     <Badge variant="outline" className={`ml-2 ${getActionColor(action)}`}>
                       {action}
                     </Badge>

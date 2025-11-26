@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete Database Fix Verification</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Complete Database Fix Verification</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+        
+        const supabase = createClient(
+            'https://zujlsbkxxsmiiwgyodph.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1amxzYmt4eHNtaWl3Z3lvZHBoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5MjU3OTgsImV4cCI6MjA1NzUwMTc5OH0.sUuM7V1rESlwZPAr_4rzQMVlPh54GDSTolPGtrZA3kY'
+        );
+        
+        const results = document.getElementById('results');
+        
+        async function authenticateForTest() {
+            // Create a temporary test user for authentication
+            const testEmail = `test-${Date.now()}@example.com`;
+            const testPassword = 'testPassword123!';
+            
+            try {
+                // Sign up the test user
+                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                    email: testEmail,
+                    password: testPassword
+                });
+                
+                if (signUpError && !signUpError.message.includes('already registered')) {
+                    console.log('Sign up error:', signUpError);
+                }
+                
+                // Sign in as the test user to get authenticated session
+                const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                    email: testEmail,
+                    password: testPassword
+                });
+                
+                if (signInError) {
+                    console.log('Sign in error:', signInError);
+                    return false;
+                }
+                
+                console.log('Successfully authenticated for test');
+                return true;
+                
+            } catch (error) {
+                console.error('Authentication error:', error);
+                return false;
+            }
+        }
+        
+        async function runCompleteTest() {
+            results.innerHTML = '<h2>🔄 Authenticating and Running Complete Database Test...</h2>';
+            
+            // First authenticate for the test
+            const isAuthenticated = await authenticateForTest();
+            if (!isAuthenticated) {
+                results.innerHTML += '<p class="error">❌ Authentication failed, running with anonymous access</p>';
+            } else {
+                results.innerHTML += '<p class="success">✅ Authentication successful</p>';
+            }
+            
+            let successCount = 0;
+            let totalTests = 0;
+            
+            function addResult(test, status, message) {
+                totalTests++;
+                if (status === 'success') successCount++;
+                results.innerHTML += `<p class="${status}">${status === 'success' ? '✅' : status === 'error' ? '❌' : '⚠️'} ${test}: ${message}</p>`;
+            }
+            
+            try {
+                // Test 1: ltree extension via wrapper function
+                addResult('ltree Extension', 'info', 'Testing text2ltree_wrapper function...');
+                const { data: ltreeTest, error: ltreeError } = await supabase
+                    .rpc('text2ltree_wrapper', { text_input: 'food.category.item' });
+                
+                if (ltreeError) {
+                    addResult('ltree Extension', 'error', `Failed: ${ltreeError.message}`);
+                } else {
+                    addResult('ltree Extension', 'success', `Working: ${ltreeTest}`);
+                }
+                
+                // Test 2: Unit lookup (should work with RLS now)
+                addResult('Unit Lookup', 'info', 'Testing units table access...');
+                const { data: unitTest, error: unitError } = await supabase
+                    .from('units')
+                    .select('id, name, unit_type')
+                    .eq('name', 'gram')
+                    .single();
+                
+                if (unitError && unitError.code === 'PGRST116') {
+                    addResult('Unit Lookup', 'success', 'Access granted (no gram unit found, but no RLS error)');
+                } else if (unitError) {
+                    addResult('Unit Lookup', 'error', `Failed: ${unitError.message}`);
+                } else {
+                    addResult('Unit Lookup', 'success', `Found unit: ${unitTest.name} (${unitTest.unit_type})`);
+                }
+                
+                // Test 3: Food lookup (should work with RLS now)
+                addResult('Food Lookup', 'info', 'Testing foods table access...');
+                const { data: foodTest, error: foodError } = await supabase
+                    .from('foods')
+                    .select('id, name')
+                    .eq('name', 'test-food')
+                    .single();
+                
+                if (foodError && foodError.code === 'PGRST116') {
+                    addResult('Food Lookup', 'success', 'Access granted (no test food found, but no RLS error)');
+                } else if (foodError) {
+                    addResult('Food Lookup', 'error', `Failed: ${foodError.message}`);
+                } else {
+                    addResult('Food Lookup', 'success', `Found food: ${foodTest.name}`);
+                }
+                
+                // Test 4: Unit creation with 'mass' type
+                addResult('Unit Creation', 'info', 'Testing unit creation with mass type...');
+                const testUnitData = {
+                    name: `test-unit-${Date.now()}`,
+                    abbreviation: 'tu',
+                    unit_type: 'mass',
+                    measurement_system: 'metric',
+                    plural_name: 'test-units',
+                    base_unit: false,
+                    display_order: 999,
+                    formatting_template: '{{amount}} {{unit}}'
+                };
+                
+                const { data: createdUnit, error: createUnitError } = await supabase
+                    .from('units')
+                    .insert(testUnitData)
+                    .select('id, name, unit_type')
+                    .single();
+                
+                if (createUnitError) {
+                    addResult('Unit Creation', 'error', `Failed: ${createUnitError.message}`);
+                } else {
+                    addResult('Unit Creation', 'success', `Created unit: ${createdUnit.name} (${createdUnit.unit_type})`);
+                }
+                
+                // Test 5: Food creation
+                addResult('Food Creation', 'info', 'Testing food creation...');
+                const testFoodData = {
+                    name: `test-food-${Date.now()}`,
+                    description: 'Test food created during verification',
+                    created_by: '00000000-0000-0000-0000-000000000000',
+                    is_active: true,
+                    space_id: null
+                };
+                
+                const { data: createdFood, error: createFoodError } = await supabase
+                    .from('foods')
+                    .insert(testFoodData)
+                    .select('id, name')
+                    .single();
+                
+                if (createFoodError) {
+                    addResult('Food Creation', 'error', `Failed: ${createFoodError.message}`);
+                } else {
+                    addResult('Food Creation', 'success', `Created food: ${createdFood.name}`);
+                }
+                
+                // Summary
+                results.innerHTML += `<hr>`;
+                results.innerHTML += `<h2>📊 Test Summary</h2>`;
+                results.innerHTML += `<p class="info">Tests Passed: ${successCount}/${totalTests}</p>`;
+                
+                if (successCount === totalTests) {
+                    results.innerHTML += `<p class="success">🎉 All tests passed! Database fixes are working correctly.</p>`;
+                    results.innerHTML += `<p class="success">✅ Ready to proceed with recipe creation testing!</p>`;
+                } else {
+                    results.innerHTML += `<p class="error">❌ Some tests failed. Please review the errors above.</p>`;
+                }
+                
+            } catch (error) {
+                addResult('General', 'error', `Unexpected error: ${error.message}`);
+            }
+        }
+        
+        runCompleteTest();
+    </script>
+</body>
+</html>

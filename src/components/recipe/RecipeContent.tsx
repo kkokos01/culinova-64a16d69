@@ -24,17 +24,16 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
     // Validate ingredient data structure
     if (recipe.ingredients) {
       recipe.ingredients.forEach((ingredient, index) => {
-        // Use our normalization functions
-        const foodObj = normalizeFood(ingredient.food);
-        const unitObj = normalizeUnit(ingredient.unit);
+        // Use text-based ingredient names instead of structured relationships
+        const foodName = ingredient.food_name || "Unknown ingredient";
+        const unitName = ingredient.unit_name || "";
           
         console.log(`Ingredient ${index + 1}:`, {
           id: ingredient.id,
           food_id: ingredient.food_id,
-          food: foodObj, // Now guaranteed to be an object or null, not an array
-          foodName: foodObj ? foodObj.name || 'No food name' : 'No food name',
+          foodName: foodName,
           amount: ingredient.amount,
-          unit: unitObj ? unitObj.abbreviation || 'No unit' : 'No unit'
+          unit: unitName || 'No unit'
         });
       });
     }
@@ -44,7 +43,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
       Array.from(selectedIngredients.entries()).map(([id, data]) => ({
         id,
         action: data.action,
-        name: normalizeFood(data.ingredient.food)?.name
+        name: data.ingredient.food_name || 'Unknown ingredient'
       }))
     );
   }, [recipe, selectedIngredients]);

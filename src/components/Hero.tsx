@@ -40,7 +40,7 @@ const Hero = ({ className }: HeroProps) => {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-sage-200 hover:bg-sage-50">
-              <Link to="/create-recipe" className="flex items-center">
+              <Link to="/recipes/create" className="flex items-center">
                 Create Recipe <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

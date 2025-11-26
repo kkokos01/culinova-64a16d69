@@ -60,12 +60,19 @@ export const useRecipeDetail = () => {
     }
   }, [recipe, setRecipe, setOriginalRecipe]);
   
-  // Fetch versions from the database when recipe data is loaded
+  // Temporarily disabled auto-versioning to fix recipe creation
+  // TODO: Re-enable after fixing versioning system to handle text-based ingredients
   useEffect(() => {
     const initializeVersions = async () => {
       if (recipe && !hasInitializedVersions) {
-        console.log("Initializing versions for recipe", recipe.id);
+        console.log("Versioning temporarily disabled for recipe", recipe.id);
         
+        // Mark that we've initialized versions to prevent re-initialization
+        setHasInitializedVersions(true);
+        return;
+        
+        // Original versioning code (commented out)
+        /*
         try {
           // Fetch versions from the database
           const versions = await fetchVersionsFromDb(recipe.id);
@@ -83,6 +90,7 @@ export const useRecipeDetail = () => {
           // Mark that we've initialized versions to prevent re-initialization
           setHasInitializedVersions(true);
         }
+        */
       }
     };
     

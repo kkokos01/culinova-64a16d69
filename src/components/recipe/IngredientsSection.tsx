@@ -21,8 +21,9 @@ const IngredientsSection: React.FC<IngredientsSectionProps> = ({
     i?.food?.name?.includes('Parent Food')
   );
 
-  // Check if we have ingredients without food details
-  const hasIncompleteData = ingredients.some(i => !i.food || !i.food.name);
+  // Check if we have ingredients without food details - DISABLED for text-based system
+  // const hasIncompleteData = ingredients.some(i => !i.food || !i.food.name);
+  const hasIncompleteData = false; // Text-based system doesn't use structured food objects
 
   // Check for non-validated ingredients
   const hasNonValidated = ingredients.some(i => 

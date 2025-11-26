@@ -33,29 +33,38 @@ const VersionTab: React.FC<VersionTabProps> = ({
   isSaving
 }) => {
   return (
-    <button
-      onClick={() => onSelectVersion(version)}
-      disabled={isSwitching}
-      className={`flex items-center px-3 py-2 text-sm font-medium border-b-2 rounded-t-md whitespace-nowrap ${
-        isActive
-          ? "border-primary text-primary"
-          : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300"
-      } ${isSwitching ? "opacity-70" : ""}`}
-    >
-      {isSwitching ? (
-        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-      ) : null}
-      {version.name}
-      
-      {/* Display temporary badge */}
-      {version.isTemporary && (
-        <Badge 
-          variant="outline" 
-          className="ml-2 text-xs bg-amber-50 text-amber-800 border-amber-200"
-        >
-          Temporary
-        </Badge>
-      )}
+    <div className="flex items-center">
+      <div
+        role="button"
+        tabIndex={isSwitching ? -1 : 0}
+        onClick={() => onSelectVersion(version)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onSelectVersion(version);
+          }
+        }}
+        className={`flex items-center px-3 py-2 text-sm font-medium border-b-2 rounded-t-md whitespace-nowrap cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+          isActive
+            ? "border-primary text-primary"
+            : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300"
+        } ${isSwitching ? "opacity-70 pointer-events-none" : ""}`}
+      >
+        {isSwitching ? (
+          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+        ) : null}
+        {version.name}
+        
+        {/* Display temporary badge */}
+        {version.isTemporary && (
+          <Badge 
+            variant="outline" 
+            className="ml-2 text-xs bg-amber-50 text-amber-800 border-amber-200"
+          >
+            Temporary
+          </Badge>
+        )}
+      </div>
       
       {version.name !== "Original" && (
         <DropdownMenu>
@@ -78,7 +87,7 @@ const VersionTab: React.FC<VersionTabProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
       )}
-    </button>
+    </div>
   );
 };
 

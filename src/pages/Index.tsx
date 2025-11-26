@@ -5,6 +5,7 @@ import FeaturedRecipes from "@/components/FeaturedRecipes";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
+import { Bookmark } from "lucide-react";
 
 const Index = () => {
   useEffect(() => {
@@ -26,6 +27,12 @@ const Index = () => {
         </Button>
         <Button asChild variant="outline" className="mx-2">
           <Link to="/supabase-recipes">View Supabase Recipes</Link>
+        </Button>
+        <Button asChild variant="outline" className="mx-2 bg-sage-50 border-sage-200 text-sage-700 hover:bg-sage-100">
+          <Link to="/collections">
+            <Bookmark className="h-4 w-4 mr-2" />
+            My Collections
+          </Link>
         </Button>
       </div>
       <FeaturedRecipes />

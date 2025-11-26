@@ -1,0 +1,23 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env.docker
+    restart: unless-stopped
+
+  # Add other services like database, backend, etc. as needed
+  # Example:
+  # supabase:
+  #   image: supabase/supabase-local
+  #   ports:
+  #     - "54321:54321"
+  #   volumes:
+  #     - ./supabase:/var/lib/supabase
+  #   env_file:
+  #     - .env.docker

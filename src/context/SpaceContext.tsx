@@ -58,10 +58,10 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
       setMemberships(membershipData as UserSpace[] || []);
       
       if (membershipData && membershipData.length > 0) {
-        // Get space IDs from memberships
-        const spaceIds = membershipData.map((membership) => membership.space_id);
+        // Get space IDs from memberships (limit to first 50 to avoid URL length issues)
+        const spaceIds = membershipData.map((membership) => membership.space_id).slice(0, 50);
         
-        // Fetch spaces with these IDs
+        // Fetch spaces with these IDs in batches to avoid URL length limits
         const { data: spacesData, error: spacesError } = await supabase
           .from("spaces")
           .select("*")

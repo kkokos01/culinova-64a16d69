@@ -1,0 +1,500 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Recipe, Ingredient } from "@/types";
+import { useAuth } from "@/hooks/useAuth";
+import { useSpace } from "@/hooks/useSpace";
+import { useToast } from "@/hooks/use-toast";
+import { aiRecipeGenerator, AIRecipeRequest, AIRecipeModificationRequest, AIRecipeResponse, AIRecipeError } from "@/services/ai/recipeGenerator";
+import { foodUnitMapper } from "@/services/ai/foodUnitMapper";
+import { recipeService } from "@/services/recipeService";
+import CreateSidebar from "./CreateSidebar";
+import ModificationSidebar from "../ModificationSidebar";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Sparkles, Loader2, Save, ChefHat } from "lucide-react";
+import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
+import AILoadingProgress from "@/components/ui/AILoadingProgress";
+
+const RecipeCreatePage: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, isLoading } = useAuth();
+  const { currentSpace, isLoading: spaceLoading } = useSpace();
+  const { toast } = useToast();
+
+  // Form state
+  const [concept, setConcept] = useState("");
+  const [selectedQuickConcept, setSelectedQuickConcept] = useState("");
+  
+  // Panel state for slide-in sidebar
+  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false); // Start expanded for Create
+  const [leftPanelSize, setLeftPanelSize] = useState(35);
+  
+  // Mode switching state
+  const [isModifyMode, setIsModifyMode] = useState(false); // Switch to Modify after generation
+  
+  // Modify flow state
+  const [customInstructions, setCustomInstructions] = useState("");
+  
+  useEffect(() => {
+    setLeftPanelSize(leftPanelCollapsed ? 4 : 35);
+  }, [leftPanelCollapsed]);
+
+  const handleTogglePanel = () => {
+    setLeftPanelCollapsed(!leftPanelCollapsed);
+  };
+
+  const handleSelectIngredient = () => {
+    // No-op for create flow - ingredient selection not needed during creation
+  };
+  
+  // Constraint state
+  const [dietaryConstraints, setDietaryConstraints] = useState<string[]>([]);
+  const [timeConstraints, setTimeConstraints] = useState<string[]>([]);
+  const [skillLevel, setSkillLevel] = useState("intermediate");
+  const [excludedIngredients, setExcludedIngredients] = useState<string[]>([]);
+  const [spicinessLevel, setSpicinessLevel] = useState(3);
+  const [targetServings, setTargetServings] = useState(4);
+
+  // Generation state
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [generatedRecipe, setGeneratedRecipe] = useState<AIRecipeResponse | null>(null);
+  const [generationError, setGenerationError] = useState<AIRecipeError | null>(null);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate("/sign-in");
+    }
+  }, [user, isLoading, navigate]);
+
+  // Show loading state
+  if (isLoading || spaceLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-spin" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  // Handle recipe generation
+  const handleGenerateRecipe = async () => {
+    if (!concept.trim()) {
+      toast({
+        title: "Concept Required",
+        description: "Please enter a recipe concept to generate.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    setGenerationError(null);
+
+    try {
+      // Build AI request
+      const request: AIRecipeRequest = {
+        concept,
+        dietaryConstraints,
+        timeConstraints,
+        skillLevel,
+        excludedIngredients,
+        spicinessLevel,
+        targetServings
+      };
+
+      // Call AI service
+      const response = await aiRecipeGenerator.generateRecipe(request);
+
+      if ('type' in response) {
+        setGenerationError(response);
+        return;
+      }
+
+      // Store the generated recipe
+      setGeneratedRecipe(response);
+      
+      // Switch to Modify mode after successful generation
+      setIsModifyMode(true);
+
+      toast({
+        title: "Recipe Generated!",
+        description: "Your recipe has been created. You can now modify it using the controls on the left.",
+      });
+
+    } catch (error) {
+      console.error('Generation error:', error);
+      setGenerationError({
+        type: 'service_error',
+        message: 'Failed to generate recipe. Please try again.',
+        suggestions: ['Check your internet connection', 'Try a different concept']
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleRegenerate = async () => {
+    await handleGenerateRecipe();
+  };
+
+  // Handle recipe modification - directly updates the displayed recipe
+  const handleModifyRecipe = async (modificationInstructions: string) => {
+    if (!generatedRecipe) return;
+
+    setIsGenerating(true); // Use same loading state for modifications
+
+    try {
+      // Build modification request - use generatedRecipe as base (AIRecipeResponse format)
+      const modificationRequest: AIRecipeModificationRequest = {
+        baseRecipe: generatedRecipe, // Use the AI response format, not transformed Recipe
+        modificationInstructions,
+        // No selectedIngredients in simplified workflow
+      };
+
+      // Call AI modification service
+      const response = await aiRecipeGenerator.modifyRecipe(modificationRequest);
+
+      if ('type' in response) {
+        throw new Error(response.message);
+      }
+
+      // Update the generated recipe directly (no temporary versions)
+      setGeneratedRecipe(response);
+      
+      // Clear modification state after successful modification
+      setCustomInstructions("");
+
+      toast({
+        title: "Recipe Modified!",
+        description: "Your recipe has been updated with the requested changes.",
+      });
+
+    } catch (error) {
+      console.error('Modification error:', error);
+      toast({
+        title: "Modification Failed",
+        description: error instanceof Error ? error.message : "Failed to modify recipe. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleApplyModifications = () => {
+    if (customInstructions.trim()) {
+      handleModifyRecipe(customInstructions.trim());
+    } else {
+      toast({
+        title: "No Modifications",
+        description: "Please enter custom instructions to modify the recipe.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleResetToCreate = () => {
+    setIsModifyMode(false);
+    setGeneratedRecipe(null);
+    setCustomInstructions("");
+  };
+
+  const handleSaveRecipe = async () => {
+    if (!generatedRecipe || !user || !currentSpace) return;
+
+    try {
+      setIsSaving(true);
+      
+      // Map ingredients to database format using text fallbacks
+      const ingredients = await Promise.all(
+        generatedRecipe.ingredients.map(async (ing) => {
+          const foodResult = await foodUnitMapper.findOrCreateFood(ing.name, currentSpace.id);
+          const unitResult = await foodUnitMapper.findOrCreateUnit(ing.unit);
+          
+          return {
+            food_id: foodResult.food_id || null,
+            food_name: foodResult.food_name,
+            unit_id: unitResult.unit_id || null,
+            unit_name: unitResult.unit_name,
+            amount: parseFloat(ing.amount) || 1,
+          };
+        })
+      );
+
+      // Map AI response to database format
+      const recipeData = {
+        title: generatedRecipe.title,
+        description: generatedRecipe.description,
+        prep_time_minutes: generatedRecipe.prepTimeMinutes,
+        cook_time_minutes: generatedRecipe.cookTimeMinutes,
+        servings: generatedRecipe.servings,
+        difficulty: generatedRecipe.difficulty,
+        is_public: false,
+        privacy_level: "private" as const,
+        tags: generatedRecipe.tags,
+        ingredients,
+        steps: generatedRecipe.steps.map((step, index) => ({
+          order_number: index + 1,
+          instruction: step,
+        })),
+        user_id: user.id,
+        space_id: currentSpace.id,
+      };
+
+      const savedRecipe = await recipeService.createRecipe(recipeData);
+
+      toast({
+        title: "Recipe saved!",
+        description: `"${savedRecipe.title}" has been added to your recipes.`,
+      });
+
+      // Navigate to the saved recipe
+      navigate(`/recipes/${savedRecipe.id}`);
+
+    } catch (error: any) {
+      console.error('Error saving recipe:', error);
+      toast({
+        title: "Save failed",
+        description: error.message || "Failed to save recipe. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRefineRecipe = () => {
+    // TODO: Open modification panel with generated recipe
+    toast({
+      title: "Refinement coming soon",
+      description: "Recipe modification will be available in the next phase.",
+    });
+  };
+
+  // Transform generated recipe to Recipe type for display
+  const recipe = generatedRecipe ? {
+    id: "generated",
+    user_id: user.id,
+    title: generatedRecipe.title,
+    description: generatedRecipe.description,
+    prep_time_minutes: generatedRecipe.prepTimeMinutes,
+    cook_time_minutes: generatedRecipe.cookTimeMinutes,
+    servings: generatedRecipe.servings,
+    difficulty: generatedRecipe.difficulty,
+    is_public: false,
+    privacy_level: "private" as const,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    tags: generatedRecipe.tags,
+    ingredients: generatedRecipe.ingredients.map((ing, index) => ({
+      id: `ing-${index}`,
+      food_id: null,
+      unit_id: null,
+      food_name: ing.name.toLowerCase(),
+      unit_name: ing.unit.toLowerCase(),
+      amount: parseFloat(ing.amount) || 1,
+    })),
+    steps: generatedRecipe.steps.map((step, index) => ({
+      id: `step-${index}`,
+      recipe_id: "generated",
+      order_number: index + 1,
+      instruction: step,
+    })),
+    // Map Supabase User to our custom User interface
+    user: {
+      id: user.id,
+      email: user.email || "",
+      name: user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
+      avatar_url: user.user_metadata?.avatar_url,
+    },
+  } : null;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                onClick={() => navigate(-1)}
+                className="mr-4"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900 flex items-center">
+                  <Sparkles className="h-5 w-5 mr-2 text-purple-500" />
+                  {isModifyMode ? "Modify Recipe with AI" : "Create Recipe with AI"}
+                </h1>
+                <p className="text-sm text-gray-600">
+                  {isModifyMode 
+                    ? "Modify your generated recipe using the controls on the left"
+                    : (currentSpace ? `Adding to: ${currentSpace.name}` : "Personal recipe")
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content - ResizablePanel Layout */}
+      <div className="container mx-auto py-2 px-3">
+        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-100px)] rounded-lg border">
+          <ResizablePanel 
+            defaultSize={35}
+            size={leftPanelSize}
+            minSize={400} // Fixed pixel width for better text fitting
+            maxSize={600} // Fixed pixel maximum
+            collapsible
+            collapsedSize={60} // Small fixed width when collapsed
+            onCollapse={() => {
+              setLeftPanelCollapsed(true);
+            }}
+            onExpand={() => {
+              setLeftPanelCollapsed(false);
+            }}
+            className={`relative transition-all duration-300 ${
+              leftPanelCollapsed 
+                ? "bg-sage-500 text-white" 
+                : "bg-sage-500 text-white shadow-lg"
+            }`}
+          }>
+            {/* Conditional Sidebar: Create or Modify */}
+            {!isModifyMode ? (
+              <CreateSidebar
+                concept={concept}
+                selectedQuickConcept={selectedQuickConcept}
+                dietaryConstraints={dietaryConstraints}
+                timeConstraints={timeConstraints}
+                skillLevel={skillLevel}
+                excludedIngredients={excludedIngredients}
+                spicinessLevel={spicinessLevel}
+                targetServings={targetServings}
+                isGenerating={isGenerating}
+                isSaving={isSaving}
+                onConceptChange={setConcept}
+                onQuickConceptSelect={setSelectedQuickConcept}
+                onDietaryChange={setDietaryConstraints}
+                onTimeChange={setTimeConstraints}
+                onSkillChange={setSkillLevel}
+                onExclusionsChange={setExcludedIngredients}
+                onSpicinessChange={setSpicinessLevel}
+                onServingsChange={setTargetServings}
+                onGenerateRecipe={handleGenerateRecipe}
+                onSaveRecipe={handleSaveRecipe}
+                onTogglePanel={handleTogglePanel}
+                isPanelCollapsed={leftPanelCollapsed}
+              />
+            ) : (
+              <ModificationSidebar
+                recipe={recipe}
+                selectedIngredients={new Map()} // Empty in simplified workflow
+                onRemoveIngredientSelection={() => {}} // No-op in simplified workflow
+                customInstructions={customInstructions}
+                onCustomInstructionsChange={setCustomInstructions}
+                onStartModification={() => handleModifyRecipe(customInstructions)}
+                onSelectModificationType={(type: string) => {
+                  // Handle quick modification types like "healthier", "spicier", etc.
+                  handleModifyRecipe(type);
+                }}
+                onApplyModifications={handleApplyModifications}
+                isModified={false} // Not needed in this simplified flow
+                resetToOriginal={handleResetToCreate}
+                isDisabled={isGenerating}
+                isSaving={isSaving}
+                isActiveVersionTemporary={false} // Not used in this flow
+                onTogglePanel={handleTogglePanel}
+                selectedModifications={[]} // Not tracking individual modifications in simplified flow
+              />
+            )}
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          <ResizablePanel defaultSize={65} className="bg-white overflow-y-auto">
+            <div className="p-4">
+              {recipe ? (
+                <>
+                  {/* Recipe Header */}
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between">
+                      <h1 className="text-2xl font-bold text-gray-900">{recipe.title}</h1>
+                      <Button
+                        onClick={handleSaveRecipe}
+                        disabled={isSaving}
+                        className="bg-sage-600 hover:bg-sage-700"
+                      >
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            Save Recipe
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    {recipe.description && (
+                      <p className="text-gray-600 mt-2">{recipe.description}</p>
+                    )}
+                  </div>
+
+                  {/* Recipe Content */}
+                  <div className="space-y-6">
+                    {/* Ingredients Section */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Ingredients</h3>
+                      <ul className="space-y-2">
+                        {recipe.ingredients.map((ingredient, index) => (
+                          <li key={index} className="flex items-center text-gray-700">
+                            <span className="w-2 h-2 bg-sage-500 rounded-full mr-3"></span>
+                            {ingredient.amount} {ingredient.unit_name} {ingredient.food_name}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Steps Section */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Instructions</h3>
+                      <ol className="space-y-3">
+                        {recipe.steps.map((step, index) => (
+                          <li key={index} className="flex text-gray-700">
+                            <span className="flex-shrink-0 w-6 h-6 bg-sage-500 text-white rounded-full flex items-center justify-center text-sm mr-3">
+                              {index + 1}
+                            </span>
+                            <span>{step.instruction}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                  <ChefHat className="h-12 w-12 mb-4 text-gray-300" />
+                  <p className="text-lg font-medium">No recipe generated yet</p>
+                  <p className="text-sm">Use the controls on the left to create a new recipe with AI</p>
+                </div>
+              )}
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
+    </div>
+  );
+};
+
+export default RecipeCreatePage;

@@ -47,8 +47,8 @@ export async function createRecipeVersion(name: string, recipe: Recipe, userId: 
     if (recipe.ingredients && recipe.ingredients.length > 0) {
       const versionIngredients = recipe.ingredients.map((ing, index) => ({
         version_id: newDbVersion.id,
-        food_id: ing.food?.id || ing.food_id || '',
-        unit_id: ing.unit?.id || ing.unit_id || '',
+        food_id: ing.food?.id || ing.food_id || null,
+        unit_id: ing.unit?.id || ing.unit_id || null,
         amount: ing.amount,
         order_index: index
       }));

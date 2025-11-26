@@ -4,7 +4,8 @@ import RecipeVersionTabs from "./RecipeVersionTabs";
 import { useRecipe } from "@/context/recipe";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Save, Loader2 } from "lucide-react";
+import { Save } from "lucide-react";
+import AILoadingProgress from "@/components/ui/AILoadingProgress";
 
 interface VersionManagementProps {
   isActiveVersionTemporary: boolean;
@@ -45,7 +46,6 @@ const VersionManagement: React.FC<VersionManagementProps> = ({
             >
               {isSaving ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : (
@@ -58,6 +58,12 @@ const VersionManagement: React.FC<VersionManagementProps> = ({
           </CardHeader>
         </Card>
       )}
+      
+      <AILoadingProgress
+        isLoading={isSaving}
+        message="Saving version..."
+        className="mb-4"
+      />
     </div>
   );
 };

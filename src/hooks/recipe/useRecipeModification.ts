@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Ingredient, Recipe } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { aiRecipeGenerator, AIRecipeModificationRequest } from "@/services/ai/recipeGenerator";
 
 export const useRecipeModification = (recipe: Recipe | null, addTemporaryVersion: ((name: string, recipe: Recipe) => any) | null) => {
   const { toast } = useToast();
@@ -56,39 +57,68 @@ export const useRecipeModification = (recipe: Recipe | null, addTemporaryVersion
     setIsAiModifying(true);
     
     try {
-      // Here we would normally call an AI API
-      // For now, we'll just simulate a modification
-      const ingredientActions = Array.from(selectedIngredients.entries())
-        .map(([_, { ingredient, action }]) => `${action} ${ingredient.food?.name}`)
-        .join(", ");
+      // Build modification request
+      const modificationRequest: AIRecipeModificationRequest = {
+        baseRecipe: recipe,
+        modificationInstructions: modificationType,
+        selectedIngredients: selectedIngredients
+      };
       
-      const modificationMessage = ingredientActions 
-        ? `Starting modification with changes: ${ingredientActions}`
-        : `Starting modification with custom instructions: ${modificationType}`;
+      // Call real AI modification service
+      const aiResponse = await aiRecipeGenerator.modifyRecipe(modificationRequest);
+      
+      // Check if AI returned an error
+      if ('type' in aiResponse) {
+        throw new Error(aiResponse.message);
+      }
+      
+      // Transform AI response to Recipe type
+      const modifiedRecipe: Recipe = {
+        ...recipe, // Keep original recipe properties
+        title: aiResponse.title,
+        description: aiResponse.description,
+        prep_time_minutes: aiResponse.prepTimeMinutes,
+        cook_time_minutes: aiResponse.cookTimeMinutes,
+        servings: aiResponse.servings,
+        difficulty: aiResponse.difficulty,
+        ingredients: aiResponse.ingredients.map((ing, index) => ({
+          id: `ing-${index}`,
+          recipe_id: recipe.id,
+          food_id: null,
+          unit_id: null,
+          food_name: ing.name.toLowerCase(),
+          unit_name: ing.unit.toLowerCase(),
+          amount: parseFloat(ing.amount) || 1,
+        })),
+        steps: aiResponse.steps.map((step, index) => ({
+          id: `step-${index}`,
+          recipe_id: recipe.id,
+          order_number: index + 1,
+          instruction: step,
+        })),
+        tags: aiResponse.tags,
+        updated_at: new Date().toISOString(),
+      };
+      
+      // Add modified recipe as temporary version
+      if (addTemporaryVersion) {
+        await addTemporaryVersion("AI Modified", modifiedRecipe);
+      }
+      
+      setIsModified(true);
       
       toast({
-        title: "AI Modification Started",
-        description: modificationMessage,
+        title: "Recipe Modified",
+        description: "Recipe has been successfully modified with AI",
       });
-      
-      // Toggle modified status on (we would normally wait for the API response)
-      setTimeout(() => {
-        // In a real implementation, we would apply AI changes to the recipe
-        setIsModified(true);
-        setIsAiModifying(false);
-        
-        toast({
-          title: "Recipe Modified",
-          description: "Recipe has been successfully modified with AI",
-        });
-      }, 1500);
     } catch (error) {
       console.error("Error during AI modification:", error);
       toast({
         title: "Error",
-        description: "Failed to modify recipe with AI",
+        description: error instanceof Error ? error.message : "Failed to modify recipe with AI",
         variant: "destructive"
       });
+    } finally {
       setIsAiModifying(false);
     }
   };

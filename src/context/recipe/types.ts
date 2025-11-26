@@ -8,6 +8,8 @@ export interface RecipeVersion {
   recipe: Recipe;
   isActive: boolean;
   isTemporary?: boolean; // Flag to indicate if version is temporary (not saved to DB)
+  isSaved?: boolean; // Flag to indicate if version has been saved to Collections
+  savedRecipeId?: string; // ID of the saved recipe in the database
 }
 
 // Define the context type

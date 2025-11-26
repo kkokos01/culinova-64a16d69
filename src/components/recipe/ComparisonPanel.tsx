@@ -62,19 +62,18 @@ const ComparisonPanel: React.FC<ComparisonPanelProps> = ({
       {selectedIngredient ? (
         <div className="p-3 sm:p-4 border border-gray-200 rounded-md bg-white">
           <h3 className="font-medium mb-2 text-sm sm:text-base">
-            {selectedIngredient.food?.name}
+            {selectedIngredient.food_name || "Unknown ingredient"}
             {isModified && (
               <Badge className="ml-2 bg-amber-500 text-xs">Modified</Badge>
             )}
           </h3>
           <p className="text-xs sm:text-sm text-gray-600 mb-2">
-            {selectedIngredient.food?.description ||
-              "No description available."}
+            Ingredient details
           </p>
           <div className="flex items-center text-xs sm:text-sm text-gray-700">
             <span className="font-medium">Amount:</span>
             <span className="ml-2">
-              {selectedIngredient.amount} {selectedIngredient.unit?.abbreviation}
+              {selectedIngredient.amount} {selectedIngredient.unit_name || ""}
             </span>
           </div>
 

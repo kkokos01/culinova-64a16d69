@@ -129,16 +129,34 @@ export interface Unit {
 
 export interface Ingredient {
   id: string;
-  food_id: string;
-  unit_id: string;
+  food_id: string | null;
+  unit_id: string | null;
+  food_name?: string;
+  unit_name?: string;
   amount: number;
   food?: Food;
   unit?: Unit;
 }
 
+export interface IngredientCreate {
+  recipe_id?: string;
+  food_id?: string | null;
+  unit_id?: string | null;
+  food_name?: string | null;
+  unit_name?: string | null;
+  amount: number;
+}
+
 export interface Step {
   id: string;
   recipe_id: string;
+  order_number: number;
+  instruction: string;
+  duration_minutes?: number;
+}
+
+export interface StepCreate {
+  recipe_id?: string;
   order_number: number;
   instruction: string;
   duration_minutes?: number;
@@ -162,6 +180,38 @@ export interface Recipe {
   ingredients?: Ingredient[];
   steps?: Step[];
   user?: User;
+}
+
+export interface RecipeCreate {
+  title: string;
+  description: string;
+  image_url?: string;
+  prep_time_minutes: number;
+  cook_time_minutes: number;
+  servings: number;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  is_public?: boolean;
+  privacy_level?: 'private' | 'space' | 'public' | 'shared';
+  space_id?: string;
+  user_id: string;
+  tags?: string[];
+  ingredients?: IngredientCreate[];
+  steps?: StepCreate[];
+}
+
+export interface RecipeUpdate {
+  title?: string;
+  description?: string;
+  image_url?: string;
+  prep_time_minutes?: number;
+  cook_time_minutes?: number;
+  servings?: number;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  is_public?: boolean;
+  privacy_level?: 'private' | 'space' | 'public' | 'shared';
+  tags?: string[];
+  ingredients?: IngredientCreate[];
+  steps?: StepCreate[];
 }
 
 export interface ShoppingList {
