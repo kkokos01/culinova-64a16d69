@@ -177,7 +177,7 @@ const RecipeCreatePage: React.FC = () => {
       const originalVersion: RecipeVersion = {
         id: "original",
         name: "Original",
-        recipe: recipe, // Use the transformed recipe with proper ingredient structure
+        recipe: JSON.parse(JSON.stringify(recipe)), // Deep copy to prevent mutation
         isActive: true,
         isTemporary: false,
       };

@@ -140,46 +140,21 @@ export class AIRecipeGenerator {
       prompt += `\nCuisine style: ${cuisinePreference}`;
     }
     
-    // Add instructions for AI - optimized for latest models
-    prompt += `
-
-You are a professional chef creating a recipe based on the above requirements. 
-
-CRITICAL: You must respond with ONLY a valid JSON object. No additional text, explanations, or formatting outside the JSON.
-
-Return exactly this JSON structure:
+    // Add concise instructions for AI
+    prompt += `\n\nCreate a recipe with these requirements. Respond with ONLY this JSON:
 {
-  "title": "Catchy recipe title",
-  "description": "Brief appealing description (1-2 sentences)",
+  "title": "Recipe name",
+  "description": "Brief description",
   "prepTimeMinutes": number,
   "cookTimeMinutes": number,
   "servings": number,
-  "difficulty": "easy" | "medium" | "hard",
-  "ingredients": [
-    {
-      "name": "ingredient name",
-      "amount": "quantity (e.g., 2, 1/2, 250)",
-      "unit": "unit (e.g., cups, tablespoons, grams)",
-      "notes": "optional preparation notes"
-    }
-  ],
-  "steps": [
-    "Clear step-by-step instruction",
-    "Next step with specific details"
-  ],
-  "tags": ["tag1", "tag2", "tag3"]
+  "difficulty": "easy|medium|hard",
+  "ingredients": [{"name": "ingredient", "amount": "quantity", "unit": "unit", "notes": "optional"}],
+  "steps": ["step 1", "step 2"],
+  "tags": ["tag1", "tag2"]
 }
 
-Requirements:
-- Ingredients must be realistic and commonly available
-- Steps must be logical and properly sequenced  
-- Times must be realistic for the skill level
-- Include specific temperatures and timings where relevant
-- Ensure all dietary constraints are respected
-- Make it appealing and practical
-- JSON must be valid and parseable
-
-Respond with ONLY the JSON object above, nothing else.`;
+Keep it practical, realistic, and appealing. JSON only.`;
 
     return prompt;
   }
@@ -484,15 +459,16 @@ Keep the ingredients and steps realistic and practical. Make sure the JSON is va
         messages: [
           {
             role: 'system',
-            content: 'You are a professional chef and recipe developer. Always respond with valid JSON only. Create detailed, practical recipes that users can actually make. Follow the exact JSON structure provided in the prompt.'
+            content: 'Professional chef. Create practical recipes. Respond with valid JSON only.'
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        max_completion_tokens: parseInt(import.meta.env.VITE_AI_MAX_TOKENS || '4000'),
-        response_format: { type: 'json_object' }
+        max_completion_tokens: parseInt(import.meta.env.VITE_AI_MAX_TOKENS || '1500'),
+        response_format: { type: 'json_object' },
+        stream: false // Enable streaming in next iteration
       });
 
       console.log('Full OpenAI completion response:', JSON.stringify(completion, null, 2));
