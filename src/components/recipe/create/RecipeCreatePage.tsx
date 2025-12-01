@@ -11,7 +11,7 @@ import { recipeService } from "@/services/supabase/recipeService";
 import CreateSidebar from "./CreateSidebar";
 import ModificationSidebar from "../ModificationSidebar";
 import IngredientItem from "../IngredientItem";
-import NavigationBar from "../../navigation/NavigationBar";
+import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles, Loader2, Save, ChefHat } from "lucide-react";
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
@@ -465,22 +465,20 @@ const RecipeCreatePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Persistent Navigation Bar */}
-      <NavigationBar 
-        showBack={true}
-        title={isModifyMode ? "Modify Recipe with AI" : "Create Recipe with AI"}
-      />
+      {/* Consistent Navbar */}
+      <Navbar />
 
-      {/* Main Content */}
-      <div className="container mx-auto py-2 px-3">
+      {/* Main Content with padding for fixed navbar */}
+      <div className="pt-16">
+        <div className="container mx-auto py-2 px-3">
         <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-100px)] rounded-lg border">
           <ResizablePanel 
             defaultSize={35}
             size={leftPanelSize}
-            minSize={leftPanelCollapsed ? 60 : 400}
-            maxSize={leftPanelCollapsed ? 60 : 600}
+            minSize={leftPanelCollapsed ? 4 : 35}
+            maxSize={leftPanelCollapsed ? 4 : 60}
             collapsible
-            collapsedSize={60}
+            collapsedSize={4}
             onCollapse={() => setLeftPanelCollapsed(true)}
             onExpand={() => setLeftPanelCollapsed(false)}
             className={`relative transition-all duration-300 ${
@@ -583,12 +581,6 @@ const RecipeCreatePage: React.FC = () => {
                 </div>
               )}
               
-              {/* Debug version tabs */}
-              {isModifyMode && (
-                <div className="mb-2 text-xs text-gray-500">
-                  Debug: recipeVersions.length = {recipeVersions.length}, isModifyMode = {isModifyMode.toString()}
-                </div>
-              )}
               {recipe ? (
                 <>
                   {/* Recipe Header */}
@@ -665,6 +657,7 @@ const RecipeCreatePage: React.FC = () => {
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
+        </div>
       </div>
     </div>
   );

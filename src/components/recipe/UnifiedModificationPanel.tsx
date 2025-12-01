@@ -114,6 +114,8 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
           
           <h3 className="text-lg font-medium text-gray-800 mb-3">Custom Instructions</h3>
           <textarea
+            id="custom-instructions"
+            name="customInstructions"
             value={customInstructions}
             onChange={(e) => onCustomInstructionsChange(e.target.value)}
             className="w-full h-24 px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-transparent"

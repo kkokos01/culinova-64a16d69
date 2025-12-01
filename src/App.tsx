@@ -22,8 +22,18 @@ import AuthCallback from "./pages/auth/AuthCallback";
 import UpdatePassword from "./pages/auth/UpdatePassword";
 import SupabaseHealth from "./pages/SupabaseHealth";
 
-// Temporarily simplified version for debugging
-const queryClient = new QueryClient();
+// Configure React Query to prevent unnecessary refetches on window focus
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false, // Prevent refetch on window focus
+      refetchOnMount: true, // Allow refetch when navigating to pages
+      refetchOnReconnect: true, // Allow refetch on reconnection
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 function App() {
   console.log("App component rendering");

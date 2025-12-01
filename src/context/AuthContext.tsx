@@ -24,20 +24,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Check if Supabase is properly configured before making requests
+    try {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+      }).catch((error) => {
+        console.error('Failed to get session:', error);
+        setIsLoading(false);
+      });
+    } catch (error) {
+      console.error('Supabase client not properly configured:', error);
       setIsLoading(false);
-    });
+    }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", _event);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
+    try {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        console.log("Auth state changed:", _event);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+      });
 
-    return () => subscription.unsubscribe();
+      return () => subscription.unsubscribe();
+    } catch (error) {
+      console.error('Failed to set up auth state listener:', error);
+      return () => {};
+    }
   }, []);
 
   const signUp = async (email: string, password: string) => {

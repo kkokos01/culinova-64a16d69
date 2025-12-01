@@ -55,7 +55,7 @@ export const MOCK_RECIPES: Recipe[] = [
     user_id: "user3",
     title: "Classic Beef Bourguignon",
     description: "A traditional French stew with tender beef, red wine, mushrooms, and carrots.",
-    image_url: "https://images.unsplash.com/photo-1600891963935-9e7049f64cb9?q=80&w=1170",
+    image_url: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=1170",
     prep_time_minutes: 30,
     cook_time_minutes: 180,
     servings: 6,
