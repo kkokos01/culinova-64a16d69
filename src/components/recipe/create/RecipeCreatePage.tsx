@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Recipe, Ingredient } from "@/types";
 import { RecipeVersion } from "@/context/recipe/types";
@@ -8,12 +8,12 @@ import { useToast } from "@/hooks/use-toast";
 import { aiRecipeGenerator, AIRecipeRequest, AIRecipeModificationRequest, AIRecipeResponse, AIRecipeError } from "@/services/ai/recipeGenerator";
 import { foodUnitMapper } from "@/services/ai/foodUnitMapper";
 import { recipeService } from "@/services/supabase/recipeService";
-import CreateSidebar from "./CreateSidebar";
-import ModificationSidebar from "../ModificationSidebar";
+import UnifiedSidebar from "./UnifiedSidebar";
 import IngredientItem from "../IngredientItem";
+import UnifiedModificationPanel from "../UnifiedModificationPanel";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles, Loader2, Save, ChefHat } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, Save, ChefHat, Wand2 } from "lucide-react";
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
 import AILoadingProgress from "@/components/ui/AILoadingProgress";
 
@@ -27,6 +27,32 @@ const RecipeCreatePage: React.FC = () => {
   const [leftPanelSize, setLeftPanelSize] = useState(35);
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false); // Start open, not collapsed
 
+  // Ref for sidebar panel and button positioning
+  const sidebarPanelRef = useRef<HTMLDivElement>(null);
+  const [buttonPosition, setButtonPosition] = useState({ left: 0 });
+
+  // Update button position when sidebar resizes
+  useEffect(() => {
+    const updateButtonPosition = () => {
+      if (sidebarPanelRef.current) {
+        const rect = sidebarPanelRef.current.getBoundingClientRect();
+        const buttonWidth = 160; // min-w-[160px]
+        const centerPosition = rect.left + rect.width / 2 - buttonWidth / 2;
+        setButtonPosition({ left: centerPosition });
+      }
+    };
+
+    updateButtonPosition();
+    
+    // Listen for resize events
+    const resizeObserver = new ResizeObserver(updateButtonPosition);
+    if (sidebarPanelRef.current) {
+      resizeObserver.observe(sidebarPanelRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, [leftPanelSize, leftPanelCollapsed]);
+
   // Form State
   const [concept, setConcept] = useState("");
   const [selectedQuickConcept, setSelectedQuickConcept] = useState("");
@@ -34,8 +60,12 @@ const RecipeCreatePage: React.FC = () => {
   const [timeConstraints, setTimeConstraints] = useState<string[]>([]);
   const [skillLevel, setSkillLevel] = useState("intermediate");
   const [excludedIngredients, setExcludedIngredients] = useState<string[]>([]);
-  const [spicinessLevel, setSpicinessLevel] = useState("medium");
+  const [spicinessLevel, setSpicinessLevel] = useState(3); // Changed to number
   const [targetServings, setTargetServings] = useState(4);
+
+  // New Unified Sidebar State
+  const [userInput, setUserInput] = useState("");
+  const [selectedInspiration, setSelectedInspiration] = useState("");
 
   // Workflow State
   const [isModifyMode, setIsModifyMode] = useState(false);
@@ -129,10 +159,17 @@ const RecipeCreatePage: React.FC = () => {
   };
 
   const handleGenerateRecipe = async () => {
-    if (!concept.trim()) {
+    // Combine all user inputs into a single concept
+    const combinedInputs = [
+      userInput.trim(),
+      selectedQuickConcept,
+      selectedInspiration
+    ].filter(Boolean).join('. ');
+    
+    if (!combinedInputs) {
       toast({
-        title: "Concept Required",
-        description: "Please enter a recipe concept to generate.",
+        title: "Input Required",
+        description: "Please enter a recipe concept, select a quick concept, or choose an inspiration to generate.",
         variant: "destructive"
       });
       return;
@@ -150,13 +187,13 @@ const RecipeCreatePage: React.FC = () => {
 
     try {
       const request: AIRecipeRequest = {
-        concept,
+        concept: combinedInputs,
         dietaryConstraints,
         timeConstraints,
         skillLevel,
         excludedIngredients,
-        spicinessLevel: parseInt(spicinessLevel) || 0,
-        targetServings: parseInt(targetServings.toString()) || 4,
+        spicinessLevel: spicinessLevel || 3,
+        targetServings: targetServings || 4,
       };
 
       const response = await aiRecipeGenerator.generateRecipe(request);
@@ -297,8 +334,11 @@ const RecipeCreatePage: React.FC = () => {
     const hasIngredientSelections = selectedIngredients.size > 0;
     const hasCustomInstructions = customInstructions.trim().length > 0;
     const hasQuickModifications = selectedQuickModifications.length > 0;
+    const hasUserInput = userInput.trim().length > 0;
+    const hasQuickConcept = selectedQuickConcept.length > 0;
+    const hasInspiration = selectedInspiration.length > 0;
     
-    if (!hasIngredientSelections && !hasCustomInstructions && !hasQuickModifications) {
+    if (!hasIngredientSelections && !hasCustomInstructions && !hasQuickModifications && !hasUserInput && !hasQuickConcept && !hasInspiration) {
       toast({
         title: "No Modifications",
         description: "Please select ingredient modifications, enter custom instructions, choose quick modifications, or any combination of these.",
@@ -309,6 +349,23 @@ const RecipeCreatePage: React.FC = () => {
     
     // Build modification instructions from all sources
     let modificationInstructions = "";
+    
+    // Add user input
+    if (hasUserInput) {
+      modificationInstructions = userInput.trim();
+    }
+    
+    // Add quick concepts/modifications
+    if (hasQuickConcept) {
+      if (modificationInstructions.length > 0) modificationInstructions += ". ";
+      modificationInstructions += selectedQuickConcept;
+    }
+    
+    // Add inspiration
+    if (hasInspiration) {
+      if (modificationInstructions.length > 0) modificationInstructions += ". ";
+      modificationInstructions += selectedInspiration;
+    }
     
     // Add quick modifications
     if (hasQuickModifications) {
@@ -329,16 +386,14 @@ const RecipeCreatePage: React.FC = () => {
             case "decrease":
               return `Decrease the amount of ${ingredient.food_name}`;
             case "remove":
-              return `Remove ${ingredient.food_name} from the recipe`;
+              return `Remove ${ingredient.food_name}`;
             default:
               return "";
           }
         }
-      ).filter(mod => mod.length > 0);
+      ).filter(Boolean).join(", ");
       
-      if (ingredientMods.length > 0) {
-        modificationInstructions += "Ingredient modifications: " + ingredientMods.join(", ");
-      }
+      modificationInstructions += "Ingredient modifications: " + ingredientMods;
     }
     
     // Add custom instructions
@@ -347,6 +402,7 @@ const RecipeCreatePage: React.FC = () => {
       modificationInstructions += customInstructions.trim();
     }
     
+    // Call the modify function with combined instructions
     handleModifyRecipe(modificationInstructions);
   };
 
@@ -471,7 +527,8 @@ const RecipeCreatePage: React.FC = () => {
       {/* Main Content with padding for fixed navbar */}
       <div className="pt-16">
         <div className="container mx-auto py-2 px-3">
-        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-100px)] rounded-lg border">
+        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-100px)] rounded-lg border relative">
+          <div ref={sidebarPanelRef} className="flex h-full">
           <ResizablePanel 
             defaultSize={35}
             size={leftPanelSize}
@@ -485,53 +542,49 @@ const RecipeCreatePage: React.FC = () => {
               leftPanelCollapsed ? "w-15" : "w-full"
             } ${leftPanelCollapsed ? "bg-sage-500 text-white" : "bg-sage-500 text-white shadow-lg"}`}
           >
-            {/* Conditional Sidebar */}
-            {!isModifyMode ? (
-              <CreateSidebar
-                concept={concept}
-                selectedQuickConcept={selectedQuickConcept}
-                dietaryConstraints={dietaryConstraints}
-                timeConstraints={timeConstraints}
-                skillLevel={skillLevel}
-                excludedIngredients={excludedIngredients}
-                spicinessLevel={parseInt(spicinessLevel) || 0}
-                targetServings={parseInt(targetServings.toString()) || 4}
-                onConceptChange={setConcept}
-                onQuickConceptSelect={setSelectedQuickConcept}
-                onDietaryChange={setDietaryConstraints}
-                onTimeChange={setTimeConstraints}
-                onSkillChange={setSkillLevel}
-                onExclusionsChange={setExcludedIngredients}
-                onSpicinessChange={(level: number) => setSpicinessLevel(level.toString())}
-                onServingsChange={setTargetServings}
-                onGenerateRecipe={handleGenerateRecipe}
-                isGenerating={isGenerating}
-                isSaving={isSaving}
-                onSaveRecipe={handleSaveRecipe}
-                onTogglePanel={handleTogglePanel}
-                isPanelCollapsed={leftPanelCollapsed}
-              />
-            ) : (
-              <ModificationSidebar
-                recipe={recipe}
-                selectedIngredients={selectedIngredients}
-                onRemoveIngredientSelection={removeIngredientSelection}
-                customInstructions={customInstructions}
-                onCustomInstructionsChange={setCustomInstructions}
-                onStartModification={() => handleApplyModifications()}
-                onSelectModificationType={handleToggleQuickModification}
-                selectedQuickModifications={selectedQuickModifications}
-                onApplyModifications={handleApplyModifications}
-                isModified={false}
-                resetToOriginal={handleResetToCreate}
-                isDisabled={isGenerating}
-                isSaving={isSaving}
-                isActiveVersionTemporary={isActiveVersionTemporary}
-                onTogglePanel={handleTogglePanel}
-                selectedModifications={selectedQuickModifications}
-              />
-            )}
+            {/* Unified Sidebar */}
+            <UnifiedSidebar
+              mode={isModifyMode ? 'modify' : 'create'}
+              recipe={recipe}
+              isPanelCollapsed={leftPanelCollapsed}
+              onTogglePanel={handleTogglePanel}
+              
+              // User input
+              userInput={userInput}
+              onUserInputChange={setUserInput}
+              
+              // Quick concepts/modifications
+              selectedQuickConcept={selectedQuickConcept}
+              onQuickConceptSelect={setSelectedQuickConcept}
+              
+              // Inspiration
+              selectedInspiration={selectedInspiration}
+              onInspirationSelect={setSelectedInspiration}
+              
+              // Advanced options
+              dietaryConstraints={dietaryConstraints}
+              timeConstraints={timeConstraints}
+              skillLevel={skillLevel}
+              excludedIngredients={excludedIngredients}
+              spicinessLevel={spicinessLevel}
+              targetServings={targetServings}
+              onDietaryChange={setDietaryConstraints}
+              onTimeChange={setTimeConstraints}
+              onSkillChange={setSkillLevel}
+              onExclusionsChange={setExcludedIngredients}
+              onSpicinessChange={setSpicinessLevel}
+              onServingsChange={setTargetServings}
+              
+              // Ingredient modifications (modify mode only)
+              selectedIngredients={selectedIngredients}
+              onRemoveIngredientSelection={removeIngredientSelection}
+              
+              // Loading states
+              isGenerating={isGenerating}
+              isSaving={isSaving}
+            />
           </ResizablePanel>
+          </div>
 
           <ResizableHandle withHandle />
 
@@ -590,7 +643,7 @@ const RecipeCreatePage: React.FC = () => {
                       <Button
                         onClick={handleSaveRecipe}
                         disabled={isSaving}
-                        className="bg-sage-600 hover:bg-sage-700"
+                        className="bg-sage-600 hover:bg-sage-700 text-white"
                       >
                         {isSaving ? (
                           <>
@@ -599,7 +652,7 @@ const RecipeCreatePage: React.FC = () => {
                           </>
                         ) : (
                           <>
-                            <Save className="mr-2 h-4 w-4" />
+                            <Save className="text-sage-400 mr-2 h-4 w-4" />
                             Save Recipe
                           </>
                         )}
@@ -657,6 +710,43 @@ const RecipeCreatePage: React.FC = () => {
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
+        
+        {/* Floating Action Button - Dynamic positioning over sidebar */}
+        <div className="fixed bottom-6 z-50" style={{ left: `${buttonPosition.left}px` }}>
+          <Button
+            onClick={isModifyMode ? handleApplyModifications : handleGenerateRecipe}
+            disabled={isGenerating || (
+              isModifyMode 
+                ? (!userInput.trim() && !selectedQuickConcept && !selectedInspiration && selectedIngredients.size === 0)
+                : (!userInput.trim() && !selectedQuickConcept && !selectedInspiration)
+            )}
+            size="lg"
+            className="text-white px-6 py-3 rounded-full min-w-[160px] border-0"
+          style={{ 
+            backgroundColor: '#384048', 
+            opacity: 1,
+            boxShadow: 'none'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#2d3438';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#384048';
+          }}
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {isModifyMode ? 'Modifying...' : 'Creating...'}
+              </>
+            ) : (
+              <>
+                <Wand2 className="text-sage-400 mr-2 h-4 w-4" />
+                {isModifyMode ? 'Modify Recipe' : 'Generate Recipe'}
+              </>
+            )}
+          </Button>
+        </div>
         </div>
       </div>
     </div>
