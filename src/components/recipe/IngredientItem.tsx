@@ -2,6 +2,7 @@
 import React from "react";
 import { Ingredient } from "@/types";
 import { Plus, Minus, X } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface IngredientItemProps {
   ingredient: Ingredient;
@@ -67,54 +68,77 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
   const unitName = ingredient.unit_name || "";
 
   return (
-    <div 
-      className={`flex items-center p-2 rounded-md border-2 transition-colors ${styles.container} cursor-pointer h-full`}
-      onClick={handleIngredientClick}
-    >
-      <div className="flex-1 min-w-0">
-        <div className={`flex items-baseline gap-x-1.5 text-base ${styles.text}`}>
-          <span className="font-medium whitespace-nowrap">
-            {ingredient.amount} {unitName}
-          </span>
-          <span className="truncate">{foodName}</span>
+    <TooltipProvider>
+      <div 
+        className={`flex items-center p-2 rounded-md border-2 transition-colors ${styles.container} cursor-pointer h-full`}
+        onClick={handleIngredientClick}
+      >
+        <div className="flex-1 min-w-0">
+          <div className={`flex items-baseline gap-x-1.5 text-base ${styles.text}`}>
+            <span className="font-medium whitespace-nowrap">
+              {ingredient.amount} {unitName}
+            </span>
+            <span className="truncate">{foodName}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 ml-2 action-buttons shrink-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => onSelectIngredient(ingredient, "increase")}
+                className={`p-1 rounded-full ${
+                  selectedAction === "increase" 
+                    ? "bg-green-500 text-white" 
+                    : "hover:bg-green-100 text-green-600 hover:text-green-700"
+                }`}
+                aria-label="Increase ingredient"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Increase amount</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => onSelectIngredient(ingredient, "decrease")}
+                className={`p-1 rounded-full ${
+                  selectedAction === "decrease" 
+                    ? "bg-amber-500 text-white" 
+                    : "hover:bg-amber-100 text-amber-600 hover:text-amber-700"
+                }`}
+                aria-label="Decrease ingredient"
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Decrease amount</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => onSelectIngredient(ingredient, "remove")}
+                className={`p-1 rounded-full ${
+                  selectedAction === "remove" 
+                    ? "bg-red-500 text-white" 
+                    : "hover:bg-red-100 text-red-600 hover:text-red-700"
+                }`}
+                aria-label="Remove ingredient"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Remove or replace ingredient</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
-      <div className="flex items-center gap-1 ml-2 action-buttons shrink-0">
-        <button
-          onClick={() => onSelectIngredient(ingredient, "increase")}
-          className={`p-1 rounded-full ${
-            selectedAction === "increase" 
-              ? "bg-green-500 text-white" 
-              : "hover:bg-green-100 text-green-600 hover:text-green-700"
-          }`}
-          aria-label="Increase ingredient"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
-        <button
-          onClick={() => onSelectIngredient(ingredient, "decrease")}
-          className={`p-1 rounded-full ${
-            selectedAction === "decrease" 
-              ? "bg-amber-500 text-white" 
-              : "hover:bg-amber-100 text-amber-600 hover:text-amber-700"
-          }`}
-          aria-label="Decrease ingredient"
-        >
-          <Minus className="h-4 w-4" />
-        </button>
-        <button
-          onClick={() => onSelectIngredient(ingredient, "remove")}
-          className={`p-1 rounded-full ${
-            selectedAction === "remove" 
-              ? "bg-red-500 text-white" 
-              : "hover:bg-red-100 text-red-600 hover:text-red-700"
-          }`}
-          aria-label="Remove ingredient"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
+    </TooltipProvider>
   );
 };
 

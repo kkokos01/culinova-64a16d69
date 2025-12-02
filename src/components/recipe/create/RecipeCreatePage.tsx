@@ -168,42 +168,37 @@ const RecipeCreatePage: React.FC = () => {
     });
   };
 
-  const handleGenerateRecipe = async () => {
-    // Combine all user inputs into a single concept
-    const combinedInputs = [
-      userInput.trim(),
-      selectedQuickConcept,
-      selectedInspiration
-    ].filter(Boolean).join('. ');
+  const handleGenerateRecipe = async (directDescription?: string, directConcept?: string, directInspiration?: string) => {
+    // Use direct parameters if provided, otherwise use state values
+    const effectiveUserInput = directDescription || userInput;
+    const effectiveQuickConcept = directConcept || selectedQuickConcept;
+    const effectiveInspiration = directInspiration || selectedInspiration;
+    
+    // Combine all inputs for the recipe concept
+    const combinedInputs = [effectiveUserInput.trim(), effectiveQuickConcept, effectiveInspiration].filter(Boolean).join('. ');
     
     if (!combinedInputs) {
       toast({
         title: "Input Required",
-        description: "Please enter a recipe concept, select a quick concept, or choose an inspiration to generate.",
+        description: "Please describe what you'd like to make or select a concept.",
         variant: "destructive"
       });
       return;
     }
 
-    setIsGenerating(true);
-    setGenerationError(null);
-
-    // Show generation toast
-    toast({
-      title: "Generating Recipe...",
-      description: "AI is creating your recipe based on your requirements. This may take a moment.",
-      variant: "default",
-    });
-
     try {
+      setIsGenerating(true);
+      setGenerationError(null);
+
       const request: AIRecipeRequest = {
         concept: combinedInputs,
         dietaryConstraints,
         timeConstraints,
         skillLevel,
-        excludedIngredients,
-        spicinessLevel: spicinessLevel || 3,
+        excludedIngredients: [],
+        spicinessLevel,
         targetServings: targetServings || 4,
+        cuisinePreference: effectiveInspiration || undefined,
       };
 
       const response = await aiRecipeGenerator.generateRecipe(request);
@@ -215,16 +210,45 @@ const RecipeCreatePage: React.FC = () => {
 
       setGeneratedRecipe(response);
 
-      toast({
-        title: "Recipe Generated!",
-        description: "Your recipe has been created. You can now modify it using the controls on the left.",
-      });
-
       // Create original recipe version and switch to modify mode
       const originalVersion: RecipeVersion = {
         id: "original",
         name: "Original",
-        recipe: JSON.parse(JSON.stringify(recipe)), // Deep copy to prevent mutation
+        recipe: {
+          id: "generated",
+          user_id: user?.id || "unknown",
+          title: response.title,
+          description: response.description,
+          prep_time_minutes: response.prepTimeMinutes,
+          cook_time_minutes: response.cookTimeMinutes,
+          servings: response.servings,
+          difficulty: response.difficulty,
+          is_public: false,
+          privacy_level: "private" as const,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          tags: response.tags,
+          ingredients: response.ingredients.map((ing, index) => ({
+            id: `ing-${index}`,
+            food_id: null,
+            unit_id: null,
+            food_name: ing.name.toLowerCase(),
+            unit_name: ing.unit.toLowerCase(),
+            amount: parseFloat(ing.amount) || 1,
+          })),
+          steps: response.steps.map((step, index) => ({
+            id: `step-${index}`,
+            recipe_id: "generated",
+            order_number: index + 1,
+            instruction: step,
+          })),
+          user: {
+            id: user?.id || "unknown",
+            email: user?.email || "",
+            name: user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User",
+            avatar_url: user?.user_metadata?.avatar_url,
+          },
+        },
         isActive: true,
         isTemporary: false,
       };
@@ -234,7 +258,13 @@ const RecipeCreatePage: React.FC = () => {
       setIsActiveVersionTemporary(false);
       setIsModifyMode(true);
 
-    } catch (error) {
+      toast({
+        title: "Recipe Generated!",
+        description: "Your recipe has been created successfully. You can now modify it or save it.",
+        variant: "default",
+      });
+
+    } catch (error: any) {
       console.error('Generation error:', error);
       setGenerationError({
         type: 'service_error',
@@ -243,14 +273,17 @@ const RecipeCreatePage: React.FC = () => {
       });
     } finally {
       setIsGenerating(false);
-      
-      // Show completion toast
-      toast({
-        title: "Recipe Generated!",
-        description: "Your recipe has been created successfully. You can now modify it or save it.",
-        variant: "default",
-      });
     }
+  };
+
+  const quickGenerateRecipe = async (description: string, concept: string) => {
+    // Set only the text field, clear other selections
+    setUserInput(description);
+    setSelectedQuickConcept("");
+    setSelectedInspiration("");
+    
+    // Call handleGenerateRecipe with direct parameters to avoid race condition
+    await handleGenerateRecipe(description, "", "");
   };
 
   const handleModifyRecipe = async (modificationInstructions: string) => {
@@ -719,47 +752,52 @@ const RecipeCreatePage: React.FC = () => {
                   {/* Clickable Inspiration Examples */}
                   <div className="flex flex-wrap gap-3 justify-center max-w-lg">
                     <button
-                      onClick={() => {
-                        setUserInput("Spicy Thai basil chicken with jasmine rice and fresh vegetables");
-                        setSelectedQuickConcept("Quick Pasta Dish");
-                      }}
-                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                      onClick={() => quickGenerateRecipe(
+                        "Spicy Thai basil chicken with jasmine rice and fresh vegetables",
+                        "Quick Pasta Dish"
+                      )}
+                      disabled={isGenerating}
+                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       🌶️ Spicy Thai Basil Chicken
                     </button>
                     <button
-                      onClick={() => {
-                        setUserInput("Creamy vegan chocolate mousse with avocado and dark chocolate");
-                        setSelectedQuickConcept("Quick Pasta Dish");
-                      }}
-                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                      onClick={() => quickGenerateRecipe(
+                        "Creamy vegan chocolate mousse with avocado and dark chocolate",
+                        "Quick Pasta Dish"
+                      )}
+                      disabled={isGenerating}
+                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       🍫 Vegan Chocolate Mousse
                     </button>
                     <button
-                      onClick={() => {
-                        setUserInput("Mediterranean quinoa bowl with roasted vegetables and lemon tahini dressing");
-                        setSelectedQuickConcept("Healthy Salad");
-                      }}
-                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                      onClick={() => quickGenerateRecipe(
+                        "Mediterranean quinoa bowl with roasted vegetables and lemon tahini dressing",
+                        "Healthy Salad"
+                      )}
+                      disabled={isGenerating}
+                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       🥗 Mediterranean Quinoa Bowl
                     </button>
                     <button
-                      onClick={() => {
-                        setUserInput("Classic Italian carbonara with crispy pancetta and pecorino cheese");
-                        setSelectedQuickConcept("Quick Pasta Dish");
-                      }}
-                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                      onClick={() => quickGenerateRecipe(
+                        "Classic Italian carbonara with crispy pancetta and pecorino cheese",
+                        "Quick Pasta Dish"
+                      )}
+                      disabled={isGenerating}
+                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       🍝 Authentic Carbonara
                     </button>
                     <button
-                      onClick={() => {
-                        setUserInput("Japanese chicken teriyaki bowl with steamed rice and pickled vegetables");
-                        setSelectedQuickConcept("Quick Pasta Dish");
-                      }}
-                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                      onClick={() => quickGenerateRecipe(
+                        "Japanese chicken teriyaki bowl with steamed rice and pickled vegetables",
+                        "Quick Pasta Dish"
+                      )}
+                      disabled={isGenerating}
+                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       🍱 Chicken Teriyaki Bowl
                     </button>
@@ -773,7 +811,7 @@ const RecipeCreatePage: React.FC = () => {
         {/* Floating Action Button - Dynamic positioning over sidebar */}
         <div className="fixed bottom-6 z-50" style={{ left: `${buttonPosition.left}px` }}>
           <Button
-            onClick={isModifyMode ? handleApplyModifications : handleGenerateRecipe}
+            onClick={isModifyMode ? handleApplyModifications : () => handleGenerateRecipe()}
             disabled={isGenerating || (
               isModifyMode 
                 ? (!userInput.trim() && !selectedQuickConcept && !selectedInspiration && selectedIngredients.size === 0)

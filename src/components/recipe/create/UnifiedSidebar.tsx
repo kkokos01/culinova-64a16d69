@@ -3,11 +3,12 @@ import { Recipe, Ingredient } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronLeft, ChevronDown, ChevronUp, Wand2, Lightbulb, Settings, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Wand2, Lightbulb, Settings, Loader2 } from "lucide-react";
 import AILoadingProgress from "@/components/ui/AILoadingProgress";
 
 interface UnifiedSidebarProps {
@@ -81,6 +82,7 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
 }, ref) => {
   const [isQuickConceptsOpen, setIsQuickConceptsOpen] = useState(true);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [isInspirationOpen, setIsInspirationOpen] = useState(false);
 
   // Mode-specific content
   const isCreateMode = mode === 'create';
@@ -150,11 +152,12 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
   }
 
   return (
-    <div ref={ref} className="h-full flex flex-col relative">
+    <div className="h-full flex flex-col relative">
+      <div ref={ref} className="flex-1">
       {/* Scrollable Content */}
       <div className="overflow-y-auto h-full">
-        <Card className="rounded-none border-x-0 border-t-0 border-b border-white/20 shadow-none">
-          <CardHeader className="p-3 flex flex-row items-center justify-between">
+        <Card className="rounded-none border-x-0 border-t-0 border-b border-white/20 shadow-none bg-white/10 backdrop-blur-sm">
+          <CardHeader className="p-4 flex flex-row items-center justify-between">
             <h2 className="text-lg font-semibold text-sage-600">
               {isCreateMode ? 'Create Recipe' : 'Modify Recipe'}
             </h2>
@@ -162,15 +165,15 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
               variant="ghost" 
               size="icon" 
               onClick={onTogglePanel}
-              className="text-sage-600 hover:text-sage-600 hover:bg-sage-100"
+              className="text-white hover:text-sage-200 hover:bg-white/10"
             >
-              <ChevronLeft className="h-4 w-4" />
+              {isPanelCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </Button>
           </CardHeader>
         </Card>
         
-        <div className="p-4 space-y-4">
-          <p className="text-black text-sm">
+        <div className="p-4 space-y-8">
+          <p className="text-sage-100 text-sm">
             {isCreateMode 
               ? 'Create a new recipe with AI assistance' 
               : 'Customize this recipe with AI assistance'
@@ -178,197 +181,208 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
           </p>
           
           {/* 1. User Input Section (Always Open) */}
-          <div className="space-y-2">
-            <Label htmlFor="user-input" className="text-base font-medium text-gray-900">
-              {isCreateMode ? 'What do you want to make?' : 'How do you want to modify this recipe?'}
+          <div className="space-y-3">
+            <Label htmlFor="user-input" className="text-base font-semibold text-white">
+              {isCreateMode ? '1. Describe your idea' : '1. Describe your modification'}
             </Label>
-            <Input
+            <Textarea
               id="user-input"
               value={userInput}
               onChange={(e) => onUserInputChange(e.target.value)}
               placeholder={isCreateMode 
-                ? 'Describe your recipe idea...' 
-                : 'Describe your modifications...'
+                ? 'What would you like to make? Be specific about ingredients, flavors, or style...' 
+                : 'How would you like to modify this recipe? Describe your desired changes...'
               }
-              className="w-full text-black placeholder:text-gray-500"
+              className="w-full text-black placeholder:text-gray-500 resize-none"
+              rows={4}
             />
+            <p className="text-xs text-sage-100 italic">
+              💡 Tip: The more detailed your description, the better Culinova can tailor your recipe.
+            </p>
           </div>
 
           {/* 2. Quick Concepts Section (Collapsible, Open by Default) */}
-          <Collapsible open={isQuickConceptsOpen} onOpenChange={setIsQuickConceptsOpen}>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between p-2 h-auto text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                <div className="flex items-center space-x-2">
-                  <Wand2 className="h-4 w-4" />
-                  <span className="font-medium">Quick {isCreateMode ? 'Concepts' : 'Modifications'}</span>
-                </div>
-                {isQuickConceptsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-3">
-              {/* Main Quick Concepts */}
-              <div className="grid grid-cols-1 gap-2">
-                {quickConcepts.map((concept) => (
-                  <Button
-                    key={concept}
-                    variant={selectedQuickConcept === concept ? "default" : "secondary"}
-                    size="sm"
-                    onClick={() => onQuickConceptSelect(selectedQuickConcept === concept ? '' : concept)}
-                    className="justify-start text-left h-8"
-                  >
-                    {concept}
-                  </Button>
-                ))}
-              </div>
-              
-              {/* Need Inspiration Subsection */}
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <Lightbulb className="h-3 w-3" />
-                  <span>Need Inspiration?</span>
-                </div>
-                <div className="grid grid-cols-1 gap-1">
-                  {inspirations.map((inspiration) => (
-                    <Button
-                      key={inspiration}
-                      variant={selectedInspiration === inspiration ? "default" : "secondary"}
-                      size="sm"
-                      onClick={() => onInspirationSelect(selectedInspiration === inspiration ? '' : inspiration)}
-                      className="justify-start text-left h-7 text-xs"
+          <div className="space-y-3">
+            <Collapsible open={isQuickConceptsOpen} onOpenChange={setIsQuickConceptsOpen}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between p-3 h-auto bg-white/10 hover:bg-white/20 text-white rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Wand2 className="h-4 w-4" />
+                    <span className="font-semibold">2. Quick {isCreateMode ? 'Concepts' : 'Modifications'}</span>
+                  </div>
+                  {isQuickConceptsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-3 mt-3">
+                <p className="text-xs text-sage-100 italic">
+                  🎯 Optional: Choose one to inspire your recipe, or combine with your description above
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {quickConcepts.map((concept, index) => (
+                    <button
+                      key={index}
+                      onClick={() => onQuickConceptSelect(selectedQuickConcept === concept ? "" : concept)}
+                      className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                        selectedQuickConcept === concept
+                          ? 'bg-white text-sage-700 shadow-sm'
+                          : 'bg-sage-100 hover:bg-sage-200 text-sage-700'
+                      }`}
                     >
-                      {inspiration}
-                    </Button>
+                      <span className="w-2 h-2 rounded-full bg-sage-400 mr-2"></span>
+                      {concept}
+                    </button>
                   ))}
                 </div>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
 
           {/* 3. Advanced Options Section (Collapsible, Closed by Default) */}
-          <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between p-2 h-auto text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                <div className="flex items-center space-x-2">
-                  <Settings className="h-4 w-4" />
-                  <span className="font-medium">Advanced Options</span>
+          <div className="space-y-3">
+            <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between p-3 h-auto bg-white/10 hover:bg-white/20 text-white rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Settings className="h-4 w-4" />
+                    <span className="font-semibold">3. Advanced Options (Optional)</span>
+                  </div>
+                  {isAdvancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 mt-3">
+                <p className="text-xs text-sage-100 italic">
+                  ⚙️ Optional: Add dietary filters and constraints for the AI to respect
+                </p>
+                
+                {/* Cuisine Type */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-900">Cuisine Type</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {inspirations.map((cuisine, index) => (
+                      <button
+                        key={index}
+                        onClick={() => onInspirationSelect(selectedInspiration === cuisine ? "" : cuisine)}
+                        className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                          selectedInspiration === cuisine
+                            ? 'bg-white text-sage-700 shadow-sm'
+                            : 'bg-sage-100 hover:bg-sage-200 text-sage-700'
+                        }`}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-sage-500 mr-2"></span>
+                        {cuisine}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                {isAdvancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4">
-              {/* Dietary Constraints */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-900">Dietary Constraints</Label>
-                <div className="flex flex-wrap gap-1">
-                  {dietaryOptions.map((option) => (
-                    <Badge
-                      key={option}
-                      variant={dietaryConstraints.includes(option) ? "default" : "secondary"}
-                      className="cursor-pointer text-xs"
-                      onClick={() => {
-                        const updated = dietaryConstraints.includes(option)
-                          ? dietaryConstraints.filter(d => d !== option)
-                          : [...dietaryConstraints, option];
-                        onDietaryChange(updated);
-                      }}
-                    >
-                      {option}
-                    </Badge>
-                  ))}
+                {/* Dietary Constraints */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-900">Dietary Constraints</Label>
+                  <div className="flex flex-wrap gap-1">
+                    {dietaryOptions.map((option) => (
+                      <Badge
+                        key={option}
+                        variant={dietaryConstraints.includes(option) ? "default" : "secondary"}
+                        className="cursor-pointer text-xs"
+                        onClick={() => {
+                          const updated = dietaryConstraints.includes(option)
+                            ? dietaryConstraints.filter(d => d !== option)
+                            : [...dietaryConstraints, option];
+                          onDietaryChange(updated);
+                        }}
+                      >
+                        {option}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Time Constraints */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-900">Time Constraints</Label>
-                <div className="flex flex-wrap gap-1">
-                  {timeOptions.map((option) => (
-                    <Badge
-                      key={option}
-                      variant={timeConstraints.includes(option) ? "default" : "secondary"}
-                      className="cursor-pointer text-xs"
-                      onClick={() => {
-                        const updated = timeConstraints.includes(option)
-                          ? timeConstraints.filter(t => t !== option)
-                          : [...timeConstraints, option];
-                        onTimeChange(updated);
-                      }}
-                    >
-                      {option.replace('-', ' ')}
-                    </Badge>
-                  ))}
+                {/* Time Constraints */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-900">Time Constraints</Label>
+                  <div className="flex flex-wrap gap-1">
+                    {timeOptions.map((option) => (
+                      <Badge
+                        key={option}
+                        variant={timeConstraints.includes(option) ? "default" : "secondary"}
+                        className="cursor-pointer text-xs"
+                        onClick={() => {
+                          const updated = timeConstraints.includes(option)
+                            ? timeConstraints.filter(t => t !== option)
+                            : [...timeConstraints, option];
+                          onTimeChange(updated);
+                        }}
+                      >
+                        {option.replace('-', ' ')}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Skill Level */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-900">Skill Level</Label>
-                <div className="flex gap-1">
-                  {skillLevels.map((level) => (
-                    <Badge
-                      key={level}
-                      variant={skillLevel === level ? "default" : "secondary"}
-                      className="cursor-pointer text-xs"
-                      onClick={() => onSkillChange(level)}
-                    >
-                      {level}
-                    </Badge>
-                  ))}
+                {/* Skill Level */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-900">Skill Level {skillLevel ? `(${skillLevel})` : ""}</Label>
+                  <div className="flex gap-1">
+                    {skillLevels.map((level) => (
+                      <Badge
+                        key={level}
+                        variant={skillLevel === level ? "default" : "secondary"}
+                        className="cursor-pointer text-xs"
+                        onClick={() => onSkillChange(skillLevel === level ? "" : level)}
+                      >
+                        {level}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Servings */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-900">Servings: {targetServings}</Label>
-                <div className="flex gap-1">
-                  {[1, 2, 4, 6, 8].map((servings) => (
-                    <Badge
-                      key={servings}
-                      variant={targetServings === servings ? "default" : "secondary"}
-                      className="cursor-pointer text-xs"
-                      onClick={() => onServingsChange(servings)}
-                    >
-                      {servings}
-                    </Badge>
-                  ))}
+                {/* Servings */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-900">Servings {targetServings ? `(${targetServings})` : ""}</Label>
+                  <div className="flex gap-1">
+                    {[1, 2, 4, 6, 8].map((servings) => (
+                      <Badge
+                        key={servings}
+                        variant={targetServings === servings ? "default" : "secondary"}
+                        className="cursor-pointer text-xs"
+                        onClick={() => onServingsChange(targetServings === servings ? 0 : servings)}
+                      >
+                        {servings}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Spiciness Level */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-900">Spiciness Level</Label>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((level) => (
-                    <Badge
-                      key={level}
-                      variant={spicinessLevel === level ? "default" : "secondary"}
-                      className="cursor-pointer text-xs"
-                      onClick={() => onSpicinessChange(level)}
-                    >
-                      {'🌶️'.repeat(level)}
-                    </Badge>
-                  ))}
+                {/* Spiciness Level */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-900">Spiciness Level {spicinessLevel > 0 ? `(${'🌶️'.repeat(spicinessLevel)})` : ""}</Label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((level) => (
+                      <Badge
+                        key={level}
+                        variant={spicinessLevel === level ? "default" : "secondary"}
+                        className="cursor-pointer text-xs"
+                        onClick={() => onSpicinessChange(spicinessLevel === level ? 0 : level)}
+                      >
+                        {'🌶️'.repeat(level)}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
 
-          {/* Loading Progress */}
-          <AILoadingProgress
-            isLoading={isGenerating}
-            message={`AI is ${isCreateMode ? 'generating' : 'modifying'} recipe...`}
-            className="mt-4"
-          />
-          
-          <AILoadingProgress
-            isLoading={isSaving}
-            message="Saving recipe..."
-            className="mt-4"
-          />
+          {/* AI Clarity Section */}
+          <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+            <p className="text-xs text-sage-100 leading-relaxed">
+              🤖 <strong>How Culinova works:</strong> We use your description + any selected concepts + optional constraints to generate a perfectly tailored recipe.
+            </p>
+          </div>
           
           {/* Extra padding to ensure space for floating button */}
           <div className="h-24"></div>
         </div>
+      </div>
       </div>
     </div>
   );
