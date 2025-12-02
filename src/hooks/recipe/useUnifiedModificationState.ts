@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { PantryMode, PantryItem } from "@/types";
+import { pantryService } from "@/services/pantry/pantryService";
 
 export const useUnifiedModificationState = () => {
   // Form State (matching RecipeCreatePage pattern)
@@ -7,10 +9,17 @@ export const useUnifiedModificationState = () => {
   const [dietaryConstraints, setDietaryConstraints] = useState<string[]>([]);
   const [timeConstraints, setTimeConstraints] = useState<string[]>([]);
   const [skillLevel, setSkillLevel] = useState("intermediate");
+  const [costPreference, setCostPreference] = useState("");
   const [excludedIngredients, setExcludedIngredients] = useState<string[]>([]);
   const [spicinessLevel, setSpicinessLevel] = useState(3);
   const [targetServings, setTargetServings] = useState(4);
   const [selectedInspiration, setSelectedInspiration] = useState("");
+
+  // Pantry State (matching RecipeCreatePage pattern)
+  const [usePantry, setUsePantry] = useState(false);
+  const [pantryMode, setPantryMode] = useState<PantryMode>('ignore');
+  const [pantryItems, setPantryItems] = useState<PantryItem[]>([]);
+  const [selectedPantryItemIds, setSelectedPantryItemIds] = useState<Map<string, 'required' | 'optional'>>(new Map());
 
   // UI State
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(true);
@@ -40,8 +49,37 @@ export const useUnifiedModificationState = () => {
     setSkillLevel(level === "" ? "intermediate" : level);
   };
 
+  const handleCostChange = (preference: string) => {
+    setCostPreference(preference);
+  };
+
   const handleExclusionsChange = (ingredients: string[]) => {
     setExcludedIngredients(ingredients);
+  };
+
+  // Pantry handlers (matching RecipeCreatePage pattern)
+  const handlePantryModeChange = (mode: PantryMode) => {
+    setPantryMode(mode);
+    if (mode === 'ignore') {
+      setSelectedPantryItemIds(new Map());
+    }
+  };
+
+  const handleSelectionChange = (selectedMap: Map<string, 'required' | 'optional'>) => {
+    setSelectedPantryItemIds(selectedMap);
+  };
+
+  const handleUsePantryChange = (enabled: boolean) => {
+    setUsePantry(enabled);
+  };
+
+  const loadPantryItems = async (userId: string, spaceId?: string) => {
+    try {
+      const items = await pantryService.getPantryItems(userId, spaceId);
+      setPantryItems(items);
+    } catch (error) {
+      console.error('Failed to load pantry items:', error);
+    }
   };
 
   const handleSpicinessChange = (level: number) => {
@@ -63,11 +101,16 @@ export const useUnifiedModificationState = () => {
     setDietaryConstraints([]);
     setTimeConstraints([]);
     setSkillLevel("intermediate");
+    setCostPreference("");
     setExcludedIngredients([]);
     setSpicinessLevel(3);
     setTargetServings(4);
     setSelectedInspiration("");
     setIsPanelCollapsed(true);
+    // Reset pantry state
+    setUsePantry(false);
+    setPantryMode('ignore');
+    setSelectedPantryItemIds(new Map());
   };
 
   // Build AI request object
@@ -79,11 +122,16 @@ export const useUnifiedModificationState = () => {
       dietaryConstraints,
       timeConstraints,
       skillLevel,
+      costPreference,
       excludedIngredients,
       spicinessLevel,
       targetServings,
       cuisinePreference: selectedInspiration,
-      concept: selectedQuickConcept || userInput
+      concept: selectedQuickConcept || userInput,
+      // Include pantry context for AI modifications
+      pantryItems: usePantry ? pantryItems : undefined,
+      pantryMode: usePantry ? pantryMode : 'ignore',
+      selectedPantryItemIds: (usePantry && pantryMode === 'custom_selection') ? selectedPantryItemIds : undefined
     };
   };
 
@@ -94,11 +142,18 @@ export const useUnifiedModificationState = () => {
     dietaryConstraints,
     timeConstraints,
     skillLevel,
+    costPreference,
     excludedIngredients,
     spicinessLevel,
     targetServings,
     selectedInspiration,
     isPanelCollapsed,
+    
+    // Pantry State
+    usePantry,
+    pantryMode,
+    pantryItems,
+    selectedPantryItemIds,
     
     // Handlers
     handleUserInputChange,
@@ -107,10 +162,18 @@ export const useUnifiedModificationState = () => {
     handleDietaryChange,
     handleTimeChange,
     handleSkillChange,
+    handleCostChange,
     handleExclusionsChange,
     handleSpicinessChange,
     handleServingsChange,
     handleTogglePanel,
+    
+    // Pantry Handlers
+    handlePantryModeChange,
+    handleSelectionChange,
+    handleUsePantryChange,
+    loadPantryItems,
+    
     resetState,
     buildModificationRequest
   };

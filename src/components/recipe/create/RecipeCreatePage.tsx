@@ -6,13 +6,13 @@ import { useAuth } from "@/context/AuthContext";
 import { useSpace } from "@/context/SpaceContext";
 import { useToast } from "@/hooks/use-toast";
 import { aiRecipeGenerator, AIRecipeRequest, AIRecipeModificationRequest, AIRecipeResponse, AIRecipeError } from "@/services/ai/recipeGenerator";
+import { logger } from "@/utils/logger";
 import { foodUnitMapper } from "@/services/ai/foodUnitMapper";
 import { recipeService } from "@/services/supabase/recipeService";
 import { pantryService } from '@/services/pantry/pantryService';
 import { PantryMode, PantryItem } from '@/types';
 import UnifiedSidebar from "./UnifiedSidebar";
 import IngredientItem from "../IngredientItem";
-import UnifiedModificationPanel from "../UnifiedModificationPanel";
 import RecipeImageGenerator from "../RecipeImageGenerator";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -86,6 +86,20 @@ const RecipeCreatePage: React.FC = () => {
 
   // Workflow State
   const [isModifyMode, setIsModifyMode] = useState(false);
+  
+  // Debug logging for mode changes
+  React.useEffect(() => {
+    logger.info('Mode changed', { isModifyMode }, 'RecipeCreatePage');
+  }, [isModifyMode]);
+
+  // Debug logging for cost preference state
+  React.useEffect(() => {
+    logger.debug('Cost preference state changed', { 
+      costPreference, 
+      setCostPreferenceType: typeof setCostPreference,
+      hasSetCostPreference: !!setCostPreference 
+    }, 'RecipeCreatePage');
+  }, [costPreference, setCostPreference]);
   const [customInstructions, setCustomInstructions] = useState("");
   const [isModifying, setIsModifying] = useState(false);
   const [modificationError, setModificationError] = useState<AIRecipeError | null>(null);
@@ -297,6 +311,7 @@ const RecipeCreatePage: React.FC = () => {
     setGenerationError(null);
 
     try {
+      logger.debug('About to send API request', { costPreference }, 'RecipeCreatePage');
       const request: AIRecipeRequest = {
         concept: combinedInputs,
         dietaryConstraints,
@@ -312,6 +327,7 @@ const RecipeCreatePage: React.FC = () => {
         pantryMode: usePantry ? pantryMode : 'ignore',
         selectedPantryItemIds: (usePantry && pantryMode === 'custom_selection') ? selectedPantryItemIds : undefined
       };
+      logger.debug('Full API request payload', request, 'RecipeCreatePage');
 
       const response = await aiRecipeGenerator.generateRecipe(request);
 
@@ -1079,8 +1095,8 @@ const RecipeCreatePage: React.FC = () => {
             onClick={isModifyMode ? handleApplyModifications : () => handleGenerateRecipe()}
             disabled={isGenerating || (
               isModifyMode 
-                ? (!userInput.trim() && !selectedQuickConcept && !selectedInspiration && selectedIngredients.size === 0)
-                : (!userInput.trim() && !selectedQuickConcept && !selectedInspiration)
+                ? (!userInput.trim() && !selectedQuickConcept && !selectedInspiration && !costPreference && selectedIngredients.size === 0)
+                : (!userInput.trim() && !selectedQuickConcept && !selectedInspiration && !costPreference)
             )}
             size="lg"
             className="text-white px-6 py-3 rounded-full min-w-[160px] border-0"

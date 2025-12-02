@@ -4,6 +4,7 @@ import RecipeHeader from "./RecipeHeader";
 import RecipeContent from "./RecipeContent";
 import { useRecipe } from "@/context/recipe";
 import { useSpace } from "@/context/SpaceContext";
+import { useAuth } from "@/context/AuthContext";
 import { useUnifiedModificationState } from "@/hooks/recipe/useUnifiedModificationState";
 import { useToast } from "@/hooks/use-toast";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -54,6 +55,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   
   const { currentSpace } = useSpace();
   const { toast } = useToast();
+  const { user } = useAuth(); // Add user access for pantry loading
   const [leftPanelSize, setLeftPanelSize] = useState(4);
   const [isSaving, setIsSaving] = useState(false);
   const [isAiModifying, setIsAiModifying] = useState(false);
@@ -70,21 +72,37 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     dietaryConstraints,
     timeConstraints,
     skillLevel,
+    costPreference,
     excludedIngredients,
     spicinessLevel,
     targetServings,
     selectedInspiration,
     isPanelCollapsed,
+    
+    // Pantry state
+    usePantry,
+    pantryMode,
+    pantryItems,
+    selectedPantryItemIds,
+    
     handleUserInputChange,
     handleQuickConceptSelect,
     handleInspirationSelect,
     handleDietaryChange,
     handleTimeChange,
     handleSkillChange,
+    handleCostChange,
     handleExclusionsChange,
     handleSpicinessChange,
     handleServingsChange,
     handleTogglePanel,
+    
+    // Pantry handlers
+    handlePantryModeChange,
+    handleSelectionChange,
+    handleUsePantryChange,
+    loadPantryItems,
+    
     buildModificationRequest
   } = useUnifiedModificationState();
   
@@ -94,6 +112,13 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   useEffect(() => {
     setLeftPanelSize(isPanelCollapsed ? 4 : 35);
   }, [isPanelCollapsed]);
+
+  // Load pantry items when user and pantry mode are available
+  useEffect(() => {
+    if (user && usePantry) {
+      loadPantryItems(user.id, currentSpace?.id);
+    }
+  }, [user, usePantry, currentSpace?.id, loadPantryItems]);
 
   // Update button position when sidebar resizes
   useEffect(() => {
@@ -192,10 +217,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     });
 
     try {
-      const modificationRequest: AIRecipeModificationRequest = {
-        baseRecipe: recipe,
-        modificationInstructions: combinedInputs || "Custom modification based on selected ingredients",
-      };
+      // Use the hook's buildModificationRequest function to include all advanced options
+      const modificationRequest = buildModificationRequest(recipe, selectedIngredients);
 
       const response = await aiRecipeGenerator.modifyRecipe(modificationRequest);
 
@@ -326,8 +349,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         <ResizablePanel 
           defaultSize={4}
           size={leftPanelSize}
-          minSize={isPanelCollapsed ? 4 : 25} 
-          maxSize={isPanelCollapsed ? 4 : 40}
+          minSize={8}
+          maxSize={100}
           collapsible
           collapsedSize={4}
           onCollapse={() => {
@@ -335,6 +358,9 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           }}
           onExpand={() => {
             handleTogglePanel();
+          }}
+          onResize={(size) => {
+            setLeftPanelSize(size);
           }}
           className={`relative transition-all duration-300 ${
             isPanelCollapsed 
@@ -357,15 +383,27 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             dietaryConstraints={dietaryConstraints}
             timeConstraints={timeConstraints}
             skillLevel={skillLevel}
+            costPreference={costPreference}
             excludedIngredients={excludedIngredients}
             spicinessLevel={spicinessLevel}
             targetServings={targetServings}
             onDietaryChange={handleDietaryChange}
             onTimeChange={handleTimeChange}
             onSkillChange={handleSkillChange}
+            onCostChange={handleCostChange}
             onExclusionsChange={handleExclusionsChange}
             onSpicinessChange={handleSpicinessChange}
             onServingsChange={handleServingsChange}
+            
+            // Pantry settings
+            usePantry={usePantry}
+            pantryMode={pantryMode}
+            pantryItems={pantryItems}
+            selectedPantryItemIds={selectedPantryItemIds}
+            onUsePantryChange={handleUsePantryChange}
+            onPantryModeChange={handlePantryModeChange}
+            onSelectionChange={handleSelectionChange}
+            
             selectedIngredients={selectedIngredients}
             onRemoveIngredientSelection={removeIngredientSelection}
             isGenerating={isAiModifying}
@@ -407,7 +445,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         >
           <Button
             onClick={handleApplyModifications}
-            disabled={isAiModifying || (!userInput.trim() && !selectedQuickConcept && !selectedInspiration && selectedIngredients.size === 0)}
+            disabled={isAiModifying || (!userInput.trim() && !selectedQuickConcept && !selectedInspiration && !costPreference && selectedIngredients.size === 0)}
             size="lg"
             className="text-white px-6 py-3 rounded-full min-w-[160px] border-0"
             style={{ 

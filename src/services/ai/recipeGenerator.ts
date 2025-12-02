@@ -1,6 +1,6 @@
 import { Recipe, Ingredient, PantryItem, PantryMode } from "@/types";
-import OpenAI from 'openai';
 import { foodUnitMapper } from './foodUnitMapper';
+import { logger } from "@/utils/logger";
 
 export interface AIRecipeRequest {
   concept: string;
@@ -50,32 +50,21 @@ export interface AIRecipeError {
 
 /**
  * Service for AI-powered recipe generation
- * Leverages patterns from existing modification system
+ * Uses Gemini 2.5 Flash via Supabase Edge Function
  */
 export class AIRecipeGenerator {
-  private openai: OpenAI;
-  
-  constructor() {
-    this.openai = new OpenAI({
-      apiKey: import.meta.env.VITE_AI_API_KEY,
-      dangerouslyAllowBrowser: true, // Required for frontend usage
-      // Default headers for latest models
-      defaultHeaders: {
-        'OpenAI-Beta': 'assistants=v2' // Enable latest features
-      }
-    });
-  }
+  // OpenAI client removed - now using Gemini via edge function
   
   /**
    * Build structured prompt from user constraints
    * Adapted from AIModificationPanel's prompt building logic
    */
   private buildPrompt(request: AIRecipeRequest): string {
-    console.log('🔍 DEBUG: buildPrompt called with:', {
+    logger.debug('buildPrompt called', {
       pantryMode: request.pantryMode,
       pantryItemsLength: request.pantryItems?.length || 0,
       selectedPantryItemIdsSize: request.selectedPantryItemIds?.size || 0
-    });
+    }, 'RecipeGenerator');
 
     const {
       concept,
@@ -171,13 +160,17 @@ export class AIRecipeGenerator {
     
     // Add cost preference
     if (costPreference) {
+      logger.debug('Adding cost preference to prompt', { costPreference }, 'RecipeGenerator');
       const costMap: Record<string, string> = {
         'cost-conscious': 'budget-friendly with affordable ingredients',
         'standard': 'regular ingredient quality and cost',
         'premium-ingredients': 'high-quality, premium ingredients regardless of cost'
       };
       const costDescription = costMap[costPreference] || costPreference;
+      logger.debug('Cost description mapped', { costDescription }, 'RecipeGenerator');
       prompt += `\nCost preference: ${costDescription}`;
+    } else {
+      logger.debug('No cost preference provided, skipping', {}, 'RecipeGenerator');
     }
     
     // Add exclusions
@@ -610,13 +603,13 @@ Keep the ingredients and steps realistic and practical. Make sure the JSON is va
   }
 
   /**
-   * Call AI service (OpenAI via Edge Function for both generation and modification)
+   * Call AI service (Gemini via Supabase Edge Function)
    */
   private async callAIService(requestOrPrompt: any): Promise<any> {
     try {
       // Route all requests to edge function for consistency and security
       console.log('Calling AI service with request:', requestOrPrompt);
-      const response = await this.callOpenAI(requestOrPrompt);
+      const response = await this.callEdgeFunction(requestOrPrompt);
       console.log('AI service returned response type:', typeof response);
       console.log('AI service returned response:', response);
       return response;
@@ -653,9 +646,9 @@ Keep the ingredients and steps realistic and practical. Make sure the JSON is va
   }
 
   /**
-   * Call OpenAI API via Supabase Edge Function
+   * Call Gemini API via Supabase Edge Function
    */
-  private async callOpenAI(recipeRequest: any): Promise<any> {
+  private async callEdgeFunction(recipeRequest: any): Promise<any> {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -707,93 +700,6 @@ Keep the ingredients and steps realistic and practical. Make sure the JSON is va
       console.error('Error calling recipe edge function:', error);
       throw error;
     }
-  }
-  
-  /**
-   * Fallback to older model if latest model unavailable
-   */
-  private async callWithFallbackModel(prompt: string): Promise<any> {
-    try {
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-5',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a professional chef and recipe developer. Always respond with valid JSON only. Create detailed, practical recipes that users can actually make. Follow the exact JSON structure provided in the prompt.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_completion_tokens: 2000,
-        response_format: { type: 'json_object' }
-      });
-
-      const response = completion.choices[0]?.message?.content;
-      if (!response) {
-        throw new Error('No response from fallback model');
-      }
-
-      console.log('Fallback model response received:', response);
-      return JSON.parse(response);
-      
-    } catch (error: any) {
-      console.error('Fallback model also failed:', error);
-      return this.getFallbackResponse(prompt);
-    }
-  }
-  
-  /**
-   * Fallback response for when AI fails
-   */
-  private getFallbackResponse(prompt: string): any {
-    if (prompt.toLowerCase().includes('smoothie')) {
-      return {
-        title: "High-Protein Berry Smoothie",
-        description: "A creamy, nutritious smoothie packed with protein and fresh berries",
-        prepTimeMinutes: 5,
-        cookTimeMinutes: 0,
-        servings: 2,
-        difficulty: "easy",
-        ingredients: [
-          { name: "Greek yogurt", amount: "1", unit: "cup", notes: "plain or vanilla" },
-          { name: "Mixed berries", amount: "1", unit: "cup", notes: "fresh or frozen" },
-          { name: "Protein powder", amount: "1", unit: "scoop", notes: "vanilla or unflavored" },
-          { name: "Almond milk", amount: "1/2", unit: "cup", notes: "unsweetened" },
-          { name: "Spinach", amount: "1", unit: "handful", notes: "optional" }
-        ],
-        steps: [
-          "Add Greek yogurt, berries, protein powder, and almond milk to blender",
-          "Add spinach if using for extra nutrients",
-          "Blend on high until smooth and creamy, about 30-60 seconds",
-          "Taste and adjust consistency with more almond milk if needed",
-          "Pour into glasses and serve immediately"
-        ],
-        tags: ["smoothie", "high-protein", "breakfast", "healthy", "quick"]
-      };
-    }
-    
-    // Default fallback recipe
-    return {
-      title: "Simple Generated Recipe",
-      description: "A basic recipe created from your concept",
-      prepTimeMinutes: 15,
-      cookTimeMinutes: 30,
-      servings: 4,
-      difficulty: "medium",
-      ingredients: [
-        { name: "Main ingredient", amount: "2", unit: "cups" },
-        { name: "Secondary ingredient", amount: "1", unit: "tablespoon" },
-        { name: "Seasoning", amount: "1", unit: "teaspoon" }
-      ],
-      steps: [
-        "Prepare all ingredients",
-        "Cook according to instructions",
-        "Serve and enjoy"
-      ],
-      tags: ["generated", "custom"]
-    };
   }
 }
 

@@ -1,12 +1,13 @@
 // Deno-specific imports - may show IDE errors but work correctly at runtime
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -22,124 +23,49 @@ serve(async (req) => {
       );
     }
 
-    // Check if this is a modification request
+    // Initialize Gemini
+    const apiKey = Deno.env.get('GEMINI_API_KEY');
+    if (!apiKey) {
+      throw new Error('Server misconfiguration: Missing GEMINI_API_KEY');
+    }
+    
+    console.log('🤖 Initializing Gemini 2.5 Flash API...');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    
+    // Configure Gemini 2.5 Flash for speed
+    console.log('⚡ Using gemini-2.5-flash model for fast generation');
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.7,
+      }
+    });
+    
+    console.log('✅ Gemini model initialized successfully');
+
+    // Build prompt based on request type
+    let prompt: string;
     if (recipeRequest.modificationInstructions && recipeRequest.baseRecipe) {
       // Handle modification request
-      const prompt = constructModificationPrompt(recipeRequest);
-      
-      // Call OpenAI API for modification
-      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`
-        },
-        body: JSON.stringify({
-          model: Deno.env.get('OPENAI_MODEL') || 'gpt-5-mini',
-          messages: [
-            {
-              role: 'system',
-              content: 'Professional chef. Modify recipes based on instructions. Respond with valid JSON only using the same format as the original recipe.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          max_completion_tokens: parseInt(Deno.env.get('OPENAI_MAX_TOKENS') || '6000'),
-          response_format: { type: 'json_object' },
-          stream: false
-        })
-      });
-
-      if (!openaiResponse.ok) {
-        const error = await openaiResponse.text();
-        console.error('OpenAI API error:', error);
-        return new Response(
-          JSON.stringify({ success: false, error: 'OpenAI API error' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-        );
-      }
-
-      const data = await openaiResponse.json();
-      let recipeResponse = data.choices[0]?.message?.content;
-
-      if (!recipeResponse) {
-        return new Response(
-          JSON.stringify({ success: false, error: 'No response from OpenAI' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-        );
-      }
-
-      // Post-process to strip "Undefined" from recipe titles
-      try {
-        const parsedResponse = JSON.parse(recipeResponse);
-        if (parsedResponse.title && typeof parsedResponse.title === 'string') {
-          // Remove "Undefined" prefix with any separator (— or -)
-          parsedResponse.title = parsedResponse.title.replace(/^Undefined\s*[—-]\s*/i, '').trim();
-          recipeResponse = JSON.stringify(parsedResponse);
-        }
-      } catch (e) {
-        // If parsing fails, return original response
-        console.log('Could not parse recipe response for title cleanup:', e);
-      }
-
-      return new Response(
-        JSON.stringify({ success: true, response: recipeResponse }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      );
+      prompt = constructModificationPrompt(recipeRequest);
+    } else {
+      // Handle generation request
+      prompt = constructPrompt(recipeRequest);
     }
 
-    // Handle generation request (existing logic)
-    const prompt = constructPrompt(recipeRequest);
+    // Generate content with Gemini
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
 
-    // Call OpenAI API
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`
-      },
-      body: JSON.stringify({
-        model: Deno.env.get('OPENAI_MODEL') || 'gpt-5-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'Professional chef. Create practical recipes. Respond with valid JSON only.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_completion_tokens: parseInt(Deno.env.get('OPENAI_MAX_TOKENS') || '6000'),
-        response_format: { type: 'json_object' },
-        stream: false
-      })
-    });
-
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.text();
-      console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${openaiResponse.status}`);
-    }
-
-    const openaiData = await openaiResponse.json();
-    const response = openaiData.choices[0]?.message?.content;
-
-    if (!response) {
-      throw new Error('No response content from OpenAI');
+    if (!text) {
+      throw new Error('No response from Gemini');
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        response: response
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
+      JSON.stringify({ success: true, response: text }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
   } catch (error) {
@@ -187,7 +113,9 @@ function constructPrompt(request: any): string {
     selectedPantryItemIds
   } = request;
 
-  let prompt = `Create a detailed recipe for: "${concept}".\n\n`;
+  let prompt = `You are a professional chef. Create a detailed recipe for: "${concept}".
+
+`;
 
   // Handle custom pantry selection
   if (pantryMode === 'custom_selection' && selectedPantryItemIds && pantryItems) {
@@ -239,16 +167,52 @@ function constructPrompt(request: any): string {
     }
   }
 
+  // Add constraints in Gemini-preferred format (at the top)
   if (dietaryConstraints && dietaryConstraints.length > 0) {
-    prompt += `Dietary requirements: ${dietaryConstraints.join(', ')}.\n`;
+    const dietaryMap: Record<string, string> = {
+      'vegan': 'vegan (no animal products)',
+      'vegetarian': 'vegetarian (no meat but may include dairy/eggs)',
+      'pescatarian': 'pescatarian (no meat but may include fish/seafood)',
+      'gluten-free': 'gluten-free (no wheat, barley, rye)',
+      'dairy-free': 'dairy-free (no milk, cheese, yogurt)',
+      'nut-free': 'nut-free (no nuts or nut products)',
+      'soy-free': 'soy-free (no soy products)',
+      'low-sodium': 'low sodium (minimal salt, no high-sodium ingredients)',
+      'low-carb': 'low carbohydrate',
+      'keto': 'keto-friendly (low carb, high fat)',
+      'high-protein': 'high protein (20g+ protein per serving)',
+      'no-mayo': 'no mayonnaise or mayonnaise-based ingredients',
+      'no-broccoli': 'no broccoli or broccoli-containing ingredients',
+      'no-olives': 'no olives or olive products'
+    };
+    
+    const dietaryDescriptions = dietaryConstraints
+      .map((id: string) => dietaryMap[id] || id)
+      .join(', ');
   }
 
   if (timeConstraints && timeConstraints.length > 0) {
-    prompt += `Time constraints: ${timeConstraints.join(', ')}.\n`;
+    const timeMap: Record<string, string> = {
+      'under-15': 'total time under 15 minutes',
+      'under-30': 'total time under 30 minutes',
+      '1-hour': 'total time under 1 hour',
+      '5-ingredients': 'maximum 5 main ingredients',
+      'one-pot': 'one-pot or one-pan meal (minimal cleanup)',
+      'no-cook': 'no cooking required'
+    };
+    
+    const timeDescriptions = timeConstraints
+      .map((id: string) => timeMap[id] || id)
+      .join(', ');
   }
 
   if (skillLevel) {
-    prompt += `Skill level: ${skillLevel}.\n`;
+    const skillMap: Record<string, string> = {
+      'beginner': 'beginner-friendly (simple techniques, basic equipment)',
+      'intermediate': 'intermediate (some experience, standard equipment)',
+      'advanced': 'restaurant-quality (complex techniques, special equipment)'
+    };
+    prompt += `Skill level: ${skillMap[skillLevel] || skillLevel}.\n`;
   }
 
   if (costPreference) {
@@ -276,26 +240,27 @@ function constructPrompt(request: any): string {
     prompt += `Meal type: ${mealType}.\n`;
   }
 
-  prompt += `\n\nReturn a complete recipe in JSON format with these exact fields:
+  prompt += `
+
+IMPORTANT constraints:
+- Ensure "prepTimeMinutes" and "cookTimeMinutes" are numbers.
+- If "pantryItems" are provided, strictly follow the "pantryMode" logic (e.g. if 'strict', do not add extra items).
+- Make the recipe practical and realistic.
+
+Respond with ONLY valid JSON matching this exact schema:
 {
-  "title": "Recipe title",
-  "description": "Detailed description",
+  "title": "string",
+  "description": "string",
   "prepTimeMinutes": number,
   "cookTimeMinutes": number,
   "servings": number,
-  "difficulty": "easy|medium|hard",
+  "difficulty": "easy" | "medium" | "hard",
   "ingredients": [
-    {
-      "name": "ingredient name",
-      "unit": "measurement unit",
-      "amount": "amount as string"
-    }
+    { "name": "string", "amount": "string", "unit": "string", "notes": "string" }
   ],
-  "steps": ["step 1", "step 2", "step 3"],
-  "tags": ["tag1", "tag2"]
-}
-
-Keep the ingredients and steps realistic and practical. Make sure the JSON is valid and properly formatted.`;
+  "steps": ["string (step 1)", "string (step 2)"],
+  "tags": ["string"]
+}`;
 
   return prompt;
 }
@@ -303,7 +268,16 @@ Keep the ingredients and steps realistic and practical. Make sure the JSON is va
 function constructModificationPrompt(request: any): string {
   const { baseRecipe, modificationInstructions } = request;
 
-  let prompt = `Modify this recipe based on the following instructions.\n\nCurrent Recipe:\nTitle: ${baseRecipe.title}\nDescription: ${baseRecipe.description}\nServings: ${baseRecipe.servings}\nDifficulty: ${baseRecipe.difficulty}\n\nIngredients:\n`;
+  let prompt = `You are a professional chef. Modify this recipe based on the following instructions.
+
+Current Recipe:
+Title: ${baseRecipe.title}
+Description: ${baseRecipe.description}
+Servings: ${baseRecipe.servings}
+Difficulty: ${baseRecipe.difficulty}
+
+Ingredients:
+`;
 
   if (baseRecipe.ingredients && baseRecipe.ingredients.length > 0) {
     baseRecipe.ingredients.forEach((ing: any) => {
@@ -320,23 +294,19 @@ function constructModificationPrompt(request: any): string {
 
   prompt += `\nModification Instructions: ${modificationInstructions}\n\n`;
   prompt += `IMPORTANT: Do NOT include "Undefined" or any placeholder text in the title. Provide a complete, descriptive title for the modified recipe.\n\n`;
-  prompt += `Return a complete modified recipe in JSON format with these exact fields:
+  prompt += `Respond with ONLY valid JSON matching this exact schema:
 {
-  "title": "Recipe title",
-  "description": "Modified description",
+  "title": "string",
+  "description": "string",
   "prepTimeMinutes": number,
   "cookTimeMinutes": number,
   "servings": number,
-  "difficulty": "easy|medium|hard",
+  "difficulty": "easy" | "medium" | "hard",
   "ingredients": [
-    {
-      "name": "ingredient name",
-      "unit": "measurement unit",
-      "amount": "amount as string"
-    }
+    { "name": "string", "amount": "string", "unit": "string", "notes": "string" }
   ],
-  "steps": ["modified step 1", "modified step 2", "modified step 3"],
-  "tags": ["tag1", "tag2"]
+  "steps": ["string (step 1)", "string (step 2)"],
+  "tags": ["string"]
 }
 
 Keep the ingredients and steps realistic and practical. Make sure the JSON is valid and properly formatted.`;

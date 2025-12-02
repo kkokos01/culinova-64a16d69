@@ -1,14 +1,15 @@
-import React, { useState, forwardRef } from "react";
+import React, { useRef, useEffect, useState, forwardRef } from 'react';
 import { Recipe, Ingredient, PantryItem, PantryMode } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ChevronRight, ArrowLeft, Sparkles, Clock, ChefHat, X, Plus, Minus } from "lucide-react";
+import { logger } from "@/utils/logger";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Wand2, Lightbulb, Settings, Loader2, Check, Package } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronUp, Wand2, Lightbulb, Settings, Loader2, Check, Package } from "lucide-react";
 import AILoadingProgress from "@/components/ui/AILoadingProgress";
 import PantryModeSelector from "./PantryModeSelector";
 
@@ -77,6 +78,8 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
   onQuickConceptSelect,
   selectedInspiration,
   onInspirationSelect,
+  
+  // Advanced options
   dietaryConstraints,
   timeConstraints,
   skillLevel,
@@ -106,6 +109,16 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
   isGenerating,
   isSaving
 }, ref) => {
+  // Debug logging for props and mode
+  React.useEffect(() => {
+    logger.debug('UnifiedSidebar rendered', { 
+      mode, 
+      costPreference, 
+      hasCostCallback: typeof onCostChange === 'function',
+      onCostChangeType: typeof onCostChange,
+      dietaryConstraintsCount: dietaryConstraints?.length || 0
+    }, 'UnifiedSidebar');
+  }, [mode, costPreference, onCostChange, dietaryConstraints]);
   const [isQuickConceptsOpen, setIsQuickConceptsOpen] = useState(true);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isInspirationOpen, setIsInspirationOpen] = useState(false);
@@ -391,7 +404,23 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
                         key={cost}
                         variant={costPreference === cost ? "default" : "secondary"}
                         className="cursor-pointer text-xs"
-                        onClick={() => onCostChange(costPreference === cost ? "" : cost)}
+                        onClick={() => {
+                        if (typeof onCostChange !== 'function') {
+                          logger.error('onCostChange is not a function', { 
+                            onCostChange,
+                            onCostChangeType: typeof onCostChange,
+                            mode,
+                            cost
+                          }, 'UnifiedSidebar');
+                          return;
+                        }
+                        logger.debug('Cost preference clicked', { 
+                          cost, 
+                          currentCostPreference: costPreference,
+                          willSetTo: costPreference === cost ? "" : cost
+                        }, 'UnifiedSidebar');
+                        onCostChange(costPreference === cost ? "" : cost);
+                      }}
                       >
                         {cost.replace('-', ' ')}
                       </Badge>
