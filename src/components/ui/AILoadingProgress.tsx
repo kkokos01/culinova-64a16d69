@@ -5,12 +5,16 @@ interface AILoadingProgressProps {
   isLoading: boolean;
   message: string;
   className?: string;
+  floating?: boolean;
+  large?: boolean;
 }
 
 const AILoadingProgress: React.FC<AILoadingProgressProps> = ({
   isLoading,
   message,
-  className = ""
+  className = "",
+  floating = false,
+  large = false
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   
@@ -42,11 +46,14 @@ const AILoadingProgress: React.FC<AILoadingProgressProps> = ({
   if (!isLoading) return null;
 
   return (
-    <div className={`flex items-center justify-center ${className}`}>
-      <div className="flex flex-col items-center text-sage-800">
-        <Loader2 className="mb-2 h-6 w-6 animate-spin" />
-        <span className="text-sm font-medium">{message}</span>
-        <span className="text-xs text-sage-600 mt-1 italic">
+    <div className={`
+      ${floating ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-6' : 'flex items-center justify-center'}
+      ${className}
+    `}>
+      <div className={`flex flex-col items-center text-sage-800 ${large ? 'scale-125' : ''}`}>
+        <Loader2 className={`mb-3 ${large ? 'h-10 w-10' : 'h-6 w-6'} animate-spin`} />
+        <span className={`font-medium ${large ? 'text-lg' : 'text-sm'}`}>{message}</span>
+        <span className={`text-sage-600 mt-2 italic ${large ? 'text-base' : 'text-xs'}`}>
           {chefSteps[currentStep]}
         </span>
       </div>

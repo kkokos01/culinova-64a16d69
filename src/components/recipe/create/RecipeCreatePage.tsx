@@ -13,7 +13,7 @@ import IngredientItem from "../IngredientItem";
 import UnifiedModificationPanel from "../UnifiedModificationPanel";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles, Loader2, Save, ChefHat, Wand2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, Save, ChefHat, Wand2, Plus, Minus, RotateCcw } from "lucide-react";
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
 import AILoadingProgress from "@/components/ui/AILoadingProgress";
 
@@ -99,6 +99,56 @@ const RecipeCreatePage: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [generatedRecipe, setGeneratedRecipe] = useState<AIRecipeResponse | null>(null);
+
+  // Serving Size Adjustment State
+  const [originalServings, setOriginalServings] = useState<number>(4);
+  const [currentServings, setCurrentServings] = useState<number>(4);
+
+  // Helper function to scale ingredient amounts and add ounce conversions
+  const scaleIngredientAmount = (originalAmount: number, unitName: string): string => {
+    if (currentServings === originalServings) {
+      return formatMeasurement(originalAmount, unitName);
+    }
+    
+    const scalingRatio = currentServings / originalServings;
+    const scaledAmount = originalAmount * scalingRatio;
+    
+    return formatMeasurement(scaledAmount, unitName);
+  };
+
+  // Helper function to format measurements with ounce conversions
+  const formatMeasurement = (amount: number, unitName: string): string => {
+    const formattedAmount = amount === Math.round(amount) 
+      ? Math.round(amount).toString() 
+      : amount.toFixed(2).replace(/\.?0+$/, '');
+    
+    // Check if unit is a weight measurement (grams or kilograms)
+    const isWeightUnit = unitName.toLowerCase().includes('g') || 
+                         unitName.toLowerCase().includes('gram') ||
+                         unitName.toLowerCase().includes('kg') ||
+                         unitName.toLowerCase().includes('kilogram');
+    
+    if (isWeightUnit) {
+      // Convert to ounces (1g = 0.035274oz, 1kg = 35.274oz)
+      let grams = amount;
+      if (unitName.toLowerCase().includes('kg')) {
+        grams = amount * 1000; // Convert kg to grams first
+      }
+      
+      const ounces = grams * 0.035274;
+      const formattedOunces = ounces.toFixed(1);
+      
+      return `${formattedAmount} ${unitName} (${formattedOunces}oz)`;
+    }
+    
+    return `${formattedAmount} ${unitName}`;
+  };
+
+  // Helper function to adjust servings
+  const adjustServings = (increment: number) => {
+    const newServings = Math.max(1, currentServings + increment);
+    setCurrentServings(newServings);
+  };
 
   // Effects
   useEffect(() => {
@@ -209,6 +259,10 @@ const RecipeCreatePage: React.FC = () => {
       }
 
       setGeneratedRecipe(response);
+
+      // Set original and current servings from generated recipe
+      setOriginalServings(response.servings);
+      setCurrentServings(response.servings);
 
       // Create original recipe version and switch to modify mode
       const originalVersion: RecipeVersion = {
@@ -692,10 +746,12 @@ const RecipeCreatePage: React.FC = () => {
               )}
               
               {isGenerating ? (
-                <div className="flex flex-col items-center justify-center h-64">
+                <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center">
                   <AILoadingProgress 
                     isLoading={isGenerating}
-                    message="Creating Your Recipe..."
+                    message={isModifyMode ? "Modifying Your Recipe..." : "Creating Your Recipe..."}
+                    floating={true}
+                    large={true}
                   />
                 </div>
               ) : recipe ? (
@@ -744,8 +800,46 @@ const RecipeCreatePage: React.FC = () => {
                         </div>
                       )}
                       {recipe.servings && (
-                        <div>
-                          <span className="font-medium">Servings:</span> {recipe.servings}
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">Servings:</span>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => adjustServings(-1)}
+                              className="h-6 w-6 p-0"
+                              disabled={currentServings <= 1}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="px-2 py-1 text-sm font-medium">
+                              {currentServings}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => adjustServings(1)}
+                              className="h-6 w-6 p-0"
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                            {currentServings !== originalServings && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setCurrentServings(originalServings)}
+                                className="h-6 w-6 p-0 ml-1"
+                                title="Reset to original servings"
+                              >
+                                <RotateCcw className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                          {currentServings !== originalServings && (
+                            <span className="text-xs text-gray-400">
+                              (scaled from {originalServings})
+                            </span>
+                          )}
                         </div>
                       )}
                       {recipe.difficulty && (
@@ -764,6 +858,7 @@ const RecipeCreatePage: React.FC = () => {
                       <div className="space-y-2">
                         {recipe.ingredients.map((ingredient, index) => {
                           const selectedIngredient = selectedIngredients.get(ingredient.id);
+                          const scaledAmount = scaleIngredientAmount(ingredient.amount, ingredient.unit_name);
                           return (
                             <IngredientItem
                               key={index}
@@ -771,6 +866,7 @@ const RecipeCreatePage: React.FC = () => {
                               isSelected={!!selectedIngredient}
                               selectedAction={selectedIngredient?.action}
                               onSelectIngredient={handleSelectIngredient}
+                              scaledAmount={scaledAmount}
                             />
                           );
                         })}

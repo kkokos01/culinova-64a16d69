@@ -9,13 +9,15 @@ interface IngredientItemProps {
   isSelected: boolean;
   selectedAction?: "increase" | "decrease" | "remove";
   onSelectIngredient: (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => void;
+  scaledAmount?: string;
 }
 
 const IngredientItem: React.FC<IngredientItemProps> = ({
   ingredient,
   isSelected,
   selectedAction,
-  onSelectIngredient
+  onSelectIngredient,
+  scaledAmount
 }) => {
   // Helper function to get the appropriate styling based on action
   const getIngredientStyles = () => {
@@ -76,7 +78,7 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
         <div className="flex-1 min-w-0">
           <div className={`flex items-baseline gap-x-1.5 text-base ${styles.text}`}>
             <span className="font-medium whitespace-nowrap">
-              {ingredient.amount} {unitName}
+              {scaledAmount || ingredient.amount} {unitName}
             </span>
             <span className="truncate">{foodName}</span>
           </div>
