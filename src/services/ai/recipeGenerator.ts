@@ -53,7 +53,7 @@ export interface AIRecipeError {
  * Uses Gemini 2.5 Flash via Supabase Edge Function
  */
 export class AIRecipeGenerator {
-  // OpenAI client removed - now using Gemini via edge function
+  // Gemini client removed - now using Gemini via edge function
   
   /**
    * Build structured prompt from user constraints
@@ -626,7 +626,7 @@ Keep the ingredients and steps realistic and practical. Make sure the JSON is va
     try {
       console.log('Parsing AI response:', response);
       
-      // Response is already parsed JSON from callOpenAI
+      // Response is already parsed JSON from callEdgeFunction
       // Just validate and return it
       if (!response) {
         throw new Error('No response from AI service');
