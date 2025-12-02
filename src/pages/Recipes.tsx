@@ -9,6 +9,7 @@ import { Recipe } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useSpace } from "@/context/SpaceContext";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { useSupabaseRecipes } from "@/hooks/useSupabaseRecipes";
 import { useSeedRecipes } from "@/utils/seedRecipes";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const Recipes = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [findingTikka, setFindingTikka] = useState(false);
+  const [notificationShown, setNotificationShown] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   
   const { recipes, loading: isLoading, error, refreshRecipes } = useSupabaseRecipes();
@@ -33,8 +35,9 @@ const Recipes = () => {
   
   useEffect(() => {
     const findDefaultRecipe = async () => {
-      if (!findingTikka && recipes.length === 0 && !isLoading && user) {
+      if (!findingTikka && recipes.length === 0 && !isLoading && user && !notificationShown) {
         setFindingTikka(true);
+        setNotificationShown(true);
         
         try {
           console.log("Looking for a default recipe...");
@@ -63,9 +66,10 @@ const Recipes = () => {
             console.log("No default recipe found");
             
             toast({
-              title: "No Recipes Found",
-              description: "Try adding sample recipes by clicking the button above.",
-              duration: 5000
+              title: "Welcome to Culinova!",
+              description: "Get started by creating your first recipe or saving one from our AI suggestions.",
+              duration: 8000,
+              action: <ToastAction altText="Create Recipe" onClick={() => navigate("/create")}>Create Recipe</ToastAction>
             });
           }
         } catch (err) {
@@ -77,7 +81,7 @@ const Recipes = () => {
     };
     
     findDefaultRecipe();
-  }, [recipes, isLoading, user, navigate, toast, findingTikka, searchParams, setSearchParams]);
+  }, [recipes, isLoading, user, navigate, toast, findingTikka, notificationShown, searchParams, setSearchParams]);
   
   useEffect(() => {
     if (error) {

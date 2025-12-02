@@ -675,7 +675,15 @@ const RecipeCreatePage: React.FC = () => {
                 </div>
               )}
               
-              {recipe ? (
+              {isGenerating ? (
+                <div className="flex flex-col items-center justify-center h-64">
+                  <Loader2 className="h-16 w-16 mb-6 text-sage-500 animate-spin" />
+                  <div className="text-center mb-8">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Creating Your Recipe...</h2>
+                    <p className="text-gray-600">Our AI is crafting something delicious just for you</p>
+                  </div>
+                </div>
+              ) : recipe ? (
                 <>
                   {/* Recipe Header */}
                   <div className="mb-6">
