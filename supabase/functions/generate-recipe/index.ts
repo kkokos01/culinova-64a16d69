@@ -158,9 +158,85 @@ serve(async (req) => {
 });
 
 function constructPrompt(request: any): string {
-  const { concept, dietaryConstraints, timeConstraints, skillLevel, excludedIngredients, includedIngredients, cuisineType, mealType } = request;
+  console.log('🔍 EDGE DEBUG: Raw request object:', JSON.stringify(request, null, 2));
+  
+  const { 
+    concept, 
+    dietaryConstraints, 
+    timeConstraints, 
+    skillLevel, 
+    excludedIngredients, 
+    includedIngredients, 
+    cuisineType, 
+    mealType,
+    pantryMode,
+    pantryItems,
+    selectedPantryItemIds
+  } = request;
+
+  console.log('🔍 EDGE DEBUG: Extracted values:');
+  console.log('  - pantryMode:', pantryMode);
+  console.log('  - pantryItems length:', pantryItems?.length || 0);
+  console.log('  - selectedPantryItemIds:', selectedPantryItemIds);
+  console.log('  - selectedPantryItemIds type:', typeof selectedPantryItemIds);
 
   let prompt = `Create a detailed recipe for: "${concept}".\n\n`;
+
+  // Handle custom pantry selection
+  if (pantryMode === 'custom_selection' && selectedPantryItemIds && pantryItems) {
+    console.log('🔍 EDGE DEBUG: Processing custom pantry selection');
+    console.log('🔍 EDGE DEBUG: selectedPantryItemIds:', selectedPantryItemIds);
+    console.log('🔍 EDGE DEBUG: pantryItems:', pantryItems);
+    
+    // Convert the selectedPantryItemIds object (Map serialized as object) back to usable format
+    const selectedMap = selectedPantryItemIds;
+    const requiredItems: any[] = [];
+    const optionalItems: any[] = [];
+    
+    // Filter and categorize selected items
+    pantryItems.forEach((item: any) => {
+      const state = selectedMap[item.id];
+      if (state === 'required') {
+        requiredItems.push(item);
+      } else if (state === 'optional') {
+        optionalItems.push(item);
+      }
+    });
+    
+    console.log('🔍 EDGE DEBUG: Required items:', requiredItems);
+    console.log('🔍 EDGE DEBUG: Optional items:', optionalItems);
+    
+    if (requiredItems.length > 0 || optionalItems.length > 0) {
+      prompt += `CUSTOM PANTRY SELECTION:\n`;
+      
+      if (requiredItems.length > 0) {
+        prompt += `\nREQUIRED ingredients (MUST include these as main components):\n`;
+        requiredItems.forEach(item => {
+          const quantity = item.quantity ? ` (${item.quantity})` : '';
+          prompt += `- ${item.name}${quantity}\n`;
+        });
+      }
+      
+      if (optionalItems.length > 0) {
+        prompt += `\nOPTIONAL ingredients (use if they enhance the dish - these are nice to have but not essential):\n`;
+        optionalItems.forEach(item => {
+          const quantity = item.quantity ? ` (${item.quantity})` : '';
+          prompt += `- ${item.name}${quantity}\n`;
+        });
+      }
+      
+      // Add specific instructions based on what's selected
+      if (requiredItems.length > 0 && optionalItems.length > 0) {
+        prompt += `\nCreate a recipe that prominently features the REQUIRED ingredients as the main components. Incorporate the OPTIONAL ingredients if they naturally complement the dish and enhance the flavor, but the recipe should still work well without them. Focus on making the required ingredients shine.\n`;
+      } else if (requiredItems.length > 0) {
+        prompt += `\nCreate a recipe that prominently features these REQUIRED ingredients as the main components. You may add basic staples like water, oil, salt, pepper, and up to 2-3 additional common ingredients (like onions, garlic) if essential to complete the dish, but focus on using the required ingredients as the foundation and stars of the recipe.\n`;
+      } else {
+        prompt += `\nCreate a recipe that would be enhanced by these OPTIONAL ingredients. Use them if they naturally complement the dish you're creating. You may add basic staples and other common ingredients as needed to create a complete recipe.\n`;
+      }
+      
+      prompt += `\n`;
+    }
+  }
 
   if (dietaryConstraints && dietaryConstraints.length > 0) {
     prompt += `Dietary requirements: ${dietaryConstraints.join(', ')}.\n`;

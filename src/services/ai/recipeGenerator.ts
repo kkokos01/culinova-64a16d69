@@ -1,4 +1,4 @@
-import { Recipe, Ingredient, Step } from "@/types";
+import { Recipe, Ingredient, PantryItem, PantryMode } from "@/types";
 import OpenAI from 'openai';
 import { foodUnitMapper } from './foodUnitMapper';
 
@@ -11,6 +11,10 @@ export interface AIRecipeRequest {
   spicinessLevel: number;
   targetServings: number;
   cuisinePreference?: string;
+  // Pantry-related fields
+  pantryItems?: PantryItem[];
+  pantryMode?: PantryMode;
+  selectedPantryItemIds?: Map<string, 'required' | 'optional'>;
 }
 
 export interface AIRecipeModificationRequest {
@@ -66,6 +70,12 @@ export class AIRecipeGenerator {
    * Adapted from AIModificationPanel's prompt building logic
    */
   private buildPrompt(request: AIRecipeRequest): string {
+    console.log('🔍 DEBUG: buildPrompt called with:', {
+      pantryMode: request.pantryMode,
+      pantryItemsLength: request.pantryItems?.length || 0,
+      selectedPantryItemIdsSize: request.selectedPantryItemIds?.size || 0
+    });
+
     const {
       concept,
       dietaryConstraints,
@@ -74,11 +84,38 @@ export class AIRecipeGenerator {
       excludedIngredients,
       spicinessLevel,
       targetServings,
-      cuisinePreference
+      cuisinePreference,
+      pantryItems = [],
+      pantryMode = 'ignore',
+      selectedPantryItemIds = new Map()
     } = request;
 
     // Base concept
     let prompt = `Create a recipe for: ${concept}`;
+    
+    // Add pantry context if enabled and items exist
+    if (pantryMode !== 'ignore' && pantryItems.length > 0) {
+      console.log('🔍 DEBUG: Pantry mode:', pantryMode);
+      console.log('🔍 DEBUG: Selected items Map:', selectedPantryItemIds);
+      console.log('🔍 DEBUG: Selected items size:', selectedPantryItemIds?.size);
+      
+      if (pantryMode === 'custom_selection' && selectedPantryItemIds && selectedPantryItemIds.size > 0) {
+        // Custom selection mode - use only selected items
+        const selectedItems = pantryItems.filter(item => selectedPantryItemIds.has(item.id));
+        console.log('🔍 DEBUG: Filtered selected items:', selectedItems);
+        const groupedPantry = this.groupPantryItems(selectedItems);
+        const customPrompt = this.buildCustomSelectionPrompt(groupedPantry, selectedPantryItemIds);
+        console.log('🔍 DEBUG: Custom prompt:', customPrompt);
+        prompt += customPrompt;
+      } else if (pantryMode !== 'custom_selection') {
+        // Other pantry modes - use all items with mode-specific logic
+        const limitedPantryItems = this.limitPantryItems(pantryItems);
+        const groupedPantry = this.groupPantryItems(limitedPantryItems);
+        prompt += this.buildPantryPrompt(groupedPantry, pantryMode);
+      }
+    }
+
+    console.log('🔍 DEBUG: Final prompt before sending to AI:', prompt);
     
     // Add dietary constraints
     if (dietaryConstraints.length > 0) {
@@ -162,6 +199,159 @@ Keep it practical, realistic, and appealing. JSON only.`;
 
     return prompt;
   }
+
+  /**
+   * Limit pantry items to avoid token limits
+   * Prioritize by updated_at (freshest first) and balance across storage types
+   */
+  private limitPantryItems(items: PantryItem[]): PantryItem[] {
+    const maxItems = 35; // Conservative limit to avoid token issues
+    
+    if (items.length <= maxItems) {
+      return items;
+    }
+
+    // Sort by updated_at (most recent first) and take top items
+    return items
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+      .slice(0, maxItems);
+  }
+
+  /**
+   * Group pantry items by storage type for better AI context
+   */
+  private groupPantryItems(items: PantryItem[]): {
+    fresh: PantryItem[];
+    staples: PantryItem[];
+    frozen: PantryItem[];
+  } {
+    return {
+      fresh: items.filter(item => ['fridge', 'produce'].includes(item.storage_type)),
+      staples: items.filter(item => ['pantry', 'spice'].includes(item.storage_type)),
+      frozen: items.filter(item => item.storage_type === 'freezer')
+    };
+  }
+
+  /**
+   * Build pantry-specific prompt based on mode and available items
+   */
+  private buildPantryPrompt(
+    groupedPantry: { fresh: PantryItem[]; staples: PantryItem[]; frozen: PantryItem[] },
+    pantryMode: PantryMode
+  ): string {
+    let pantryPrompt = '\n\nPANTRY REQUIREMENTS:\n';
+    
+    const formatItemList = (items: PantryItem[]): string => {
+      return items.map(item => {
+        const quantity = item.quantity ? ` (${item.quantity})` : '';
+        return `- ${item.name}${quantity}`;
+      }).join('\n');
+    };
+
+    switch (pantryMode) {
+      case 'strict_pantry':
+        pantryPrompt += `Use ONLY these ingredients (plus basic staples like water, oil, salt, pepper):\n`;
+        if (groupedPantry.fresh.length > 0) {
+          pantryPrompt += `\nFresh items:\n${formatItemList(groupedPantry.fresh)}`;
+        }
+        if (groupedPantry.staples.length > 0) {
+          pantryPrompt += `\nPantry staples:\n${formatItemList(groupedPantry.staples)}`;
+        }
+        if (groupedPantry.frozen.length > 0) {
+          pantryPrompt += `\nFrozen items:\n${formatItemList(groupedPantry.frozen)}`;
+        }
+        pantryPrompt += `\nDo not add any ingredients not listed above (except water, oil, salt, pepper).`;
+        break;
+
+      case 'mostly_pantry':
+        pantryPrompt += `Prioritize these ingredients, you may add 2-3 additional basic items if needed:\n`;
+        if (groupedPantry.fresh.length > 0) {
+          pantryPrompt += `\nFresh items (use these first):\n${formatItemList(groupedPantry.fresh)}`;
+        }
+        if (groupedPantry.staples.length > 0) {
+          pantryPrompt += `\nPantry staples:\n${formatItemList(groupedPantry.staples)}`;
+        }
+        if (groupedPantry.frozen.length > 0) {
+          pantryPrompt += `\nFrozen items:\n${formatItemList(groupedPantry.frozen)}`;
+        }
+        pantryPrompt += `\nYou may add up to 3 additional common ingredients (like onions, garlic, basic seasonings) if essential for the recipe.`;
+        break;
+
+      case 'pantry_plus_fresh':
+        pantryPrompt += `Use these pantry/spice items as base, suggest fresh produce/meat as needed:\n`;
+        if (groupedPantry.staples.length > 0) {
+          pantryPrompt += `\nUse these pantry staples:\n${formatItemList(groupedPantry.staples)}`;
+        }
+        if (groupedPantry.fresh.length > 0) {
+          pantryPrompt += `\nConsider these fresh items:\n${formatItemList(groupedPantry.fresh)}`;
+        }
+        if (groupedPantry.frozen.length > 0) {
+          pantryPrompt += `\nFrozen items available:\n${formatItemList(groupedPantry.frozen)}`;
+        }
+        pantryPrompt += `\nYou may add 3-5 fresh ingredients (proteins, vegetables, herbs) to complete the dish. Focus on using the pantry items as the foundation.`;
+        break;
+
+      default:
+        return ''; // ignore mode - no pantry prompt
+    }
+
+    return pantryPrompt;
+  }
+
+  /**
+   * Build custom selection prompt using only specifically selected ingredients
+   */
+  private buildCustomSelectionPrompt(
+    groupedPantry: { fresh: PantryItem[]; staples: PantryItem[]; frozen: PantryItem[] },
+    selectedItems: Map<string, 'required' | 'optional'>
+  ): string {
+    let pantryPrompt = '\n\nCUSTOM PANTRY SELECTION:\n';
+    
+    const formatItemList = (items: PantryItem[]): string => {
+      return items.map(item => {
+        const quantity = item.quantity ? ` (${item.quantity})` : '';
+        return `- ${item.name}${quantity}`;
+      }).join('\n');
+    };
+
+    // Separate required and optional items
+    const requiredItems: PantryItem[] = [];
+    const optionalItems: PantryItem[] = [];
+
+    [...groupedPantry.fresh, ...groupedPantry.staples, ...groupedPantry.frozen].forEach(item => {
+      const state = selectedItems.get(item.id);
+      if (state === 'required') {
+        requiredItems.push(item);
+      } else if (state === 'optional') {
+        optionalItems.push(item);
+      }
+    });
+
+    if (requiredItems.length > 0) {
+      pantryPrompt += `\nREQUIRED ingredients (MUST include these as main components):\n`;
+      pantryPrompt += formatItemList(requiredItems);
+    }
+
+    if (optionalItems.length > 0) {
+      pantryPrompt += `\nOPTIONAL ingredients (use if they enhance the dish - these are nice to have but not essential):\n`;
+      pantryPrompt += formatItemList(optionalItems);
+    }
+
+    if (requiredItems.length === 0 && optionalItems.length === 0) {
+      return '';
+    }
+
+    // Build specific instructions based on what's selected
+    if (requiredItems.length > 0 && optionalItems.length > 0) {
+      pantryPrompt += `\nCreate a recipe that prominently features the REQUIRED ingredients as the main components. Incorporate the OPTIONAL ingredients if they naturally complement the dish and enhance the flavor, but the recipe should still work well without them. Focus on making the required ingredients shine.`;
+    } else if (requiredItems.length > 0) {
+      pantryPrompt += `\nCreate a recipe that prominently features these REQUIRED ingredients as the main components. You may add basic staples like water, oil, salt, pepper, and up to 2-3 additional common ingredients (like onions, garlic) if essential to complete the dish, but focus on using the required ingredients as the foundation and stars of the recipe.`;
+    } else {
+      pantryPrompt += `\nCreate a recipe that would be enhanced by these OPTIONAL ingredients. Use them if they naturally complement the dish you're creating. You may add basic staples and other common ingredients as needed to create a complete recipe.`;
+    }
+
+    return pantryPrompt;
+  }
   
   /**
    * Validate AI response and check for constraint conflicts
@@ -234,7 +424,10 @@ Keep it practical, realistic, and appealing. JSON only.`;
    * Generate recipe using AI service
    * Main method that orchestrates the creation process
    */
-  async generateRecipe(request: AIRecipeRequest): Promise<AIRecipeResponse | AIRecipeError> {
+  public async generateRecipe(request: AIRecipeRequest): Promise<AIRecipeResponse | AIRecipeError> {
+    console.log('🔍 DEBUG: AI Recipe Request received:', request);
+    console.log('🔍 DEBUG: selectedPantryItemIds in request:', request.selectedPantryItemIds);
+    
     try {
       console.log('Generating recipe with request:', request);
       
@@ -453,6 +646,15 @@ Keep the ingredients and steps realistic and practical. Make sure the JSON is va
       
       console.log('Calling recipe edge function with request:', recipeRequest);
       
+      // Convert Map to plain object for JSON serialization
+      const serializedRequest = {
+        ...recipeRequest,
+        selectedPantryItemIds: recipeRequest.selectedPantryItemIds ? 
+          Object.fromEntries(recipeRequest.selectedPantryItemIds) : {}
+      };
+      
+      console.log('🔍 DEBUG: Serialized request with Map converted:', serializedRequest);
+      
       const response = await fetch(`${supabaseUrl}/functions/v1/generate-recipe`, {
         method: 'POST',
         headers: {
@@ -460,7 +662,7 @@ Keep the ingredients and steps realistic and practical. Make sure the JSON is va
           'Authorization': `Bearer ${supabaseAnonKey}`,
           'apikey': supabaseAnonKey
         },
-        body: JSON.stringify({ recipeRequest })
+        body: JSON.stringify({ recipeRequest: serializedRequest })
       });
 
       if (!response.ok) {

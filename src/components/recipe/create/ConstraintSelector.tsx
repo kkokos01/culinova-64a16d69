@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Leaf, Clock, ChefHat, X, Plus, Settings } from "lucide-react";
+import PantryModeSelector from "./PantryModeSelector";
+import { PantryMode, PantryItem } from "@/types";
 
 interface ConstraintSelectorProps {
   dietaryConstraints: string[];
@@ -21,6 +23,12 @@ interface ConstraintSelectorProps {
   onExclusionsChange: (exclusions: string[]) => void;
   onSpicinessChange: (level: number) => void;
   onServingsChange: (servings: number) => void;
+  // Pantry-related props
+  usePantry: boolean;
+  pantryMode: PantryMode;
+  pantryItems?: PantryItem[];
+  onUsePantryChange: (enabled: boolean) => void;
+  onPantryModeChange: (mode: PantryMode) => void;
 }
 
 const dietaryOptions = [
@@ -68,7 +76,13 @@ const ConstraintSelector: React.FC<ConstraintSelectorProps> = ({
   onSkillChange,
   onExclusionsChange,
   onSpicinessChange,
-  onServingsChange
+  onServingsChange,
+  // Pantry-related props
+  usePantry,
+  pantryMode,
+  pantryItems = [],
+  onUsePantryChange,
+  onPantryModeChange
 }) => {
   const [currentExclusion, setCurrentExclusion] = useState("");
 
@@ -119,10 +133,11 @@ const ConstraintSelector: React.FC<ConstraintSelectorProps> = ({
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="dietary" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="dietary" className="text-xs">Dietary</TabsTrigger>
               <TabsTrigger value="time" className="text-xs">Time & Skill</TabsTrigger>
               <TabsTrigger value="ingredients" className="text-xs">Ingredients</TabsTrigger>
+              <TabsTrigger value="pantry" className="text-xs">Pantry</TabsTrigger>
             </TabsList>
             
             <TabsContent value="dietary" className="space-y-4">
@@ -286,6 +301,16 @@ const ConstraintSelector: React.FC<ConstraintSelectorProps> = ({
                   </Select>
                 </div>
               </div>
+            </TabsContent>
+            
+            <TabsContent value="pantry" className="space-y-4">
+              <PantryModeSelector
+                usePantry={usePantry}
+                pantryMode={pantryMode}
+                pantryItems={pantryItems}
+                onUsePantryChange={onUsePantryChange}
+                onPantryModeChange={onPantryModeChange}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>

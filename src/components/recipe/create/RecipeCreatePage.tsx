@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { aiRecipeGenerator, AIRecipeRequest, AIRecipeModificationRequest, AIRecipeResponse, AIRecipeError } from "@/services/ai/recipeGenerator";
 import { foodUnitMapper } from "@/services/ai/foodUnitMapper";
 import { recipeService } from "@/services/supabase/recipeService";
+import { pantryService } from '@/services/pantry/pantryService';
+import { PantryMode, PantryItem } from '@/types';
 import UnifiedSidebar from "./UnifiedSidebar";
 import IngredientItem from "../IngredientItem";
 import UnifiedModificationPanel from "../UnifiedModificationPanel";
@@ -108,6 +110,13 @@ const RecipeCreatePage: React.FC = () => {
   // Image Generation State
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
 
+  // Pantry State
+  const [usePantry, setUsePantry] = useState(false);
+  const [pantryMode, setPantryMode] = useState<PantryMode>('ignore');
+  const [pantryItems, setPantryItems] = useState<PantryItem[]>([]);
+  const [selectedPantryItemIds, setSelectedPantryItemIds] = useState<Map<string, 'required' | 'optional'>>(new Map());
+  const [isLoadingPantry, setIsLoadingPantry] = useState(false);
+
   // Helper function to scale ingredient amounts
   const scaleIngredientAmount = (originalAmount: number, unitName: string): string => {
     if (currentServings === originalServings) {
@@ -147,6 +156,39 @@ const RecipeCreatePage: React.FC = () => {
       navigate("/sign-in");
     }
   }, [user, isLoading, navigate]);
+
+  // Load pantry items when user or space changes
+  const loadPantryItems = async () => {
+    if (!user) return;
+    
+    setIsLoadingPantry(true);
+    try {
+      const items = await pantryService.getPantryItems(user.id, currentSpace?.id);
+      setPantryItems(items);
+    } catch (error) {
+      console.error('Error loading pantry items:', error);
+      // Don't show toast for pantry loading error to avoid disrupting recipe creation
+    } finally {
+      setIsLoadingPantry(false);
+    }
+  };
+
+  // Handle pantry selection changes
+  const handleSelectionChange = (selectedMap: Map<string, 'required' | 'optional'>) => {
+    setSelectedPantryItemIds(selectedMap);
+  };
+
+  // Reset selections when pantry mode changes away from custom_selection
+  const handlePantryModeChange = (mode: PantryMode) => {
+    setPantryMode(mode);
+    if (mode !== 'custom_selection') {
+      setSelectedPantryItemIds(new Map());
+    }
+  };
+
+  useEffect(() => {
+    loadPantryItems();
+  }, [user, currentSpace]);
 
   // Loading states
   if (isLoading || spaceLoading) {
@@ -210,23 +252,35 @@ const RecipeCreatePage: React.FC = () => {
     const effectiveUserInput = directDescription || userInput;
     const effectiveQuickConcept = directConcept || selectedQuickConcept;
     const effectiveInspiration = directInspiration || selectedInspiration;
-    
-    // Combine all inputs for the recipe concept
-    const combinedInputs = [effectiveUserInput.trim(), effectiveQuickConcept, effectiveInspiration].filter(Boolean).join('. ');
-    
-    if (!combinedInputs) {
+
+    // Build combined inputs for AI
+    const combinedInputs = [effectiveUserInput, effectiveQuickConcept]
+      .filter(Boolean)
+      .join(' + ');
+
+    if (!effectiveUserInput.trim() && !effectiveQuickConcept) {
       toast({
-        title: "Input Required",
-        description: "Please describe what you'd like to make or select a concept.",
-        variant: "destructive"
+        title: "Missing Recipe Concept",
+        description: "Please enter a recipe description or select a quick concept to get started.",
+        variant: "destructive",
       });
       return;
     }
 
-    try {
-      setIsGenerating(true);
-      setGenerationError(null);
+    // Validation for custom pantry selection mode
+    if (usePantry && pantryMode === 'custom_selection' && selectedPantryItemIds.size === 0) {
+      toast({
+        title: "No Ingredients Selected",
+        description: "Please select at least one ingredient from your pantry when using Custom Selection mode.",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    setIsGenerating(true);
+    setGenerationError(null);
+
+    try {
       const request: AIRecipeRequest = {
         concept: combinedInputs,
         dietaryConstraints,
@@ -236,6 +290,10 @@ const RecipeCreatePage: React.FC = () => {
         spicinessLevel,
         targetServings: targetServings || 4,
         cuisinePreference: effectiveInspiration || undefined,
+        // Include pantry context only when enabled
+        pantryItems: usePantry ? pantryItems : undefined,
+        pantryMode: usePantry ? pantryMode : 'ignore',
+        selectedPantryItemIds: (usePantry && pantryMode === 'custom_selection') ? selectedPantryItemIds : undefined
       };
 
       const response = await aiRecipeGenerator.generateRecipe(request);
@@ -674,6 +732,15 @@ const RecipeCreatePage: React.FC = () => {
               onExclusionsChange={setExcludedIngredients}
               onSpicinessChange={setSpicinessLevel}
               onServingsChange={setTargetServings}
+              
+              // Pantry settings
+              usePantry={usePantry}
+              pantryMode={pantryMode}
+              pantryItems={pantryItems}
+              selectedPantryItemIds={selectedPantryItemIds}
+              onUsePantryChange={setUsePantry}
+              onPantryModeChange={handlePantryModeChange}
+              onSelectionChange={handleSelectionChange}
               
               // Ingredient modifications (modify mode only)
               selectedIngredients={selectedIngredients}

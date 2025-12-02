@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProfileSidebar from "@/components/auth/ProfileSidebar";
 import ProfileSettings from "@/components/auth/ProfileSettings";
 import SpacesList from "@/components/auth/SpacesList";
+import PantryManager from "@/components/pantry/PantryManager";
 import { useUserData } from "@/hooks/useUserData";
 import { useSpace } from "@/context/SpaceContext";
 
@@ -51,6 +52,7 @@ const Profile = () => {
               <TabsList className="mb-6">
                 <TabsTrigger value="profile">Profile Settings</TabsTrigger>
                 <TabsTrigger value="spaces">Spaces</TabsTrigger>
+                <TabsTrigger value="pantry">My Pantry</TabsTrigger>
               </TabsList>
               
               <TabsContent value="profile">
@@ -80,6 +82,10 @@ const Profile = () => {
                     refreshSpaces={fetchSpaces}
                   />
                 )}
+              </TabsContent>
+              
+              <TabsContent value="pantry">
+                <PantryManager />
               </TabsContent>
             </Tabs>
           </div>

@@ -255,3 +255,39 @@ export interface Meal {
   servings: number;
   recipe?: Recipe;
 }
+
+// Pantry & Inventory Types
+export type StorageType = 'pantry' | 'fridge' | 'freezer' | 'produce' | 'spice';
+
+export type PantryMode = 'ignore' | 'strict_pantry' | 'mostly_pantry' | 'pantry_plus_fresh' | 'custom_selection';
+
+export interface SelectedPantryItem {
+  id: string;
+  state: 'required' | 'optional';
+}
+
+export interface PantryItem {
+  id: string;
+  user_id: string;
+  space_id?: string;
+  name: string;
+  quantity?: string;
+  storage_type: StorageType;
+  is_staple: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PantryItemCreate {
+  name: string;
+  quantity?: string;
+  storage_type: StorageType;
+  is_staple?: boolean;
+}
+
+export interface PantryItemUpdate {
+  name?: string;
+  quantity?: string;
+  storage_type?: StorageType;
+  is_staple?: boolean;
+}

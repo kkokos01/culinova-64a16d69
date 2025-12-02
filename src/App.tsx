@@ -20,6 +20,7 @@ import SignUp from "./pages/auth/SignUp";
 import ResetPassword from "./pages/auth/ResetPassword";
 import AuthCallback from "./pages/auth/AuthCallback";
 import UpdatePassword from "./pages/auth/UpdatePassword";
+import Profile from "./pages/auth/Profile";
 import SupabaseHealth from "./pages/SupabaseHealth";
 
 // Configure React Query to prevent unnecessary refetches on window focus
@@ -63,6 +64,7 @@ function App() {
                           <Route path="/sign-up" element={<SignUp />} />
                           <Route path="/reset-password" element={<ResetPassword />} />
                           <Route path="/update-password" element={<UpdatePassword />} />
+                          <Route path="/profile" element={<Profile />} />
                           <Route path="/auth/v1/callback" element={<AuthCallback />} />
                           <Route path="/supabase-health" element={<SupabaseHealth />} />
                           <Route path="*" element={<NotFound />} />

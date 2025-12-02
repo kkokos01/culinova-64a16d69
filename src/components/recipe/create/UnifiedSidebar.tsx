@@ -1,5 +1,5 @@
 import React, { useState, forwardRef } from "react";
-import { Recipe, Ingredient } from "@/types";
+import { Recipe, Ingredient, PantryItem, PantryMode } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Wand2, Lightbulb, Settings, Loader2, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Wand2, Lightbulb, Settings, Loader2, Check, Package } from "lucide-react";
 import AILoadingProgress from "@/components/ui/AILoadingProgress";
+import PantryModeSelector from "./PantryModeSelector";
 
 interface UnifiedSidebarProps {
   mode: 'create' | 'modify';
@@ -43,6 +44,15 @@ interface UnifiedSidebarProps {
   onSpicinessChange: (level: number) => void;
   onServingsChange: (servings: number) => void;
   
+  // Pantry settings
+  usePantry: boolean;
+  pantryMode: PantryMode;
+  pantryItems: PantryItem[];
+  selectedPantryItemIds: Map<string, 'required' | 'optional'>;
+  onUsePantryChange: (enabled: boolean) => void;
+  onPantryModeChange: (mode: PantryMode) => void;
+  onSelectionChange: (selectedMap: Map<string, 'required' | 'optional'>) => void;
+  
   // Ingredient modifications (modify mode only)
   selectedIngredients?: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
   onRemoveIngredientSelection?: (id: string) => void;
@@ -75,6 +85,13 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
   onExclusionsChange,
   onSpicinessChange,
   onServingsChange,
+  usePantry,
+  pantryMode,
+  pantryItems,
+  selectedPantryItemIds,
+  onUsePantryChange,
+  onPantryModeChange,
+  onSelectionChange,
   selectedIngredients,
   onRemoveIngredientSelection,
   isGenerating,
@@ -385,6 +402,19 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
                       </Badge>
                     ))}
                   </div>
+                </div>
+
+                {/* Pantry Settings */}
+                <div className="space-y-2">
+                  <PantryModeSelector
+                    usePantry={usePantry}
+                    pantryMode={pantryMode}
+                    pantryItems={pantryItems}
+                    selectedPantryItemIds={selectedPantryItemIds}
+                    onUsePantryChange={onUsePantryChange}
+                    onPantryModeChange={onPantryModeChange}
+                    onSelectionChange={onSelectionChange}
+                  />
                 </div>
               </CollapsibleContent>
             </Collapsible>
