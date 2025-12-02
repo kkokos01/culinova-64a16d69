@@ -165,6 +165,7 @@ export interface StepCreate {
 export interface Recipe {
   id: string;
   user_id: string;
+  space_id?: string;
   title: string;
   description: string;
   image_url?: string;

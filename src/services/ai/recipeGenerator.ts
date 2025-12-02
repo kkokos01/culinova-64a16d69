@@ -297,11 +297,8 @@ Keep it practical, realistic, and appealing. JSON only.`;
         };
       }
       
-      // Build modification prompt
-      const prompt = this.buildModificationPrompt(request);
-      
-      // Call AI service
-      const response = await this.callAIService(prompt);
+      // Send the structured object so the Edge Function recognizes it as a modification
+      const response = await this.callAIService(request);
       
       // Parse response
       const recipeData = this.parseAIResponse(response);

@@ -1,8 +1,8 @@
-
 import { v4 as uuidv4 } from "uuid";
 import { Recipe } from "@/types";
 import { RecipeVersion } from "@/context/recipe/types";
-import { createRecipeVersion } from "@/api/recipeVersions";
+import { createRecipeVersion } from "@/api/versions/createVersion";
+import { createStandaloneRecipeFromVersion } from "@/api/versions/createStandaloneRecipe";
 
 interface TemporaryVersionsProps {
   recipeVersions: RecipeVersion[];
@@ -66,6 +66,15 @@ export const useTemporaryVersions = ({
       
       // Create a new version in the database
       const persistedVersion = await createRecipeVersion(tempVersion.name, tempVersion.recipe, userId);
+      
+      // Create standalone recipe for user's collection
+      console.log("Creating standalone recipe from modification:", tempVersion.recipe.title);
+      const standaloneRecipe = await createStandaloneRecipeFromVersion(
+        tempVersion.recipe, 
+        userId, 
+        tempVersion.recipe.id // parent recipe ID
+      );
+      console.log("Standalone recipe created successfully:", standaloneRecipe.id);
       
       // Set recipe data first - use the recipe title as-is since it already includes the version name
       const updatedRecipe = {
