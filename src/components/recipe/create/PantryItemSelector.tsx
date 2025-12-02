@@ -119,15 +119,27 @@ const PantryItemSelector: React.FC<PantryItemSelectorProps> = ({
         
         <CollapsibleContent className="space-y-4 mt-3">
           {/* Legend */}
-          <div className="flex items-center justify-center gap-4 text-xs text-gray-600 bg-gray-50 rounded p-2">
-            <div className="flex items-center gap-1">
-              <div className="w-4 h-4 bg-red-500 text-white rounded flex items-center justify-center font-bold text-xs">R</div>
-              <span>= Required (must include)</span>
+          <div className="flex items-center justify-between gap-4 text-xs text-gray-600 bg-gray-50 rounded p-2">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <div className="w-4 h-4 bg-red-500 text-white rounded flex items-center justify-center font-bold text-xs">R</div>
+                <span>= Required (must include)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-4 h-4 bg-green-500 text-white rounded flex items-center justify-center font-bold text-xs">O</div>
+                <span>= Optional (nice to include)</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <div className="w-4 h-4 bg-green-500 text-white rounded flex items-center justify-center font-bold text-xs">O</div>
-              <span>= Optional (nice to include)</span>
-            </div>
+            {selectedItems.size > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onSelectionChange(new Map())}
+                className="text-xs h-6 px-2 text-gray-600 hover:text-gray-900"
+              >
+                Clear All
+              </Button>
+            )}
           </div>
 
           {Object.entries(groupedItems).map(([storageType, items]) => {

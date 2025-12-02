@@ -653,8 +653,6 @@ Keep the ingredients and steps realistic and practical. Make sure the JSON is va
           Object.fromEntries(recipeRequest.selectedPantryItemIds) : {}
       };
       
-      console.log('🔍 DEBUG: Serialized request with Map converted:', serializedRequest);
-      
       const response = await fetch(`${supabaseUrl}/functions/v1/generate-recipe`, {
         method: 'POST',
         headers: {
