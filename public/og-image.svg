@@ -1,42 +1,30 @@
 <svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
-  <rect width="1200" height="630" fill="#1a1a1a"/>
-  
-  <!-- Gradient overlay -->
-  <defs>
-    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#f97316;stop-opacity:0.8"/>
-      <stop offset="100%" style="stop-color:#ea580c;stop-opacity:0.8"/>
-    </linearGradient>
-  </defs>
-  
-  <!-- Decorative circle -->
-  <circle cx="100" cy="100" r="80" fill="url(#gradient)" opacity="0.3"/>
-  <circle cx="1100" cy="530" r="100" fill="url(#gradient)" opacity="0.2"/>
+  <!-- Background matching navbar (slate-800) -->
+  <rect width="1200" height="630" fill="#1e293b"/>
   
   <!-- Main content area -->
-  <rect x="60" y="140" width="1080" height="350" rx="20" fill="#2a2a2a" stroke="#f97316" stroke-width="2"/>
+  <rect x="60" y="140" width="1080" height="350" rx="20" fill="#334155" stroke="#84cc16" stroke-width="2" opacity="0.9"/>
   
-  <!-- Logo/Icon area -->
-  <g transform="translate(600, 200)">
-    <!-- Chef hat icon -->
-    <path d="M-40 -20 C-40 -35 -25 -50 0 -50 C25 -50 40 -35 40 -20 L40 10 L-40 10 Z" fill="#f97316"/>
-    <ellipse cx="0" cy="15" rx="45" ry="15" fill="#f97316"/>
-    <rect x="-40" y="-20" width="80" height="30" fill="#f97316"/>
+  <!-- Exact ChefHat icon from lucide-react -->
+  <g transform="translate(600, 200) scale(3)">
+    <!-- This is the exact SVG path from lucide-react ChefHat icon -->
+    <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" 
+          fill="#84cc16" stroke="none"/>
+    <line x1="6" y1="17" x2="18" y2="17" stroke="#1e293b" stroke-width="2"/>
   </g>
   
-  <!-- Title -->
+  <!-- Culinova title (matching navbar text) -->
   <text x="600" y="320" font-family="Arial, sans-serif" font-size="72" font-weight="bold" text-anchor="middle" fill="white">
     Culinova
   </text>
   
-  <!-- Subtitle -->
-  <text x="600" y="370" font-family="Arial, sans-serif" font-size="28" text-anchor="middle" fill="#f97316">
+  <!-- Tagline -->
+  <text x="600" y="370" font-family="Arial, sans-serif" font-size="28" text-anchor="middle" fill="#84cc16">
     Recipe Management Made Simple
   </text>
   
   <!-- URL -->
-  <text x="600" y="450" font-family="Arial, sans-serif" font-size="20" text-anchor="middle" fill="#888">
+  <text x="600" y="450" font-family="Arial, sans-serif" font-size="20" text-anchor="middle" fill="#94a3b8">
     culinova-six.vercel.app
   </text>
 </svg>
