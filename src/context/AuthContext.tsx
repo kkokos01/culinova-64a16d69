@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isProduction = window.location.hostname !== 'localhost';
     // Updated to use a generic app URL instead of Lovable
     const redirectTo = isProduction 
-      ? `https://culinova.app/auth/v1/callback`
+      ? `https://culinova-six.vercel.app/auth/v1/callback`
       : `${window.location.origin}/auth/v1/callback`;
     
     console.log("Redirecting to:", redirectTo);
