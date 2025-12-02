@@ -75,6 +75,7 @@ const RecipeCreatePage: React.FC = () => {
   const [dietaryConstraints, setDietaryConstraints] = useState<string[]>([]);
   const [timeConstraints, setTimeConstraints] = useState<string[]>([]);
   const [skillLevel, setSkillLevel] = useState("intermediate");
+  const [costPreference, setCostPreference] = useState("");
   const [excludedIngredients, setExcludedIngredients] = useState<string[]>([]);
   const [spicinessLevel, setSpicinessLevel] = useState(3); // Changed to number
   const [targetServings, setTargetServings] = useState(4);
@@ -301,6 +302,7 @@ const RecipeCreatePage: React.FC = () => {
         dietaryConstraints,
         timeConstraints,
         skillLevel,
+        costPreference,
         excludedIngredients: [],
         spicinessLevel,
         targetServings: targetServings || 4,
@@ -759,13 +761,17 @@ const RecipeCreatePage: React.FC = () => {
                 dietaryConstraints={dietaryConstraints}
                 timeConstraints={timeConstraints}
                 skillLevel={skillLevel}
+                costPreference={costPreference}
                 excludedIngredients={excludedIngredients}
                 spicinessLevel={spicinessLevel}
                 targetServings={targetServings}
                 onServingsChange={setTargetServings}
+                
+                // Callback functions for advanced options
                 onDietaryChange={setDietaryConstraints}
                 onTimeChange={setTimeConstraints}
                 onSkillChange={setSkillLevel}
+                onCostChange={setCostPreference}
                 onExclusionsChange={setExcludedIngredients}
                 onSpicinessChange={setSpicinessLevel}
                 

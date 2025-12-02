@@ -7,6 +7,7 @@ export interface AIRecipeRequest {
   dietaryConstraints: string[];
   timeConstraints: string[];
   skillLevel: string;
+  costPreference?: string;
   excludedIngredients: string[];
   spicinessLevel: number;
   targetServings: number;
@@ -81,6 +82,7 @@ export class AIRecipeGenerator {
       dietaryConstraints,
       timeConstraints,
       skillLevel,
+      costPreference,
       excludedIngredients,
       spicinessLevel,
       targetServings,
@@ -130,7 +132,10 @@ export class AIRecipeGenerator {
         'low-sodium': 'low sodium (minimal salt, no high-sodium ingredients)',
         'low-carb': 'low carbohydrate',
         'keto': 'keto-friendly (low carb, high fat)',
-        'high-protein': 'high protein (20g+ protein per serving)'
+        'high-protein': 'high protein (20g+ protein per serving)',
+        'no-mayo': 'no mayonnaise or mayonnaise-based ingredients',
+        'no-broccoli': 'no broccoli or broccoli-containing ingredients',
+        'no-olives': 'no olives or olive products'
       };
       
       const dietaryDescriptions = dietaryConstraints
@@ -163,6 +168,17 @@ export class AIRecipeGenerator {
       'advanced': 'restaurant-quality (complex techniques, special equipment)'
     };
     prompt += `\nSkill level: ${skillMap[skillLevel] || skillLevel}`;
+    
+    // Add cost preference
+    if (costPreference) {
+      const costMap: Record<string, string> = {
+        'cost-conscious': 'budget-friendly with affordable ingredients',
+        'standard': 'regular ingredient quality and cost',
+        'premium-ingredients': 'high-quality, premium ingredients regardless of cost'
+      };
+      const costDescription = costMap[costPreference] || costPreference;
+      prompt += `\nCost preference: ${costDescription}`;
+    }
     
     // Add exclusions
     if (excludedIngredients.length > 0) {

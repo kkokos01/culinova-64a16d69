@@ -177,6 +177,7 @@ function constructPrompt(request: any): string {
     dietaryConstraints, 
     timeConstraints, 
     skillLevel, 
+    costPreference,
     excludedIngredients, 
     includedIngredients, 
     cuisineType, 
@@ -248,6 +249,15 @@ function constructPrompt(request: any): string {
 
   if (skillLevel) {
     prompt += `Skill level: ${skillLevel}.\n`;
+  }
+
+  if (costPreference) {
+    const costMap: Record<string, string> = {
+      'cost-conscious': 'budget-friendly with affordable ingredients',
+      'standard': 'regular ingredient quality and cost',
+      'premium-ingredients': 'high-quality, premium ingredients regardless of cost'
+    };
+    prompt += `Cost preference: ${costMap[costPreference] || costPreference}.\n`;
   }
 
   if (excludedIngredients && excludedIngredients.length > 0) {

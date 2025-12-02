@@ -44,6 +44,10 @@ interface UnifiedSidebarProps {
   onSpicinessChange: (level: number) => void;
   onServingsChange: (servings: number) => void;
   
+  // Cost preference
+  costPreference: string;
+  onCostChange: (cost: string) => void;
+  
   // Pantry settings
   usePantry: boolean;
   pantryMode: PantryMode;
@@ -85,6 +89,11 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
   onExclusionsChange,
   onSpicinessChange,
   onServingsChange,
+  
+  // Cost preference
+  costPreference,
+  onCostChange,
+  
   usePantry,
   pantryMode,
   pantryItems,
@@ -148,7 +157,8 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
 
   const dietaryOptions = [
     'vegan', 'vegetarian', 'pescatarian', 'gluten-free', 'dairy-free', 
-    'nut-free', 'soy-free', 'low-sodium', 'low-carb', 'keto', 'high-protein'
+    'nut-free', 'soy-free', 'low-sodium', 'low-carb', 'keto', 'high-protein',
+    'no-mayo', 'no-broccoli', 'no-olives'
   ];
 
   const timeOptions = [
@@ -156,6 +166,8 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
   ];
 
   const skillLevels = ['beginner', 'intermediate', 'advanced'];
+
+  const costOptions = ['cost-conscious', 'standard', 'premium-ingredients'];
 
   if (isPanelCollapsed) {
     return (
@@ -365,6 +377,23 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
                         onClick={() => onSkillChange(skillLevel === level ? "" : level)}
                       >
                         {level}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Cost Preference */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-900">Cost Preference {costPreference ? `(${costPreference.replace('-', ' ')})` : ""}</Label>
+                  <div className="flex gap-1">
+                    {costOptions.map((cost) => (
+                      <Badge
+                        key={cost}
+                        variant={costPreference === cost ? "default" : "secondary"}
+                        className="cursor-pointer text-xs"
+                        onClick={() => onCostChange(costPreference === cost ? "" : cost)}
+                      >
+                        {cost.replace('-', ' ')}
                       </Badge>
                     ))}
                   </div>
