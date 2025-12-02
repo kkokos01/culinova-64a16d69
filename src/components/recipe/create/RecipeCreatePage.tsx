@@ -680,12 +680,7 @@ const RecipeCreatePage: React.FC = () => {
                   <AILoadingProgress 
                     isLoading={isGenerating}
                     message="Creating Your Recipe..."
-                    className="mb-8"
                   />
-                  <div className="text-center">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Creating Your Recipe...</h2>
-                    <p className="text-gray-600">Our AI is crafting something delicious just for you</p>
-                  </div>
                 </div>
               ) : recipe ? (
                 <>
