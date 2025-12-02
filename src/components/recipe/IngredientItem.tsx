@@ -78,7 +78,7 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
         <div className="flex-1 min-w-0 pr-4">
           <div className={`flex items-baseline gap-x-1.5 text-base ${styles.text}`}>
             <span className="font-medium whitespace-nowrap">
-              {scaledAmount || ingredient.amount} {unitName}
+              {scaledAmount || (ingredient.amount + (unitName ? ` ${unitName}` : ''))}
             </span>
             <span className="truncate">{foodName}</span>
           </div>

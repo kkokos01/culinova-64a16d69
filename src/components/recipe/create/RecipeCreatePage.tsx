@@ -11,6 +11,7 @@ import { recipeService } from "@/services/supabase/recipeService";
 import UnifiedSidebar from "./UnifiedSidebar";
 import IngredientItem from "../IngredientItem";
 import UnifiedModificationPanel from "../UnifiedModificationPanel";
+import RecipeImageGenerator from "../RecipeImageGenerator";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles, Loader2, Save, ChefHat, Wand2, Plus, Minus, RotateCcw } from "lucide-react";
@@ -103,6 +104,9 @@ const RecipeCreatePage: React.FC = () => {
   // Serving Size Adjustment State
   const [originalServings, setOriginalServings] = useState<number>(4);
   const [currentServings, setCurrentServings] = useState<number>(4);
+
+  // Image Generation State
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
 
   // Helper function to scale ingredient amounts
   const scaleIngredientAmount = (originalAmount: number, unitName: string): string => {
@@ -532,6 +536,7 @@ const RecipeCreatePage: React.FC = () => {
       const recipeData = {
         title: generatedRecipe.title,
         description: generatedRecipe.description,
+        image_url: generatedImageUrl || null,
         prep_time_minutes: generatedRecipe.prepTimeMinutes,
         cook_time_minutes: generatedRecipe.cookTimeMinutes,
         servings: generatedRecipe.servings,
@@ -831,6 +836,15 @@ const RecipeCreatePage: React.FC = () => {
                       )}
                     </div>
                   </div>
+
+                  {/* Recipe Image Generator */}
+                  {recipe && (
+                    <RecipeImageGenerator
+                      recipe={recipe}
+                      onImageGenerated={setGeneratedImageUrl}
+                      currentImageUrl={generatedImageUrl}
+                    />
+                  )}
 
                   {/* Recipe Content */}
                   <div className="space-y-6">

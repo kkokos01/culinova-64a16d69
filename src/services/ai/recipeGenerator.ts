@@ -470,15 +470,12 @@ Keep the ingredients and steps realistic and practical. Make sure the JSON is va
             content: prompt
           }
         ],
-        max_completion_tokens: parseInt(import.meta.env.VITE_AI_MAX_TOKENS || '1500'),
-        response_format: { type: 'json_object' },
+        max_completion_tokens: parseInt(import.meta.env.VITE_AI_MAX_TOKENS || '6000'), // Increased to prevent truncation
+        response_format: { type: 'json_object' }, // Re-enabled now working properly
         stream: false // Enable streaming in next iteration
       });
 
-      console.log('Full OpenAI completion response:', JSON.stringify(completion, null, 2));
-      
       const response = completion.choices[0]?.message?.content;
-      console.log('Raw OpenAI response:', response);
       
       if (!response) {
         console.error('No response content found. Completion structure:', {

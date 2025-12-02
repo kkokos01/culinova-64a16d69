@@ -66,6 +66,17 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   
   return (
     <div className="mb-8">
+      {/* Recipe Image */}
+      {recipeToUse?.image_url ? (
+        <div className="mb-6">
+          <img
+            src={recipeToUse.image_url}
+            alt={`${displayTitle} - AI generated recipe image`}
+            className="w-full h-64 sm:h-80 object-cover rounded-lg shadow-lg"
+          />
+        </div>
+      ) : null}
+      
       <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
         {displayTitle}
       </h1>

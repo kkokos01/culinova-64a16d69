@@ -10,7 +10,13 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application
+# Accept build arguments for environment variables
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+ARG VITE_GOOGLE_AI_API_KEY
+ARG VITE_AI_API_KEY
+
+# Build the application with environment variables
 RUN npm run build
 
 # Production stage
