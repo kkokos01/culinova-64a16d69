@@ -85,12 +85,15 @@ export class AIRecipeGenerator {
       const dietaryMap: Record<string, string> = {
         'vegan': 'vegan (no animal products)',
         'vegetarian': 'vegetarian (no meat but may include dairy/eggs)',
+        'pescatarian': 'pescatarian (no meat but may include fish/seafood)',
         'gluten-free': 'gluten-free (no wheat, barley, rye)',
         'dairy-free': 'dairy-free (no milk, cheese, yogurt)',
+        'nut-free': 'nut-free (no nuts or nut products)',
+        'soy-free': 'soy-free (no soy products)',
         'low-sodium': 'low sodium (minimal salt, no high-sodium ingredients)',
+        'low-carb': 'low carbohydrate',
         'keto': 'keto-friendly (low carb, high fat)',
-        'high-protein': 'high protein (20g+ protein per serving)',
-        'low-carb': 'low carbohydrate'
+        'high-protein': 'high protein (20g+ protein per serving)'
       };
       
       const dietaryDescriptions = dietaryConstraints
@@ -104,8 +107,9 @@ export class AIRecipeGenerator {
       const timeMap: Record<string, string> = {
         'under-15': 'total time under 15 minutes',
         'under-30': 'total time under 30 minutes',
-        'one-pot': 'one-pot meal (minimal cleanup)',
+        '1-hour': 'total time under 1 hour',
         '5-ingredients': 'maximum 5 main ingredients',
+        'one-pot': 'one-pot or one-pan meal (minimal cleanup)',
         'no-cook': 'no cooking required'
       };
       

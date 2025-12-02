@@ -89,11 +89,17 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
   
   const quickConcepts = isCreateMode ? [
     'Quick Pasta Dish',
+    'One-Pan Chicken',
     'Healthy Salad',
     'Comfort Soup',
-    'Grilled Chicken',
-    'Vegetarian Stir-fry',
-    'Breakfast Bowl'
+    'Stir-Fry Dinner',
+    'Breakfast Bowl',
+    'High-Protein Meal',
+    'Vegetarian Dinner',
+    'Sheet-Pan Meal',
+    '5-Ingredient Meal',
+    'Slow Cooker Meal',
+    'Low-Carb Bowl'
   ] : [
     'Healthier',
     'Simpler', 
@@ -104,12 +110,16 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
   ];
 
   const inspirations = isCreateMode ? [
-    'Italian Cuisine',
-    'Asian Fusion',
-    'Comfort Food',
+    'Italian',
+    'Mexican',
+    'Chinese',
+    'Indian',
     'Mediterranean',
-    'Mexican Flavors',
-    'French Classic'
+    'Thai',
+    'Japanese',
+    'American Comfort',
+    'French',
+    'Middle Eastern'
   ] : [
     'Reduce Calories',
     'Add Vegetables',
@@ -120,12 +130,12 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
   ];
 
   const dietaryOptions = [
-    'vegan', 'vegetarian', 'gluten-free', 'dairy-free', 
-    'low-sodium', 'keto', 'high-protein', 'low-carb'
+    'vegan', 'vegetarian', 'pescatarian', 'gluten-free', 'dairy-free', 
+    'nut-free', 'soy-free', 'low-sodium', 'low-carb', 'keto', 'high-protein'
   ];
 
   const timeOptions = [
-    'under-15', 'under-30', 'one-pot', '5-ingredients', 'no-cook'
+    'under-15', 'under-30', '1-hour', '5-ingredients', 'one-pot', 'no-cook'
   ];
 
   const skillLevels = ['beginner', 'intermediate', 'advanced'];
@@ -354,7 +364,7 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
 
                 {/* Spiciness Level */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-900">Spiciness Level {spicinessLevel > 0 ? `(${'🌶️'.repeat(spicinessLevel)})` : ""}</Label>
+                  <Label className="text-sm font-medium text-gray-900">Spiciness Level {spicinessLevel > 0 ? `(${['Mild (🌶️)', 'Medium (🌶️🌶️)', 'Medium-Hot (🌶️🌶️🌶️)', 'Hot (🌶️🌶️🌶️🌶️)', 'Extra Hot (🌶️🌶️🌶️🌶️🌶️)'][spicinessLevel - 1]})` : ""}</Label>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((level) => (
                       <Badge

@@ -13,60 +13,88 @@ interface ConceptInputProps {
 
 const quickConcepts = [
   {
-    id: "family",
-    title: "Quick Family Dinner",
-    concept: "A quick family dinner that's kid-friendly and can be made in under 30 minutes",
-    icon: <Home className="h-5 w-5 text-blue-500" />,
+    id: "pasta",
+    title: "Quick Pasta Dish",
+    concept: "A quick pasta dish that's delicious and can be made in under 30 minutes",
+    icon: <ChefHat className="h-5 w-5 text-blue-500" />,
     color: "bg-blue-50 hover:bg-blue-100 border-blue-200"
   },
   {
-    id: "healthy",
-    title: "Healthy Meal Prep",
-    concept: "A healthy meal prep recipe that's nutritious and lasts well in the fridge",
-    icon: <Leaf className="h-5 w-5 text-green-500" />,
+    id: "chicken",
+    title: "One-Pan Chicken",
+    concept: "A one-pan chicken dinner that's flavorful with minimal cleanup",
+    icon: <ChefHat className="h-5 w-5 text-green-500" />,
     color: "bg-green-50 hover:bg-green-100 border-green-200"
   },
   {
-    id: "comfort",
-    title: "Comfort Classic",
-    concept: "A comforting classic dish that's warm, hearty, and satisfying",
-    icon: <Heart className="h-5 w-5 text-red-500" />,
-    color: "bg-red-50 hover:bg-red-100 border-red-200"
-  },
-  {
-    id: "vegetarian",
-    title: "Vegetarian Delight",
-    concept: "A delicious vegetarian dish that's full of flavor and protein",
+    id: "salad",
+    title: "Healthy Salad",
+    concept: "A healthy salad that's nutritious, fresh, and satisfying",
     icon: <Leaf className="h-5 w-5 text-emerald-500" />,
     color: "bg-emerald-50 hover:bg-emerald-100 border-emerald-200"
   },
   {
-    id: "protein",
-    title: "High-Protein",
-    concept: "A high-protein meal perfect for fitness and muscle building",
+    id: "soup",
+    title: "Comfort Soup",
+    concept: "A comforting soup that's warm, hearty, and perfect for cold days",
+    icon: <Heart className="h-5 w-5 text-red-500" />,
+    color: "bg-red-50 hover:bg-red-100 border-red-200"
+  },
+  {
+    id: "stir-fry",
+    title: "Stir-Fry Dinner",
+    concept: "A quick stir-fry dinner that's packed with vegetables and flavor",
     icon: <Zap className="h-5 w-5 text-yellow-500" />,
     color: "bg-yellow-50 hover:bg-yellow-100 border-yellow-200"
   },
   {
-    id: "low-sodium",
-    title: "Low Sodium",
-    concept: "A flavorful low-sodium dish that's heart-healthy",
-    icon: <Heart className="h-5 w-5 text-pink-500" />,
-    color: "bg-pink-50 hover:bg-pink-100 border-pink-200"
+    id: "breakfast",
+    title: "Breakfast Bowl",
+    concept: "A nutritious breakfast bowl that's energizing and delicious",
+    icon: <Home className="h-5 w-5 text-orange-500" />,
+    color: "bg-orange-50 hover:bg-orange-100 border-orange-200"
   },
   {
-    id: "keto",
-    title: "Keto",
-    concept: "A keto-friendly meal that's low carb and high fat",
-    icon: <ChefHat className="h-5 w-5 text-purple-500" />,
+    id: "protein",
+    title: "High-Protein Meal",
+    concept: "A high-protein meal perfect for fitness and muscle building",
+    icon: <Zap className="h-5 w-5 text-purple-500" />,
     color: "bg-purple-50 hover:bg-purple-100 border-purple-200"
   },
   {
-    id: "global",
-    title: "Global Flavors",
-    concept: "An international dish with authentic global flavors and spices",
-    icon: <Globe className="h-5 w-5 text-orange-500" />,
-    color: "bg-orange-50 hover:bg-orange-100 border-orange-200"
+    id: "vegetarian",
+    title: "Vegetarian Dinner",
+    concept: "A delicious vegetarian dinner that's full of flavor and satisfying",
+    icon: <Leaf className="h-5 w-5 text-green-600" />,
+    color: "bg-green-50 hover:bg-green-100 border-green-200"
+  },
+  {
+    id: "sheet-pan",
+    title: "Sheet-Pan Meal",
+    concept: "An easy sheet-pan meal with minimal prep and cleanup",
+    icon: <ChefHat className="h-5 w-5 text-blue-600" />,
+    color: "bg-blue-50 hover:bg-blue-100 border-blue-200"
+  },
+  {
+    id: "five-ingredient",
+    title: "5-Ingredient Meal",
+    concept: "A simple meal using just 5 main ingredients for quick cooking",
+    icon: <Clock className="h-5 w-5 text-cyan-500" />,
+    color: "bg-cyan-50 hover:bg-cyan-100 border-cyan-200"
+  },
+  {
+    id: "slow-cooker",
+    title: "Slow Cooker Meal",
+    concept: "A set-it-and-forget-it slow cooker meal that's tender and flavorful",
+    icon: <Clock className="h-5 w-5 text-amber-500" />,
+    color: "bg-amber-50 hover:bg-amber-100 border-amber-200"
+  },
+  {
+    id: "low-carb",
+    title: "Low-Carb Bowl",
+    concept: "A low-carb bowl that's satisfying and perfect for keto or low-carb diets",
+    icon: <Leaf className="h-5 w-5 text-pink-500" />,
+    color: "bg-pink-50 hover:bg-pink-100 border-pink-200"
   }
 ];
 

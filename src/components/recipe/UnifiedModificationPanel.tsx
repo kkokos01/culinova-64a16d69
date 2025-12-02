@@ -65,9 +65,16 @@ const UnifiedModificationPanel: React.FC<UnifiedModificationPanelProps> = ({
     { id: "healthier", label: "Healthier" },
     { id: "simpler", label: "Simpler" },
     { id: "vegan", label: "Vegan" },
-    { id: "quicker", label: "Quicker" },
+    { id: "vegetarian", label: "Vegetarian" },
+    { id: "pescatarian", label: "Pescatarian" },
     { id: "gluten-free", label: "Gluten-Free" },
+    { id: "dairy-free", label: "Dairy-Free" },
+    { id: "nut-free", label: "Nut-Free" },
+    { id: "soy-free", label: "Soy-Free" },
     { id: "keto", label: "Keto" },
+    { id: "low-carb", label: "Low-Carb" },
+    { id: "high-protein", label: "High-Protein" },
+    { id: "quicker", label: "Quicker" },
     { id: "spicier", label: "Spicier" },
     { id: "budget", label: "Budget" }
   ];

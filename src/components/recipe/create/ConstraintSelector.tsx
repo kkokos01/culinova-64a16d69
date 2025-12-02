@@ -26,26 +26,30 @@ interface ConstraintSelectorProps {
 const dietaryOptions = [
   { id: "vegan", label: "Vegan", icon: <Leaf className="h-4 w-4" />, color: "bg-green-100 text-green-800 border-green-200" },
   { id: "vegetarian", label: "Vegetarian", icon: <Leaf className="h-4 w-4" />, color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  { id: "pescatarian", label: "Pescatarian", icon: <Leaf className="h-4 w-4" />, color: "bg-blue-100 text-blue-800 border-blue-200" },
   { id: "gluten-free", label: "Gluten-Free", icon: <Leaf className="h-4 w-4" />, color: "bg-amber-100 text-amber-800 border-amber-200" },
-  { id: "dairy-free", label: "Dairy-Free", icon: <Leaf className="h-4 w-4" />, color: "bg-blue-100 text-blue-800 border-blue-200" },
-  { id: "low-sodium", label: "Low Sodium", icon: <Leaf className="h-4 w-4" />, color: "bg-pink-100 text-pink-800 border-pink-200" },
-  { id: "keto", label: "Keto", icon: <Leaf className="h-4 w-4" />, color: "bg-purple-100 text-purple-800 border-purple-200" },
-  { id: "high-protein", label: "High-Protein", icon: <Leaf className="h-4 w-4" />, color: "bg-red-100 text-red-800 border-red-200" },
-  { id: "low-carb", label: "Low-Carb", icon: <Leaf className="h-4 w-4" />, color: "bg-orange-100 text-orange-800 border-orange-200" }
+  { id: "dairy-free", label: "Dairy-Free", icon: <Leaf className="h-4 w-4" />, color: "bg-cyan-100 text-cyan-800 border-cyan-200" },
+  { id: "nut-free", label: "Nut-Free", icon: <Leaf className="h-4 w-4" />, color: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+  { id: "soy-free", label: "Soy-Free", icon: <Leaf className="h-4 w-4" />, color: "bg-orange-100 text-orange-800 border-orange-200" },
+  { id: "low-sodium", label: "Low-Sodium", icon: <Leaf className="h-4 w-4" />, color: "bg-pink-100 text-pink-800 border-pink-200" },
+  { id: "low-carb", label: "Low-Carb", icon: <Leaf className="h-4 w-4" />, color: "bg-purple-100 text-purple-800 border-purple-200" },
+  { id: "keto", label: "Keto", icon: <Leaf className="h-4 w-4" />, color: "bg-indigo-100 text-indigo-800 border-indigo-200" },
+  { id: "high-protein", label: "High-Protein", icon: <Leaf className="h-4 w-4" />, color: "bg-red-100 text-red-800 border-red-200" }
 ];
 
 const timeOptions = [
   { id: "under-15", label: "Under 15 minutes", icon: <Clock className="h-4 w-4" />, color: "bg-blue-100 text-blue-800 border-blue-200" },
   { id: "under-30", label: "Under 30 minutes", icon: <Clock className="h-4 w-4" />, color: "bg-green-100 text-green-800 border-green-200" },
-  { id: "one-pot", label: "One-Pot", icon: <Settings className="h-4 w-4" />, color: "bg-purple-100 text-purple-800 border-purple-200" },
-  { id: "5-ingredients", label: "5-Ingredients Max", icon: <Settings className="h-4 w-4" />, color: "bg-orange-100 text-orange-800 border-orange-200" },
-  { id: "no-cook", label: "No-Cook", icon: <Clock className="h-4 w-4" />, color: "bg-cyan-100 text-cyan-800 border-cyan-200" }
+  { id: "1-hour", label: "1-Hour Dinner", icon: <Clock className="h-4 w-4" />, color: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+  { id: "5-ingredients", label: "5 Ingredients", icon: <Settings className="h-4 w-4" />, color: "bg-orange-100 text-orange-800 border-orange-200" },
+  { id: "one-pot", label: "One-Pot / One-Pan", icon: <Settings className="h-4 w-4" />, color: "bg-purple-100 text-purple-800 border-purple-200" },
+  { id: "no-cook", label: "No Cook", icon: <Clock className="h-4 w-4" />, color: "bg-cyan-100 text-cyan-800 border-cyan-200" }
 ];
 
 const skillLevels = [
-  { id: "beginner", label: "Beginner-Friendly", description: "Simple techniques, basic equipment" },
+  { id: "beginner", label: "Beginner", description: "Simple techniques, basic equipment" },
   { id: "intermediate", label: "Intermediate", description: "Some experience, standard equipment" },
-  { id: "advanced", label: "Restaurant-Quality", description: "Complex techniques, special equipment" }
+  { id: "advanced", label: "Advanced", description: "Complex techniques, special equipment" }
 ];
 
 const commonAllergens = [
