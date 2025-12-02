@@ -72,7 +72,7 @@ const ModificationSidebar: React.FC<ModificationSidebarProps> = ({
           onApplyModifications={onApplyModifications}
           onSelectModificationType={onSelectModificationType}
           isDisabled={isDisabled}
-          selectedModifications={selectedQuickModifications}
+          selectedModifications={selectedModifications}
         />
         
         <AILoadingProgress

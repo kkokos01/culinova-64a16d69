@@ -30,26 +30,9 @@ export const useVersionFetching = ({
       // Set the versions in state
       setRecipeVersions(versions);
       
-      // Set the active version
-      const activeVersion = versions.find(v => v.isActive);
-      if (activeVersion) {
-        console.log("Setting active version from fetch:", activeVersion.id, activeVersion.name);
-        
-        // Get the clean recipe title without any version prefixes
-        const cleanTitle = getCleanTitle(activeVersion.recipe.title);
-        
-        // Prepare the recipe with the appropriate title based on version name
-        const updatedRecipe = {
-          ...activeVersion.recipe,
-          title: activeVersion.name !== "Original" ? 
-            `${activeVersion.name} ${cleanTitle}` : 
-            cleanTitle
-        };
-        
-        console.log("Setting recipe to:", updatedRecipe.title);
-        setRecipe(updatedRecipe);
-        setActiveVersionId(activeVersion.id);
-      }
+      // DO NOT auto-activate versions from DB - let the calling code decide
+      // This prevents auto-loading of modified versions on page refresh
+      console.log("Versions fetched but NOT auto-activating (preventing modified version auto-load)");
       
       setIsLoadingVersions(false);
       return versions;

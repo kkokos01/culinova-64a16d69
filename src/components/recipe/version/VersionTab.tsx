@@ -2,7 +2,7 @@
 import React from "react";
 import { RecipeVersion } from "@/context/recipe/types";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MoreHorizontal } from "lucide-react";
+import { Loader2, MoreHorizontal, X } from "lucide-react";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +32,12 @@ const VersionTab: React.FC<VersionTabProps> = ({
   onPersist,
   isSaving
 }) => {
+  console.log('VersionTab rendering:', {
+    versionName: version.name,
+    isTemporary: version.isTemporary,
+    showDropdown: version.name !== "Original"
+  });
+  
   return (
     <div className="flex items-center">
       <div
@@ -66,6 +72,22 @@ const VersionTab: React.FC<VersionTabProps> = ({
         )}
       </div>
       
+      {/* Add obvious X button for non-Original versions */}
+      {version.name !== "Original" && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('X button clicked for version:', version.id, version.name);
+            onDelete(version.id);
+          }}
+          className="ml-1 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-sm transition-colors"
+          title="Delete version"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      )}
+      
+      {/* Keep dropdown for additional options */}
       {version.name !== "Original" && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

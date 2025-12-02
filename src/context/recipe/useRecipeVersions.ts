@@ -19,13 +19,9 @@ export function useRecipeVersions(setRecipe: (recipe: Recipe) => void) {
       
       setRecipeVersions(versions);
       
-      // Set the active version
-      const activeVersion = versions.find(v => v.isActive);
-      if (activeVersion) {
-        console.log("Setting active version from fetch:", activeVersion.id, activeVersion.name);
-        setActiveVersionId(activeVersion.id);
-        setRecipe(activeVersion.recipe);
-      }
+      // DO NOT auto-activate versions from DB - let the calling code decide
+      // This prevents auto-loading of modified versions on page refresh
+      console.log("Versions fetched but NOT auto-activating (preventing modified version auto-load)");
       
       setIsLoadingVersions(false);
       return versions;

@@ -1,14 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Recipe, Ingredient } from "@/types";
 import RecipeHeader from "./RecipeHeader";
 import RecipeContent from "./RecipeContent";
 import { useRecipe } from "@/context/recipe";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { ChevronRight, Wand2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import ModificationSidebar from "./ModificationSidebar";
-import VersionManagement from "./VersionManagement";
+import { useSpace } from "@/context/SpaceContext";
+import { useUnifiedModificationState } from "@/hooks/recipe/useUnifiedModificationState";
 import { useToast } from "@/hooks/use-toast";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { ChevronRight, Wand2, Sparkles, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import UnifiedSidebar from "./create/UnifiedSidebar";
+import VersionManagement from "./VersionManagement";
+import { aiRecipeGenerator, AIRecipeModificationRequest } from "@/services/ai/recipeGenerator";
+import { foodUnitMapper } from "@/services/ai/foodUnitMapper";
 
 interface DesktopLayoutProps {
   recipe: Recipe | null;
@@ -20,7 +24,6 @@ interface DesktopLayoutProps {
   handleAcceptChanges: () => void;
   setSelectedIngredient: (ingredient: Ingredient | null) => void;
   onSelectIngredient: (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => void;
-  isAiModifying?: boolean;
 }
 
 const DesktopLayout: React.FC<DesktopLayoutProps> = ({
@@ -32,8 +35,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   handleStartModification,
   handleAcceptChanges,
   setSelectedIngredient,
-  onSelectIngredient,
-  isAiModifying = false
+  onSelectIngredient
 }) => {
   const { 
     selectedIngredients, 
@@ -44,26 +46,86 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     removeIngredientSelection,
     setCustomInstructions,
     addRecipeVersion,
+    addTemporaryVersion,
     persistVersion,
+    deleteVersion,
     activeVersionId
   } = useRecipe();
   
+  const { currentSpace } = useSpace();
   const { toast } = useToast();
-  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(true);
   const [leftPanelSize, setLeftPanelSize] = useState(4);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedModifications, setSelectedModifications] = useState<string[]>([]);
+  const [isAiModifying, setIsAiModifying] = useState(false);
+  const [isModificationComplete, setIsModificationComplete] = useState(false);
+  
+  // Ref for sidebar panel and button positioning
+  const sidebarPanelRef = useRef<HTMLDivElement>(null);
+  const [buttonPosition, setButtonPosition] = useState({ left: 0 });
+  
+  // UnifiedSidebar state management
+  const {
+    userInput,
+    selectedQuickConcept,
+    dietaryConstraints,
+    timeConstraints,
+    skillLevel,
+    excludedIngredients,
+    spicinessLevel,
+    targetServings,
+    selectedInspiration,
+    isPanelCollapsed,
+    handleUserInputChange,
+    handleQuickConceptSelect,
+    handleInspirationSelect,
+    handleDietaryChange,
+    handleTimeChange,
+    handleSkillChange,
+    handleExclusionsChange,
+    handleSpicinessChange,
+    handleServingsChange,
+    handleTogglePanel,
+    buildModificationRequest
+  } = useUnifiedModificationState();
   
   const activeVersion = recipeVersions.find(v => v.id === activeVersionId);
   const isActiveVersionTemporary = activeVersion?.isTemporary || false;
   
   useEffect(() => {
-    setLeftPanelSize(leftPanelCollapsed ? 4 : 35);
-  }, [leftPanelCollapsed]);
+    setLeftPanelSize(isPanelCollapsed ? 4 : 35);
+  }, [isPanelCollapsed]);
 
-  const handleToggleModifyPanel = () => {
-    setLeftPanelCollapsed(!leftPanelCollapsed);
-  };
+  // Update button position when sidebar resizes
+  useEffect(() => {
+    const updateButtonPosition = () => {
+      if (sidebarPanelRef.current) {
+        const rect = sidebarPanelRef.current.getBoundingClientRect();
+        const buttonWidth = 160; // min-w-[160px]
+        const centerPosition = rect.left + rect.width / 2 - buttonWidth / 2;
+        
+        console.log('Button position debug:', {
+          rectLeft: rect.left,
+          rectWidth: rect.width,
+          centerPosition,
+          buttonPosition
+        });
+        
+        setButtonPosition({ left: centerPosition });
+      } else {
+        console.log('Sidebar ref is null');
+      }
+    };
+
+    updateButtonPosition();
+    
+    // Listen for resize events
+    const resizeObserver = new ResizeObserver(updateButtonPosition);
+    if (sidebarPanelRef.current) {
+      resizeObserver.observe(sidebarPanelRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, [leftPanelSize, isPanelCollapsed, isAiModifying]);
 
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
     onSelectIngredient(ingredient, action);
@@ -95,28 +157,164 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     }
   };
   
-  const handleSelectModificationType = (type: string) => {
-    setSelectedModifications(prev => 
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
-    );
+  const handleApplyModifications = async () => {
+    if (!recipe) return;
     
-    setCustomInstructions(`Make this recipe ${type}`);
-  };
-  
-  const handleApplyModifications = () => {
-    try {
-      if (selectedModifications.length > 0) {
-        handleStartModification(selectedModifications.join(", "));
-      } else if (customInstructions.trim()) {
-        handleStartModification("custom");
-      }
-    } catch (error) {
-      console.error("Error applying modifications:", error);
+    setIsAiModifying(true);
+    setIsModificationComplete(false); // Reset completion state
+    
+    toast({ title: "Modifying Recipe...", description: "AI is modifying your recipe...", variant: "default" });
+    
+    // Build modification instructions from all inputs (matching RecipeCreatePage pattern)
+    const effectiveUserInput = userInput.trim();
+    const effectiveQuickConcept = selectedQuickConcept;
+    const effectiveInspiration = selectedInspiration;
+    
+    // Combine all inputs for the modification instructions
+    const combinedInputs = [effectiveUserInput, effectiveQuickConcept, effectiveInspiration].filter(Boolean).join('. ');
+    
+    if (!combinedInputs && selectedIngredients.size === 0) {
       toast({
-        title: "Error",
-        description: "Failed to apply modifications",
+        title: "Input Required",
+        description: "Please add modification instructions or select ingredients to modify.",
         variant: "destructive"
       });
+      return;
+    }
+
+    setIsAiModifying(true);
+
+    // Show modification toast (matching RecipeCreatePage)
+    toast({
+      title: "Modifying Recipe...",
+      description: "AI is modifying your recipe based on your selections and instructions. This may take a moment.",
+      variant: "default",
+    });
+
+    try {
+      const modificationRequest: AIRecipeModificationRequest = {
+        baseRecipe: recipe,
+        modificationInstructions: combinedInputs || "Custom modification based on selected ingredients",
+      };
+
+      const response = await aiRecipeGenerator.modifyRecipe(modificationRequest);
+
+      if ('type' in response) {
+        throw new Error(response.message);
+      }
+
+      // Transform AI response to Recipe type (matching RecipeCreatePage pattern)
+      const modifiedRecipe: Recipe = {
+        ...recipe, // Keep original recipe properties
+        title: response.title,
+        description: response.description,
+        prep_time_minutes: response.prepTimeMinutes,
+        cook_time_minutes: response.cookTimeMinutes,
+        servings: response.servings,
+        difficulty: response.difficulty,
+        ingredients: response.ingredients.map((ing, index) => ({
+          id: `ing-${index}`,
+          recipe_id: recipe.id,
+          food_id: null,
+          unit_id: null,
+          food_name: ing.name.toLowerCase(),
+          unit_name: ing.unit.toLowerCase(),
+          amount: parseFloat(ing.amount) || 1,
+        })),
+        steps: response.steps.map((step, index) => ({
+          id: `step-${index}`,
+          recipe_id: recipe.id,
+          order_number: index + 1,
+          instruction: step,
+        })),
+        tags: response.tags,
+        updated_at: new Date().toISOString(),
+      };
+      
+      // Map AI-generated ingredients to database foods (matching RecipeCreatePage pattern)
+      console.log('Starting ingredient mapping for modification...');
+      if (!currentSpace) {
+        throw new Error('No current space found for ingredient mapping');
+      }
+
+      console.log('AI response ingredients:', response.ingredients);
+      console.log('Current space ID:', currentSpace.id);
+
+      const mappedIngredients = await Promise.all(
+        response.ingredients.map(async (ing) => {
+          console.log('Mapping ingredient:', ing);
+          const foodResult = await foodUnitMapper.findOrCreateFood(ing.name, currentSpace.id);
+          const unitResult = await foodUnitMapper.findOrCreateUnit(ing.unit);
+          
+          console.log('Food mapping result:', foodResult);
+          console.log('Unit mapping result:', unitResult);
+          
+          const mappedIngredient = {
+            id: `ing-${Date.now()}-${Math.random()}`,
+            recipe_id: recipe.id,
+            food_id: foodResult.food_id || null,
+            unit_id: unitResult.unit_id || null,
+            food_name: foodResult.food_name,
+            unit_name: unitResult.unit_name,
+            amount: parseFloat(ing.amount) || 1,
+          };
+          
+          console.log('Mapped ingredient:', mappedIngredient);
+          return mappedIngredient;
+        })
+      );
+
+      console.log('All mapped ingredients:', mappedIngredients);
+
+      // Update the modified recipe with mapped ingredients
+      modifiedRecipe.ingredients = mappedIngredients;
+      console.log('Modified recipe with mapped ingredients:', modifiedRecipe);
+      
+      console.log('Available functions from useRecipe:', {
+  addTemporaryVersion: typeof addTemporaryVersion,
+  addRecipeVersion: typeof addRecipeVersion,
+  persistVersion: typeof persistVersion,
+  deleteVersion: typeof deleteVersion
+});
+
+      // Add modified recipe as temporary version (not persisted to DB)
+      if (addTemporaryVersion && typeof addTemporaryVersion === 'function') {
+        console.log('✅ Using addTemporaryVersion (session-only)');
+        console.log('Version name to use:', modifiedRecipe.title);
+        console.log('Recipe to save:', modifiedRecipe);
+        
+        const result = addTemporaryVersion(modifiedRecipe.title || "AI Modified", modifiedRecipe);
+        console.log('addTemporaryVersion completed successfully with result:', result);
+        console.log('Result isTemporary:', result?.isTemporary);
+        
+        // Mark modification as complete to trigger UI updates
+        setIsModificationComplete(true);
+      } else {
+        console.error('❌ addTemporaryVersion function is not available or not a function!');
+        console.error('addTemporaryVersion:', addTemporaryVersion);
+        
+        // Fallback to addRecipeVersion if temporary not available (for debugging)
+        if (addRecipeVersion) {
+          console.log('⚠️ Falling back to addRecipeVersion (this will persist to DB)');
+          const result = await addRecipeVersion(modifiedRecipe.title || "AI Modified", modifiedRecipe);
+          console.log('addRecipeVersion completed with result:', result);
+        }
+      }
+
+      toast({
+        title: "Recipe Modified!",
+        description: "Your recipe has been updated. You can continue modifying or save it.",
+      });
+
+    } catch (error) {
+      console.error("Error during AI modification:", error);
+      toast({
+        title: "Modification Failed",
+        description: error instanceof Error ? error.message : "Failed to modify recipe with AI",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAiModifying(false);
     }
   };
 
@@ -128,58 +326,51 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         <ResizablePanel 
           defaultSize={4}
           size={leftPanelSize}
-          minSize={leftPanelCollapsed ? 4 : 25} 
-          maxSize={leftPanelCollapsed ? 4 : 40}
+          minSize={isPanelCollapsed ? 4 : 25} 
+          maxSize={isPanelCollapsed ? 4 : 40}
           collapsible
           collapsedSize={4}
           onCollapse={() => {
-            setLeftPanelCollapsed(true);
+            handleTogglePanel();
           }}
           onExpand={() => {
-            setLeftPanelCollapsed(false);
+            handleTogglePanel();
           }}
           className={`relative transition-all duration-300 ${
-            leftPanelCollapsed 
+            isPanelCollapsed 
               ? "bg-sage-500 text-white" 
               : "bg-sage-500 text-white shadow-lg"
           }`}
         >
-          {leftPanelCollapsed ? (
-            <div 
-              className="h-full flex flex-col items-center justify-center cursor-pointer hover:bg-sage-600/60 transition-colors"
-              onClick={handleToggleModifyPanel}
-            >
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="absolute top-4 right-2 text-white hover:text-white hover:bg-sage-600/60 pointer-events-none"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <div className="rotate-90 whitespace-nowrap text-base font-medium text-white flex items-center space-x-2">
-                <Wand2 className="h-4 w-4 transform -rotate-90 mr-2" />
-                <span>Recipe Modification</span>
-              </div>
-            </div>
-          ) : (
-            <ModificationSidebar 
-              recipe={recipe}
-              selectedIngredients={selectedIngredients}
-              onRemoveIngredientSelection={removeIngredientSelection}
-              customInstructions={customInstructions}
-              onCustomInstructionsChange={setCustomInstructions}
-              onStartModification={() => handleStartModification("custom")}
-              onSelectModificationType={handleSelectModificationType}
-              onApplyModifications={handleApplyModifications}
-              isModified={isModified}
-              resetToOriginal={resetToOriginal}
-              isDisabled={isAiModifying}
-              isSaving={isSaving}
-              isActiveVersionTemporary={isActiveVersionTemporary}
-              onTogglePanel={handleToggleModifyPanel}
-              selectedModifications={selectedModifications}
-            />
-          )}
+          <UnifiedSidebar
+            ref={sidebarPanelRef}
+            mode="modify"
+            recipe={recipe}
+            isPanelCollapsed={isPanelCollapsed}
+            onTogglePanel={handleTogglePanel}
+            userInput={userInput}
+            onUserInputChange={handleUserInputChange}
+            selectedQuickConcept={selectedQuickConcept}
+            onQuickConceptSelect={handleQuickConceptSelect}
+            selectedInspiration={selectedInspiration}
+            onInspirationSelect={handleInspirationSelect}
+            dietaryConstraints={dietaryConstraints}
+            timeConstraints={timeConstraints}
+            skillLevel={skillLevel}
+            excludedIngredients={excludedIngredients}
+            spicinessLevel={spicinessLevel}
+            targetServings={targetServings}
+            onDietaryChange={handleDietaryChange}
+            onTimeChange={handleTimeChange}
+            onSkillChange={handleSkillChange}
+            onExclusionsChange={handleExclusionsChange}
+            onSpicinessChange={handleSpicinessChange}
+            onServingsChange={handleServingsChange}
+            selectedIngredients={selectedIngredients}
+            onRemoveIngredientSelection={removeIngredientSelection}
+            isGenerating={isAiModifying}
+            isSaving={isSaving}
+          />
         </ResizablePanel>
 
         <ResizableHandle withHandle />
@@ -189,8 +380,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             <RecipeHeader
               recipe={recipe}
               isModified={isModified}
-              onModifyWithAI={handleToggleModifyPanel}
-              showModifyButton={leftPanelCollapsed}
+              onModifyWithAI={handleTogglePanel}
+              showModifyButton={isPanelCollapsed}
               isTemporary={isActiveVersionTemporary}
             />
 
@@ -207,6 +398,44 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
+
+      {/* Floating Action Button */}
+      {!isPanelCollapsed && (
+        <div
+          className="fixed bottom-6 z-50 min-w-[160px]"
+          style={{ left: `${buttonPosition.left}px` }}
+        >
+          <Button
+            onClick={handleApplyModifications}
+            disabled={isAiModifying || (!userInput.trim() && !selectedQuickConcept && !selectedInspiration && selectedIngredients.size === 0)}
+            size="lg"
+            className="text-white px-6 py-3 rounded-full min-w-[160px] border-0"
+            style={{ 
+              backgroundColor: '#384048', 
+              opacity: 1,
+              boxShadow: 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#2d3438';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#384048';
+            }}
+          >
+            {isAiModifying ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Modifying Recipe...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Modify Recipe
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

@@ -251,11 +251,8 @@ Keep it practical, realistic, and appealing. JSON only.`;
         };
       }
       
-      // Build prompt
-      const prompt = this.buildPrompt(request);
-      
-      // Call AI service
-      const response = await this.callAIService(prompt);
+      // Call AI service (pass request object for edge function)
+      const response = await this.callAIService(request);
       
       // Parse response
       const recipeData = this.parseAIResponse(response);
@@ -388,7 +385,7 @@ ${modificationInstructions}`;
 
 Please modify the recipe according to the instructions. Maintain the same overall structure and format. Return a valid JSON object with the following structure:
 {
-  "title": "Modified recipe title",
+  "title": "Recipe title",
   "description": "Modified recipe description", 
   "prepTimeMinutes": number,
   "cookTimeMinutes": number,
@@ -407,12 +404,13 @@ Keep the ingredients and steps realistic and practical. Make sure the JSON is va
   }
 
   /**
-   * Call AI service (OpenAI)
+   * Call AI service (OpenAI via Edge Function for both generation and modification)
    */
-  private async callAIService(prompt: string): Promise<any> {
+  private async callAIService(requestOrPrompt: any): Promise<any> {
     try {
-      console.log('Calling AI service with prompt length:', prompt.length);
-      const response = await this.callOpenAI(prompt);
+      // Route all requests to edge function for consistency and security
+      console.log('Calling AI service with request:', requestOrPrompt);
+      const response = await this.callOpenAI(requestOrPrompt);
       console.log('AI service returned response type:', typeof response);
       console.log('AI service returned response:', response);
       return response;
@@ -449,72 +447,52 @@ Keep the ingredients and steps realistic and practical. Make sure the JSON is va
   }
 
   /**
-   * Call OpenAI API
+   * Call OpenAI API via Supabase Edge Function
    */
-  private async callOpenAI(prompt: string): Promise<any> {
+  private async callOpenAI(recipeRequest: any): Promise<any> {
     try {
-      const apiKey = import.meta.env.VITE_AI_API_KEY;
-      console.log('Calling OpenAI API with model:', import.meta.env.VITE_AI_MODEL);
-      console.log('API Key loaded:', apiKey ? 'YES' : 'NO');
-      console.log('API Key starts with sk-:', apiKey?.startsWith('sk-') ? 'YES' : 'NO');
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       
-      const completion = await this.openai.chat.completions.create({
-        model: import.meta.env.VITE_AI_MODEL || 'gpt-5-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'Professional chef. Create practical recipes. Respond with valid JSON only.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_completion_tokens: parseInt(import.meta.env.VITE_AI_MAX_TOKENS || '6000'), // Increased to prevent truncation
-        response_format: { type: 'json_object' }, // Re-enabled now working properly
-        stream: false // Enable streaming in next iteration
+      console.log('Calling recipe edge function with request:', recipeRequest);
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/generate-recipe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'apikey': supabaseAnonKey
+        },
+        body: JSON.stringify({ recipeRequest })
       });
 
-      const response = completion.choices[0]?.message?.content;
-      
-      if (!response) {
-        console.error('No response content found. Completion structure:', {
-          choices: completion.choices,
-          usage: completion.usage,
-          created: completion.created,
-          model: completion.model,
-          object: completion.object,
-          id: completion.id
-        });
-        throw new Error('No response from OpenAI');
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Edge function error:', errorData);
+        throw new Error(`Edge function error: ${response.status}`);
       }
 
-      console.log('OpenAI response received:', response);
-      
+      const data = await response.json();
+      console.log('Edge function response received:', data);
+
+      if (!data.success || !data.response) {
+        throw new Error(data.error || 'No response from edge function');
+      }
+
       // Parse JSON response with better error handling
       try {
-        const parsedResponse = JSON.parse(response);
+        const parsedResponse = JSON.parse(data.response);
         console.log('Parsed response:', parsedResponse);
         return parsedResponse;
       } catch (parseError) {
-        console.error('Failed to parse JSON response:', response);
-        console.error('Parse error:', parseError);
-        throw new Error('Invalid JSON response from AI');
+        console.error('JSON parse error:', parseError);
+        console.error('Raw response:', data.response);
+        throw new Error('Failed to parse recipe response');
       }
-      
-    } catch (error: any) {
-      console.error('OpenAI API error:', error);
-      
-      // Check for model-specific errors
-      if (error.message?.includes('model')) {
-        console.log('Model not available, falling back to gpt-4-turbo-preview...');
-        // Retry with fallback model
-        return this.callWithFallbackModel(prompt);
-      }
-      
-      // Fallback to mock response if API fails
-      console.log('Falling back to mock response...');
-      return this.getFallbackResponse(prompt);
+
+    } catch (error) {
+      console.error('Error calling recipe edge function:', error);
+      throw error;
     }
   }
   

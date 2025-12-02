@@ -60,29 +60,43 @@ export const useRecipeDetail = () => {
     }
   }, [recipe, setRecipe, setOriginalRecipe]);
   
-  // Temporarily disabled auto-versioning to fix recipe creation
-  // TODO: Re-enable after fixing versioning system to handle text-based ingredients
+  // Re-enabled versioning system - text-based ingredients now supported
   useEffect(() => {
     const initializeVersions = async () => {
+      console.log('Version initialization check:', {
+        recipe: !!recipe,
+        recipeId: recipe?.id,
+        hasInitializedVersions,
+        addRecipeVersion: !!addRecipeVersion,
+        fetchVersionsFromDb: !!fetchVersionsFromDb
+      });
+      
       if (recipe && !hasInitializedVersions) {
-        console.log("Versioning temporarily disabled for recipe", recipe.id);
+        console.log("Initializing versioning for recipe", recipe.id);
         
-        // Mark that we've initialized versions to prevent re-initialization
-        setHasInitializedVersions(true);
-        return;
-        
-        // Original versioning code (commented out)
-        /*
         try {
           // Fetch versions from the database
+          console.log('Fetching versions from database...');
           const versions = await fetchVersionsFromDb(recipe.id);
+          console.log('Fetched versions:', versions);
           
-          // If no versions exist yet, create the Original version
+          // If no versions exist yet, do NOT create an "Original" version in DB
+          // Just set the current recipe as the active one
           if (versions.length === 0) {
-            console.log("No versions found, creating Original version for recipe", recipe.id);
-            await addRecipeVersion("Original", recipe);
+            console.log("No versions found, using current recipe as original (not persisting to DB)");
+            console.log("Defaulting to original recipe (not auto-selecting newest version)");
+            setRecipe(recipe);
+            setOriginalRecipe(recipe);
+            setHasInitializedVersions(true);
+            return;
           } else {
             console.log("Found existing versions:", versions.length);
+            console.log("Existing versions:", versions);
+            
+            // Always default to the original recipe, not the newest modified version
+            console.log("Defaulting to original recipe (not auto-selecting newest version)");
+            setRecipe(recipe);
+            setOriginalRecipe(recipe);
           }
         } catch (error) {
           console.error("Error initializing versions:", error);
@@ -90,12 +104,11 @@ export const useRecipeDetail = () => {
           // Mark that we've initialized versions to prevent re-initialization
           setHasInitializedVersions(true);
         }
-        */
       }
     };
     
     initializeVersions();
-  }, [recipe, hasInitializedVersions, addRecipeVersion, setHasInitializedVersions, fetchVersionsFromDb]);
+  }, [recipe, hasInitializedVersions, setHasInitializedVersions, fetchVersionsFromDb]);
 
   // Function to handle ingredient selection
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
