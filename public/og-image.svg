@@ -1,0 +1,42 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#1a1a1a"/>
+  
+  <!-- Gradient overlay -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f97316;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#ea580c;stop-opacity:0.8"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Decorative circle -->
+  <circle cx="100" cy="100" r="80" fill="url(#gradient)" opacity="0.3"/>
+  <circle cx="1100" cy="530" r="100" fill="url(#gradient)" opacity="0.2"/>
+  
+  <!-- Main content area -->
+  <rect x="60" y="140" width="1080" height="350" rx="20" fill="#2a2a2a" stroke="#f97316" stroke-width="2"/>
+  
+  <!-- Logo/Icon area -->
+  <g transform="translate(600, 200)">
+    <!-- Chef hat icon -->
+    <path d="M-40 -20 C-40 -35 -25 -50 0 -50 C25 -50 40 -35 40 -20 L40 10 L-40 10 Z" fill="#f97316"/>
+    <ellipse cx="0" cy="15" rx="45" ry="15" fill="#f97316"/>
+    <rect x="-40" y="-20" width="80" height="30" fill="#f97316"/>
+  </g>
+  
+  <!-- Title -->
+  <text x="600" y="320" font-family="Arial, sans-serif" font-size="72" font-weight="bold" text-anchor="middle" fill="white">
+    Culinova
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="370" font-family="Arial, sans-serif" font-size="28" text-anchor="middle" fill="#f97316">
+    Recipe Management Made Simple
+  </text>
+  
+  <!-- URL -->
+  <text x="600" y="450" font-family="Arial, sans-serif" font-size="20" text-anchor="middle" fill="#888">
+    culinova-six.vercel.app
+  </text>
+</svg>
