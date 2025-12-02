@@ -27,7 +27,15 @@ const AILoadingProgress: React.FC<AILoadingProgressProps> = ({
     "Tasting and adjusting seasoning...",
     "Plating with care...",
     "Adding final garnishes...",
-    "Almost ready..."
+    "Almost ready...",
+    "Measuring ingredients precisely...",
+    "Preheating the oven...",
+    "Mixing herbs and spices...",
+    "Checking for perfect texture...",
+    "Balancing flavors...",
+    "Preparing cooking surface...",
+    "Testing temperature...",
+    "Arranging ingredients artfully..."
   ];
 
   useEffect(() => {
@@ -38,7 +46,7 @@ const AILoadingProgress: React.FC<AILoadingProgressProps> = ({
 
     const interval = setInterval(() => {
       setCurrentStep((prev) => (prev + 1) % chefSteps.length);
-    }, 2000); // Change every 2 seconds for better pacing
+    }, 3000); // Change every 3 seconds for better pacing
 
     return () => clearInterval(interval);
   }, [isLoading, chefSteps.length]);

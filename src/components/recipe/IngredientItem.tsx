@@ -72,10 +72,10 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
   return (
     <TooltipProvider>
       <div 
-        className={`flex items-center p-2 rounded-md border-2 transition-colors ${styles.container} cursor-pointer h-full`}
+        className={`flex items-center p-4 rounded-md border-2 transition-colors ${styles.container} cursor-pointer h-full min-h-[56px]`}
         onClick={handleIngredientClick}
       >
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pr-4">
           <div className={`flex items-baseline gap-x-1.5 text-base ${styles.text}`}>
             <span className="font-medium whitespace-nowrap">
               {scaledAmount || ingredient.amount} {unitName}

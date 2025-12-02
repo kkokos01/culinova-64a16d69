@@ -26,6 +26,7 @@ const RecipeCreatePage: React.FC = () => {
   // UI State
   const [leftPanelSize, setLeftPanelSize] = useState(35);
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false); // Start open, not collapsed
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Ref for sidebar panel and button positioning
   const sidebarPanelRef = useRef<HTMLDivElement>(null);
@@ -61,7 +62,7 @@ const RecipeCreatePage: React.FC = () => {
     }
 
     return () => resizeObserver.disconnect();
-  }, [leftPanelSize, leftPanelCollapsed]);
+  }, [leftPanelSize, leftPanelCollapsed, isGenerating]);
 
   // Form State
   const [concept, setConcept] = useState("");
@@ -96,7 +97,6 @@ const RecipeCreatePage: React.FC = () => {
   const [generationError, setGenerationError] = useState<AIRecipeError | null>(null);
 
   // Loading State
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [generatedRecipe, setGeneratedRecipe] = useState<AIRecipeResponse | null>(null);
 
@@ -104,44 +104,27 @@ const RecipeCreatePage: React.FC = () => {
   const [originalServings, setOriginalServings] = useState<number>(4);
   const [currentServings, setCurrentServings] = useState<number>(4);
 
-  // Helper function to scale ingredient amounts and add ounce conversions
+  // Helper function to scale ingredient amounts
   const scaleIngredientAmount = (originalAmount: number, unitName: string): string => {
     if (currentServings === originalServings) {
-      return formatMeasurement(originalAmount, unitName);
+      // Check if amount already includes unit to avoid duplication
+      return originalAmount.toString().includes(unitName) 
+        ? originalAmount.toString() 
+        : `${originalAmount} ${unitName}`;
     }
     
     const scalingRatio = currentServings / originalServings;
     const scaledAmount = originalAmount * scalingRatio;
     
-    return formatMeasurement(scaledAmount, unitName);
-  };
-
-  // Helper function to format measurements with ounce conversions
-  const formatMeasurement = (amount: number, unitName: string): string => {
-    const formattedAmount = amount === Math.round(amount) 
-      ? Math.round(amount).toString() 
-      : amount.toFixed(2).replace(/\.?0+$/, '');
+    // Format the scaled amount nicely
+    const formattedAmount = scaledAmount === Math.round(scaledAmount) 
+      ? Math.round(scaledAmount).toString() 
+      : scaledAmount.toFixed(2).replace(/\.?0+$/, '');
     
-    // Check if unit is a weight measurement (grams or kilograms)
-    const isWeightUnit = unitName.toLowerCase().includes('g') || 
-                         unitName.toLowerCase().includes('gram') ||
-                         unitName.toLowerCase().includes('kg') ||
-                         unitName.toLowerCase().includes('kilogram');
-    
-    if (isWeightUnit) {
-      // Convert to ounces (1g = 0.035274oz, 1kg = 35.274oz)
-      let grams = amount;
-      if (unitName.toLowerCase().includes('kg')) {
-        grams = amount * 1000; // Convert kg to grams first
-      }
-      
-      const ounces = grams * 0.035274;
-      const formattedOunces = ounces.toFixed(1);
-      
-      return `${formattedAmount} ${unitName} (${formattedOunces}oz)`;
-    }
-    
-    return `${formattedAmount} ${unitName}`;
+    // Check if formatted amount should include unit
+    return formattedAmount.includes(unitName) 
+      ? formattedAmount 
+      : `${formattedAmount} ${unitName}`;
   };
 
   // Helper function to adjust servings
@@ -746,11 +729,10 @@ const RecipeCreatePage: React.FC = () => {
               )}
               
               {isGenerating ? (
-                <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center">
+                <div className="flex flex-col items-center justify-center h-64">
                   <AILoadingProgress 
                     isLoading={isGenerating}
                     message={isModifyMode ? "Modifying Your Recipe..." : "Creating Your Recipe..."}
-                    floating={true}
                     large={true}
                   />
                 </div>
