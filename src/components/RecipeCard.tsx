@@ -11,7 +11,20 @@ interface RecipeCardProps {
 }
 
 const RecipeCard = ({ recipe, className }: RecipeCardProps) => {
-  const totalTime = recipe.prep_time_minutes + recipe.cook_time_minutes;
+  // Debug logging to inspect recipe data structure
+  console.log("RecipeCard - recipe data:", recipe);
+  console.log("RecipeCard - prep_time_minutes:", recipe.prep_time_minutes);
+  console.log("RecipeCard - cook_time_minutes:", recipe.cook_time_minutes);
+  console.log("RecipeCard - servings:", recipe.servings);
+  console.log("RecipeCard - difficulty:", recipe.difficulty);
+  
+  // Handle potential undefined/null values with fallbacks
+  const prepTime = recipe.prep_time_minutes || 0;
+  const cookTime = recipe.cook_time_minutes || 0;
+  const servings = recipe.servings || 1;
+  const difficulty = recipe.difficulty || 'easy';
+  
+  const totalTime = prepTime + cookTime;
   
   // Format time to display in hours and minutes if needed
   const formatTime = (minutes: number) => {
@@ -83,9 +96,9 @@ const RecipeCard = ({ recipe, className }: RecipeCardProps) => {
           <div className="absolute top-3 left-3 flex flex-wrap gap-2 z-20">
             <span className={cn(
               "px-2 py-1 rounded-full text-xs font-medium",
-              getDifficultyColor(recipe.difficulty)
+              getDifficultyColor(difficulty)
             )}>
-              {recipe.difficulty.charAt(0).toUpperCase() + recipe.difficulty.slice(1)}
+              {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
             </span>
             
             {recipe.tags && recipe.tags.slice(0, 2).map((tag, index) => (
@@ -115,7 +128,7 @@ const RecipeCard = ({ recipe, className }: RecipeCardProps) => {
           </div>
           <div className="flex items-center">
             <Users className="h-4 w-4 mr-1" />
-            <span>{recipe.servings} serving{recipe.servings !== 1 ? 's' : ''}</span>
+            <span>{servings} serving{servings !== 1 ? 's' : ''}</span>
           </div>
         </CardFooter>
       </Card>

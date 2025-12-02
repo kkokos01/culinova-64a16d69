@@ -53,6 +53,17 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   const displayServings = recipeToUse?.servings || servings;
   const displayDifficulty = recipeToUse?.difficulty || difficulty;
   
+  // Calculate total time
+  const totalTime = (displayPrepTime || 0) + (displayCookTime || 0);
+  
+  // Format time to display in hours and minutes if needed
+  const formatTime = (minutes: number) => {
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours} hr ${mins} min` : `${hours} hr`;
+  };
+  
   return (
     <div className="mb-8">
       <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
@@ -69,6 +80,11 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
         {displayCookTime && (
           <div>
             <span className="font-medium">Cook:</span> {displayCookTime} min
+          </div>
+        )}
+        {totalTime > 0 && (
+          <div>
+            <span className="font-medium">Total:</span> {formatTime(totalTime)}
           </div>
         )}
         {displayServings && (

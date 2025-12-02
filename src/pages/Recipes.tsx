@@ -178,15 +178,7 @@ const Recipes = () => {
             description="Find inspiration for your next culinary adventure with our collection of recipes from Supabase."
           />
           
-          {user && (
-            <Button 
-              onClick={handleSeedRecipes}
-              className="bg-sage-500 hover:bg-sage-600"
-            >
-              Add Sample Recipes
-            </Button>
-          )}
-        </div>
+          </div>
         
         <SearchFilters 
           searchQuery={searchQuery}
