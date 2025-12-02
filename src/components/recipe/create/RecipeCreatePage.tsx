@@ -257,6 +257,14 @@ const RecipeCreatePage: React.FC = () => {
       setActiveVersionId("original");
       setIsActiveVersionTemporary(false);
       setIsModifyMode(true);
+      
+      // Clear all input and selection states for clean modification slate
+      setUserInput("");
+      setSelectedQuickConcept("");
+      setSelectedInspiration("");
+      setSelectedIngredients(new Map());
+      setSelectedQuickModifications([]);
+      setCustomInstructions("");
 
       toast({
         title: "Recipe Generated!",
@@ -347,6 +355,14 @@ const RecipeCreatePage: React.FC = () => {
         title: "Recipe Modified!",
         description: "Your recipe has been updated. You can continue modifying or save it.",
       });
+
+      // Clear all input and selection states after successful modification
+      setUserInput("");
+      setSelectedQuickConcept("");
+      setSelectedInspiration("");
+      setSelectedIngredients(new Map());
+      setSelectedQuickModifications([]);
+      setCustomInstructions("");
 
     } catch (error) {
       console.error('Modification error:', error);
@@ -709,6 +725,35 @@ const RecipeCreatePage: React.FC = () => {
                     {recipe.description && (
                       <p className="text-gray-600 mt-2">{recipe.description}</p>
                     )}
+                    
+                    {/* Recipe Metadata */}
+                    <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-500">
+                      {recipe.prep_time_minutes && (
+                        <div>
+                          <span className="font-medium">Prep:</span> {recipe.prep_time_minutes} min
+                        </div>
+                      )}
+                      {recipe.cook_time_minutes && (
+                        <div>
+                          <span className="font-medium">Cook:</span> {recipe.cook_time_minutes} min
+                        </div>
+                      )}
+                      {(recipe.prep_time_minutes || recipe.cook_time_minutes) && (
+                        <div>
+                          <span className="font-medium">Total:</span> {((recipe.prep_time_minutes || 0) + (recipe.cook_time_minutes || 0))} min
+                        </div>
+                      )}
+                      {recipe.servings && (
+                        <div>
+                          <span className="font-medium">Servings:</span> {recipe.servings}
+                        </div>
+                      )}
+                      {recipe.difficulty && (
+                        <div>
+                          <span className="font-medium">Difficulty:</span> {recipe.difficulty.charAt(0).toUpperCase() + recipe.difficulty.slice(1)}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Recipe Content */}
