@@ -1,19 +1,31 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ProfileSidebar from "@/components/auth/ProfileSidebar";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ProfileSettings from "@/components/auth/ProfileSettings";
 import SpacesList from "@/components/auth/SpacesList";
 import PantryManager from "@/components/pantry/PantryManager";
 import { useUserData } from "@/hooks/useUserData";
 import { useSpace } from "@/context/SpaceContext";
+import { LogOut } from "lucide-react";
 
 const Profile = () => {
-  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { user, signOut } = useAuth();
   const { currentSpace } = useSpace();
   const [activeTab, setActiveTab] = useState("profile");
+  
+  // Set active tab from URL parameter on mount
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'pantry' || tabParam === 'spaces' || tabParam === 'profile') {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
   
   const { 
     profileData, 
@@ -24,37 +36,70 @@ const Profile = () => {
     isLoading
   } = useUserData(user?.id);
 
+  const getInitials = () => {
+    if (profileData.display_name) {
+      return profileData.display_name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase();
+    }
+    return user?.email?.charAt(0).toUpperCase() || "U";
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="container mx-auto px-4 py-24">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-display font-semibold text-slate-800">Your Profile</h1>
-          {currentSpace && (
-            <div className="bg-white px-4 py-2 rounded-md shadow-sm border">
-              <span className="text-sm text-slate-500">Current Space:</span>
-              <span className="ml-2 font-medium">{currentSpace.name}</span>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        
+        {/* Profile Header Section */}
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={profileData.avatar_url} alt={profileData.display_name || user?.email} />
+              <AvatarFallback className="text-xl">{getInitials()}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 text-center sm:text-left">
+              <h1 className="text-3xl font-display font-semibold text-slate-800 mb-2">
+                {profileData.display_name || "Your Profile"}
+              </h1>
+              <p className="text-gray-600">{user?.email}</p>
             </div>
-          )}
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              {currentSpace && (
+                <div className="bg-white px-4 py-2 rounded-md shadow-sm border">
+                  <span className="text-sm text-slate-500">Current Space:</span>
+                  <span className="ml-2 font-medium">{currentSpace.name}</span>
+                </div>
+              )}
+              <Button
+                variant="outline"
+                onClick={handleSignOut}
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="md:col-span-1">
-            <ProfileSidebar 
-              displayName={profileData.display_name} 
-              avatarUrl={profileData.avatar_url}
-              email={user?.email}
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="mb-6">
+        {/* Main Content Area */}
+        <div className="bg-white rounded-lg shadow-sm border">
+          <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab}>
+            <div className="px-6 pt-6">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="profile">Profile Settings</TabsTrigger>
                 <TabsTrigger value="spaces">Spaces</TabsTrigger>
                 <TabsTrigger value="pantry">My Pantry</TabsTrigger>
               </TabsList>
-              
+            </div>
+            
+            <div className="p-6">
               <TabsContent value="profile">
                 {isLoading ? (
                   <div className="flex justify-center p-8">
@@ -87,8 +132,8 @@ const Profile = () => {
               <TabsContent value="pantry">
                 <PantryManager />
               </TabsContent>
-            </Tabs>
-          </div>
+            </div>
+          </Tabs>
         </div>
       </div>
     </div>

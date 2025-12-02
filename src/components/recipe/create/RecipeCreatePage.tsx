@@ -16,7 +16,7 @@ import UnifiedModificationPanel from "../UnifiedModificationPanel";
 import RecipeImageGenerator from "../RecipeImageGenerator";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles, Loader2, Save, ChefHat, Wand2, Plus, Minus, RotateCcw } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, Save, ChefHat, Wand2, Plus, Minus, RotateCcw, ChevronRight } from "lucide-react";
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
 import AILoadingProgress from "@/components/ui/AILoadingProgress";
 
@@ -26,10 +26,12 @@ const RecipeCreatePage: React.FC = () => {
   const { currentSpace, isLoading: spaceLoading } = useSpace();
   const { toast } = useToast();
 
-  // UI State
-  const [leftPanelSize, setLeftPanelSize] = useState(35);
-  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false); // Start open, not collapsed
+  // UI State - Start with 2/3 width for better input space
+  const [leftPanelSize, setLeftPanelSize] = useState(66);
+  const [rightPanelSize, setRightPanelSize] = useState(34);
+  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hasUserManuallyResized, setHasUserManuallyResized] = useState(false);
 
   // Ref for sidebar panel and button positioning
   const sidebarPanelRef = useRef<HTMLDivElement>(null);
@@ -102,6 +104,19 @@ const RecipeCreatePage: React.FC = () => {
   // Loading State
   const [isSaving, setIsSaving] = useState(false);
   const [generatedRecipe, setGeneratedRecipe] = useState<AIRecipeResponse | null>(null);
+
+  // Dynamic sidebar sizing - transition to 1/3 when recipe is generated
+  useEffect(() => {
+    if (generatedRecipe && !hasUserManuallyResized) {
+      // Recipe exists and user hasn't manually resized - transition to 1/3
+      setLeftPanelSize(33);
+      setRightPanelSize(67);
+    } else if (!generatedRecipe && !hasUserManuallyResized) {
+      // No recipe and user hasn't manually resized - reset to 2/3
+      setLeftPanelSize(66);
+      setRightPanelSize(34);
+    }
+  }, [generatedRecipe, hasUserManuallyResized]);
 
   // Serving Size Adjustment State
   const [originalServings, setOriginalServings] = useState<number>(4);
@@ -688,73 +703,106 @@ const RecipeCreatePage: React.FC = () => {
         <div className="container mx-auto py-2 px-3">
         <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-100px)] rounded-lg border relative">
           <ResizablePanel 
-            defaultSize={35}
+            defaultSize={66}
             size={leftPanelSize}
-            minSize={leftPanelCollapsed ? 4 : 35}
-            maxSize={leftPanelCollapsed ? 4 : 60}
+            minSize={8}
+            maxSize={100}
             collapsible
-            collapsedSize={4}
+            collapsedSize={8}
             onCollapse={() => setLeftPanelCollapsed(true)}
             onExpand={() => setLeftPanelCollapsed(false)}
+            onResize={(size) => {
+              setLeftPanelSize(size);
+              // Track if user has manually resized (with tolerance for floating-point precision)
+              if (Math.abs(size - 66) > 2 && Math.abs(size - 33) > 2) {
+                setHasUserManuallyResized(true);
+              }
+            }}
             className={`relative transition-all duration-300 ${
               leftPanelCollapsed ? "w-15" : "w-full"
             } ${leftPanelCollapsed ? "bg-sage-500 text-white" : "bg-sage-500 text-white shadow-lg"}`}
           >
-            <UnifiedSidebar
-              ref={sidebarPanelRef}
-              mode={isModifyMode ? 'modify' : 'create'}
-              recipe={recipe}
-              isPanelCollapsed={leftPanelCollapsed}
-              onTogglePanel={handleTogglePanel}
-              
-              // User input
-              userInput={userInput}
-              onUserInputChange={setUserInput}
-              
-              // Quick concepts/modifications
-              selectedQuickConcept={selectedQuickConcept}
-              onQuickConceptSelect={setSelectedQuickConcept}
-              
-              // Inspiration
-              selectedInspiration={selectedInspiration}
-              onInspirationSelect={setSelectedInspiration}
-              
-              // Advanced options
-              dietaryConstraints={dietaryConstraints}
-              timeConstraints={timeConstraints}
-              skillLevel={skillLevel}
-              excludedIngredients={excludedIngredients}
-              spicinessLevel={spicinessLevel}
-              targetServings={targetServings}
-              onDietaryChange={setDietaryConstraints}
-              onTimeChange={setTimeConstraints}
-              onSkillChange={setSkillLevel}
-              onExclusionsChange={setExcludedIngredients}
-              onSpicinessChange={setSpicinessLevel}
-              onServingsChange={setTargetServings}
-              
-              // Pantry settings
-              usePantry={usePantry}
-              pantryMode={pantryMode}
-              pantryItems={pantryItems}
-              selectedPantryItemIds={selectedPantryItemIds}
-              onUsePantryChange={setUsePantry}
-              onPantryModeChange={handlePantryModeChange}
-              onSelectionChange={handleSelectionChange}
-              
-              // Ingredient modifications (modify mode only)
-              selectedIngredients={selectedIngredients}
-              onRemoveIngredientSelection={removeIngredientSelection}
-              
-              // Loading states
-              isGenerating={isGenerating}
-              isSaving={isSaving}
-            />
+            {/* Collapsed state indicator - positioned absolutely over sidebar */}
+            {(leftPanelCollapsed || leftPanelSize < 15) && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-sage-500 pointer-events-none">
+                <div className="text-white text-center">
+                  <div className="[writing-mode:vertical-lr] text-sm font-medium mb-2">
+                    {isModifyMode ? 'Modify' : 'Create'} recipe
+                  </div>
+                  <ChevronRight className="h-4 w-4 mx-auto animate-pulse" />
+                </div>
+              </div>
+            )}
+            
+            {/* UnifiedSidebar - only render when not collapsed/small */}
+            {!(leftPanelCollapsed || leftPanelSize < 15) && (
+              <UnifiedSidebar
+                ref={sidebarPanelRef}
+                mode={isModifyMode ? 'modify' : 'create'}
+                recipe={recipe}
+                isPanelCollapsed={leftPanelCollapsed}
+                onTogglePanel={handleTogglePanel}
+                
+                // User input
+                userInput={userInput}
+                onUserInputChange={setUserInput}
+                
+                // Quick concepts/modifications
+                selectedQuickConcept={selectedQuickConcept}
+                onQuickConceptSelect={setSelectedQuickConcept}
+                
+                // Inspiration
+                selectedInspiration={selectedInspiration}
+                onInspirationSelect={setSelectedInspiration}
+                
+                // Advanced options
+                dietaryConstraints={dietaryConstraints}
+                timeConstraints={timeConstraints}
+                skillLevel={skillLevel}
+                excludedIngredients={excludedIngredients}
+                spicinessLevel={spicinessLevel}
+                targetServings={targetServings}
+                onServingsChange={setTargetServings}
+                onDietaryChange={setDietaryConstraints}
+                onTimeChange={setTimeConstraints}
+                onSkillChange={setSkillLevel}
+                onExclusionsChange={setExcludedIngredients}
+                onSpicinessChange={setSpicinessLevel}
+                
+                // Pantry settings
+                usePantry={usePantry}
+                pantryMode={pantryMode}
+                pantryItems={pantryItems}
+                selectedPantryItemIds={selectedPantryItemIds}
+                onUsePantryChange={setUsePantry}
+                onPantryModeChange={handlePantryModeChange}
+                onSelectionChange={handleSelectionChange}
+                
+                // Ingredient modifications (modify mode only)
+                selectedIngredients={selectedIngredients}
+                onRemoveIngredientSelection={removeIngredientSelection}
+                
+                // Loading states
+                isGenerating={isGenerating}
+                isSaving={isSaving}
+              />
+            )}
           </ResizablePanel>
 
-          <ResizableHandle withHandle />
+          <ResizableHandle className="relative">
+            {/* Drag indicator */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="flex flex-col items-center justify-center bg-slate-100 rounded-full p-1 shadow-sm border">
+                <div className="flex flex-col gap-0.5">
+                  <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                </div>
+              </div>
+            </div>
+          </ResizableHandle>
 
-          <ResizablePanel defaultSize={65} className="bg-white overflow-y-auto">
+          <ResizablePanel defaultSize={34} size={rightPanelSize} className="bg-white overflow-y-auto">
             <div className="p-4">
               {/* Simple Version Management Tabs */}
               {isModifyMode && recipeVersions.length > 0 && (

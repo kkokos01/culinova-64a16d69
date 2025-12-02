@@ -42,7 +42,8 @@ const Navbar = () => {
   
   const navLinks = [
     { path: '/', label: 'Home' },
-    { path: '/recipes', label: 'Recipes' }
+    { path: '/recipes', label: 'Recipes' },
+    { path: '/profile?tab=pantry', label: 'Pantry' }
     // Shopping Lists and Meal Plans removed as requested
   ];
   
