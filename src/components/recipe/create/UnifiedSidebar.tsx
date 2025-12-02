@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Wand2, Lightbulb, Settings, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Wand2, Lightbulb, Settings, Loader2, Check } from "lucide-react";
 import AILoadingProgress from "@/components/ui/AILoadingProgress";
 
 interface UnifiedSidebarProps {
@@ -234,11 +234,15 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
                       onClick={() => onQuickConceptSelect(selectedQuickConcept === concept ? "" : concept)}
                       className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                         selectedQuickConcept === concept
-                          ? 'bg-white text-sage-700 shadow-sm'
+                          ? 'bg-green-600 text-white shadow-md hover:bg-green-700'
                           : 'bg-sage-100 hover:bg-sage-200 text-sage-700'
                       }`}
                     >
-                      <span className="w-2 h-2 rounded-full bg-sage-400 mr-2"></span>
+                      {selectedQuickConcept === concept ? (
+                        <Check className="h-3 w-3 mr-2" />
+                      ) : (
+                        <span className="w-2 h-2 rounded-full bg-sage-400 mr-2"></span>
+                      )}
                       {concept}
                     </button>
                   ))}
@@ -274,11 +278,15 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
                         onClick={() => onInspirationSelect(selectedInspiration === cuisine ? "" : cuisine)}
                         className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                           selectedInspiration === cuisine
-                            ? 'bg-white text-sage-700 shadow-sm'
+                            ? 'bg-green-600 text-white shadow-md hover:bg-green-700'
                             : 'bg-sage-100 hover:bg-sage-200 text-sage-700'
                         }`}
                       >
-                        <span className="w-2 h-2 rounded-full bg-sage-500 mr-2"></span>
+                        {selectedInspiration === cuisine ? (
+                          <Check className="h-3 w-3 mr-2" />
+                        ) : (
+                          <span className="w-2 h-2 rounded-full bg-sage-500 mr-2"></span>
+                        )}
                         {cuisine}
                       </button>
                     ))}
