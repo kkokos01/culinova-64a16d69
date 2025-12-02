@@ -38,7 +38,17 @@ const RecipeCreatePage: React.FC = () => {
         const rect = sidebarPanelRef.current.getBoundingClientRect();
         const buttonWidth = 160; // min-w-[160px]
         const centerPosition = rect.left + rect.width / 2 - buttonWidth / 2;
+        
+        console.log('Button position debug:', {
+          rectLeft: rect.left,
+          rectWidth: rect.width,
+          centerPosition,
+          buttonPosition
+        });
+        
         setButtonPosition({ left: centerPosition });
+      } else {
+        console.log('Sidebar ref is null');
       }
     };
 
@@ -528,7 +538,6 @@ const RecipeCreatePage: React.FC = () => {
       <div className="pt-16">
         <div className="container mx-auto py-2 px-3">
         <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-100px)] rounded-lg border relative">
-          <div ref={sidebarPanelRef} className="flex h-full">
           <ResizablePanel 
             defaultSize={35}
             size={leftPanelSize}
@@ -542,8 +551,8 @@ const RecipeCreatePage: React.FC = () => {
               leftPanelCollapsed ? "w-15" : "w-full"
             } ${leftPanelCollapsed ? "bg-sage-500 text-white" : "bg-sage-500 text-white shadow-lg"}`}
           >
-            {/* Unified Sidebar */}
             <UnifiedSidebar
+              ref={sidebarPanelRef}
               mode={isModifyMode ? 'modify' : 'create'}
               recipe={recipe}
               isPanelCollapsed={leftPanelCollapsed}
@@ -584,7 +593,6 @@ const RecipeCreatePage: React.FC = () => {
               isSaving={isSaving}
             />
           </ResizablePanel>
-          </div>
 
           <ResizableHandle withHandle />
 
@@ -701,10 +709,61 @@ const RecipeCreatePage: React.FC = () => {
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-                  <ChefHat className="h-12 w-12 mb-4 text-gray-300" />
-                  <p className="text-lg font-medium">No recipe generated yet</p>
-                  <p className="text-sm">Use the controls on the left to create a new recipe with AI</p>
+                <div className="flex flex-col items-center justify-center h-64">
+                  <ChefHat className="h-16 w-16 mb-6 text-sage-500" />
+                  <div className="text-center mb-8">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Ready to Create Something Delicious?</h2>
+                    <p className="text-gray-600">Try one of these ideas or describe your own recipe</p>
+                  </div>
+                  
+                  {/* Clickable Inspiration Examples */}
+                  <div className="flex flex-wrap gap-3 justify-center max-w-lg">
+                    <button
+                      onClick={() => {
+                        setUserInput("Spicy Thai basil chicken with jasmine rice and fresh vegetables");
+                        setSelectedQuickConcept("Quick Pasta Dish");
+                      }}
+                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                    >
+                      🌶️ Spicy Thai Basil Chicken
+                    </button>
+                    <button
+                      onClick={() => {
+                        setUserInput("Creamy vegan chocolate mousse with avocado and dark chocolate");
+                        setSelectedQuickConcept("Quick Pasta Dish");
+                      }}
+                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                    >
+                      🍫 Vegan Chocolate Mousse
+                    </button>
+                    <button
+                      onClick={() => {
+                        setUserInput("Mediterranean quinoa bowl with roasted vegetables and lemon tahini dressing");
+                        setSelectedQuickConcept("Healthy Salad");
+                      }}
+                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                    >
+                      🥗 Mediterranean Quinoa Bowl
+                    </button>
+                    <button
+                      onClick={() => {
+                        setUserInput("Classic Italian carbonara with crispy pancetta and pecorino cheese");
+                        setSelectedQuickConcept("Quick Pasta Dish");
+                      }}
+                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                    >
+                      🍝 Authentic Carbonara
+                    </button>
+                    <button
+                      onClick={() => {
+                        setUserInput("Japanese chicken teriyaki bowl with steamed rice and pickled vegetables");
+                        setSelectedQuickConcept("Quick Pasta Dish");
+                      }}
+                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                    >
+                      🍱 Chicken Teriyaki Bowl
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

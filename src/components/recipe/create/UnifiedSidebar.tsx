@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, forwardRef } from "react";
 import { Recipe, Ingredient } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -51,7 +51,7 @@ interface UnifiedSidebarProps {
   isSaving: boolean;
 }
 
-const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
+const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
   mode,
   recipe,
   isPanelCollapsed,
@@ -78,7 +78,7 @@ const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   onRemoveIngredientSelection,
   isGenerating,
   isSaving
-}) => {
+}, ref) => {
   const [isQuickConceptsOpen, setIsQuickConceptsOpen] = useState(true);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
@@ -150,7 +150,7 @@ const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
   }
 
   return (
-    <div className="h-full flex flex-col relative">
+    <div ref={ref} className="h-full flex flex-col relative">
       {/* Scrollable Content */}
       <div className="overflow-y-auto h-full">
         <Card className="rounded-none border-x-0 border-t-0 border-b border-white/20 shadow-none">
@@ -190,7 +190,7 @@ const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
                 ? 'Describe your recipe idea...' 
                 : 'Describe your modifications...'
               }
-              className="w-full"
+              className="w-full text-black placeholder:text-gray-500"
             />
           </div>
 
@@ -372,6 +372,8 @@ const UnifiedSidebar: React.FC<UnifiedSidebarProps> = ({
       </div>
     </div>
   );
-};
+});
+
+UnifiedSidebar.displayName = 'UnifiedSidebar';
 
 export default UnifiedSidebar;

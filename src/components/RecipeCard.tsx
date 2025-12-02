@@ -35,18 +35,49 @@ const RecipeCard = ({ recipe, className }: RecipeCardProps) => {
     }
   };
   
+  // Get gradient fallback based on recipe category/tags
+  const getGradientFallback = (recipe: Recipe) => {
+    const title = recipe.title.toLowerCase();
+    const tags = recipe.tags?.join(' ').toLowerCase() || '';
+    const combined = `${title} ${tags}`;
+    
+    // Determine category based on title and tags
+    if (combined.includes('chicken') || combined.includes('meat') || combined.includes('beef') || combined.includes('pork')) {
+      return 'bg-gradient-to-br from-red-400 to-orange-500';
+    } else if (combined.includes('vegetable') || combined.includes('salad') || combined.includes('vegan') || combined.includes('green')) {
+      return 'bg-gradient-to-br from-green-400 to-emerald-500';
+    } else if (combined.includes('pasta') || combined.includes('bread') || combined.includes('wheat')) {
+      return 'bg-gradient-to-br from-yellow-400 to-amber-500';
+    } else if (combined.includes('chocolate') || combined.includes('dessert') || combined.includes('sweet')) {
+      return 'bg-gradient-to-br from-purple-400 to-pink-500';
+    } else if (combined.includes('fish') || combined.includes('seafood')) {
+      return 'bg-gradient-to-br from-blue-400 to-cyan-500';
+    } else {
+      return 'bg-gradient-to-br from-sage-400 to-sage-600';
+    }
+  };
+
   return (
     <Link to={`/recipes/${recipe.id}`}>
-      <Card className={cn("overflow-hidden h-full recipe-card transition-all duration-200 hover:shadow-md", className)}>
+      <Card className={cn("overflow-hidden h-full recipe-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] shadow-md", className)}>
         {/* Image with gradient overlay */}
-        <div className="aspect-video relative overflow-hidden">
+        <div className="aspect-video relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
-          <img 
-            src={recipe.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"} 
-            alt={recipe.title} 
-            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-          />
+          {recipe.image_url ? (
+            <img 
+              src={recipe.image_url} 
+              alt={recipe.title} 
+              className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <div className={cn("w-full h-full flex items-center justify-center text-white", getGradientFallback(recipe))}>
+              <div className="text-center">
+                <div className="text-4xl mb-2">🍳</div>
+                <div className="text-sm font-medium opacity-90">{recipe.title}</div>
+              </div>
+            </div>
+          )}
           
           {/* Tags overlay */}
           <div className="absolute top-3 left-3 flex flex-wrap gap-2 z-20">
