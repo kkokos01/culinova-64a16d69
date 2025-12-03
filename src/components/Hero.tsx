@@ -35,7 +35,7 @@ const Hero = ({ className }: HeroProps) => {
           
           <div className="flex flex-col sm:flex-row gap-4 animate-slide-in [animation-delay:400ms]">
             <Button asChild size="lg" className="bg-sage-400 hover:bg-sage-500 text-white">
-              <Link to="/recipes">
+              <Link to="/collections">
                 Browse Recipes
               </Link>
             </Button>

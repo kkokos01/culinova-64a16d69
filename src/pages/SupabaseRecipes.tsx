@@ -75,8 +75,8 @@ const SupabaseRecipes = () => {
               There are no recipes in your Supabase database yet.
             </p>
             <Button asChild>
-              <Link to="/recipes">
-                Go to Mock Recipes
+              <Link to="/collections">
+                Go to Collections
               </Link>
             </Button>
           </div>

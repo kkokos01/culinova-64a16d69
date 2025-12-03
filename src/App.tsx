@@ -11,7 +11,6 @@ import { ToastProvider } from "@/components/ui/use-toast";
 import Index from "./pages/Index";
 import Collections from "./pages/Collections";
 import NotFound from "./pages/NotFound";
-import Recipes from "./pages/Recipes";
 import SupabaseRecipes from "./pages/SupabaseRecipes";
 import RecipeDetail from "./pages/RecipeDetail";
 import RecipeCreate from "./pages/RecipeCreate";
@@ -55,7 +54,6 @@ function App() {
                         <Routes>
                           <Route path="/" element={<Index />} />
                           <Route path="/collections" element={<Collections />} />
-                          <Route path="/recipes" element={<Recipes />} />
                           <Route path="/supabase-recipes" element={<SupabaseRecipes />} />
                           <Route path="/create" element={<RecipeCreate />} />
                           <Route path="/recipes/create" element={<RecipeCreate />} />

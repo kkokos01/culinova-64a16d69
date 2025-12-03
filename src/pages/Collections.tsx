@@ -13,15 +13,23 @@ import { filterRecipes } from "@/utils/recipeUtils";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 const Collections: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   
-  // Search and filter state (like Recipes page)
+  // Use React Query for caching and performance
+  const { data: savedRecipes = [], isLoading, error } = useQuery({
+    queryKey: ['userRecipes', user?.id],
+    queryFn: () => user ? recipeService.getUserRecipes(user.id) : [],
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+  });
+  
+  // Search and filter state ( like Recipes page)
   const [searchQuery, setSearchQuery] = useState("");
   const [difficulty, setDifficulty] = useState("all");
   const [timeFilter, setTimeFilter] = useState("all");
@@ -30,30 +38,23 @@ const Collections: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      fetchUserRecipes();
+      // Data is now handled by React Query
+      console.log('🔍 Collections: Using cached data for user:', user.id);
     } else {
       navigate("/sign-in");
     }
   }, [user, navigate]);
 
-  const fetchUserRecipes = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    try {
-      const recipes = await recipeService.getUserRecipes(user.id);
-      setSavedRecipes(recipes || []);
-    } catch (error) {
+  useEffect(() => {
+    if (error) {
       console.error('Error fetching recipes:', error);
       toast({
         title: "Error loading collections",
         description: "Failed to load your saved recipes. Please try again.",
         variant: "destructive"
       });
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [error, toast]);
 
   const handleCreateNew = () => {
     navigate("/create");
@@ -105,7 +106,7 @@ const Collections: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pt-16">
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
