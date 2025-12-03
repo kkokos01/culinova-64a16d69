@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useSpace } from "@/context/SpaceContext";
 import { useToast } from "@/hooks/use-toast";
 import { aiRecipeGenerator, AIRecipeRequest, AIRecipeModificationRequest, AIRecipeResponse, AIRecipeError } from "@/services/ai/recipeGenerator";
+import { useAI } from "@/hooks/useAI";
 import { logger } from "@/utils/logger";
 import { foodUnitMapper } from "@/services/ai/foodUnitMapper";
 import { recipeService } from "@/services/supabase/recipeService";
@@ -25,13 +26,29 @@ const RecipeCreatePage: React.FC = () => {
   const { user, isLoading } = useAuth();
   const { currentSpace, isLoading: spaceLoading } = useSpace();
   const { toast } = useToast();
+  
+  // Unified AI operations
+  const {
+    generateRecipe,
+    modifyRecipe,
+    generateImage,
+    isGeneratingRecipe,
+    isModifyingRecipe,
+    isGeneratingImage,
+    recipeError,
+    modificationError,
+    imageError,
+    clearCompleted
+  } = useAI();
 
   // UI State - Start with 95% left for create mode
   const [leftPanelSize, setLeftPanelSize] = useState(95);
   const [rightPanelSize, setRightPanelSize] = useState(5);
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [hasUserManuallyResized, setHasUserManuallyResized] = useState(false);
+  
+  // Combined loading state for UI
+  const isGenerating = isGeneratingRecipe || isModifyingRecipe;
 
   // Ref for sidebar panel and button positioning
   const sidebarPanelRef = useRef<HTMLDivElement>(null);
@@ -102,7 +119,7 @@ const RecipeCreatePage: React.FC = () => {
   }, [costPreference, setCostPreference]);
   const [customInstructions, setCustomInstructions] = useState("");
   const [isModifying, setIsModifying] = useState(false);
-  const [modificationError, setModificationError] = useState<AIRecipeError | null>(null);
+  const [localModificationError, setModificationError] = useState<AIRecipeError | null>(null);
 
   // Ingredient Selection State
   const [selectedIngredients, setSelectedIngredients] = useState<Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>>(new Map());
@@ -325,7 +342,6 @@ const RecipeCreatePage: React.FC = () => {
     console.log('🔍 Generation started - shrinking panel to 5% to show status');
     setLeftPanelSize(5);
     setRightPanelSize(95);
-    setIsGenerating(true);
     setGenerationError(null);
 
     try {
@@ -347,7 +363,7 @@ const RecipeCreatePage: React.FC = () => {
       };
       logger.debug('Full API request payload', request, 'RecipeCreatePage');
 
-      const response = await aiRecipeGenerator.generateRecipe(request);
+      const response = await generateRecipe(request);
 
       if ('type' in response) {
         setGenerationError(response);
@@ -430,7 +446,7 @@ const RecipeCreatePage: React.FC = () => {
         suggestions: ['Check your internet connection', 'Try a different concept']
       });
     } finally {
-      setIsGenerating(false);
+      // No longer needed - loading state managed by useAI hook
     }
   };
 
@@ -447,15 +463,13 @@ const RecipeCreatePage: React.FC = () => {
   const handleModifyRecipe = async (modificationInstructions: string) => {
     if (!recipe) return;
 
-    setIsGenerating(true);
-
     try {
       const modificationRequest: AIRecipeModificationRequest = {
         baseRecipe: recipe,
         modificationInstructions,
       };
 
-      const response = await aiRecipeGenerator.modifyRecipe(modificationRequest);
+      const response = await modifyRecipe(modificationRequest);
 
       if ('type' in response) {
         throw new Error(response.message);
@@ -505,14 +519,7 @@ const RecipeCreatePage: React.FC = () => {
     } catch (error) {
       console.error('Modification error:', error);
     } finally {
-      setIsGenerating(false);
-      
-      // Show completion toast
-      toast({
-        title: "Recipe Modified!",
-        description: "Your recipe has been updated successfully. You can continue modifying or save it.",
-        variant: "default",
-      });
+      // No longer needed - loading state managed by useAI hook
     }
   };
 
@@ -533,7 +540,6 @@ const RecipeCreatePage: React.FC = () => {
     console.log('🔍 Modification started - shrinking panel to 5% to show status');
     setLeftPanelSize(5);
     setRightPanelSize(95);
-    setIsGenerating(true);
     
     // Build modification instructions from all sources
     let modificationInstructions = "";
@@ -805,9 +811,17 @@ const RecipeCreatePage: React.FC = () => {
             {leftPanelSize < 15 && (
               <div 
                 onClick={handleOverlayClick}
-                className="absolute inset-0 z-50 flex items-center justify-center bg-sage-500 cursor-pointer hover:bg-sage-600 transition-colors"
+                className="absolute inset-0 z-50 flex flex-col items-center justify-start pt-8 bg-sage-500 cursor-pointer hover:bg-sage-600 transition-colors"
               >
                 <ChevronRight className="h-4 w-4 text-white animate-pulse" />
+                {generatedRecipe && (
+                  <span 
+                    className="text-xs text-white mt-2 font-medium"
+                    style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+                  >
+                    Modify Recipe
+                  </span>
+                )}
               </div>
             )}
           </ResizablePanel>
