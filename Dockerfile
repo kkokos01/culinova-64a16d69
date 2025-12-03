@@ -13,7 +13,7 @@ COPY . .
 # Accept build arguments for environment variables
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
-ARG VITE_GOOGLE_AI_API_KEY
+ARG VITE_NODE_ENV
 ARG VITE_AI_API_KEY
 
 # Build the application with environment variables
