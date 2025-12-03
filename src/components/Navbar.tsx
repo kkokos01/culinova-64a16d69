@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChefHat, Search, User, LogOut } from 'lucide-react';
+import { Menu, X, ChefHat, Search, User, LogOut, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -43,7 +43,8 @@ const Navbar = () => {
   const navLinks = [
     { path: '/', label: 'Home' },
     { path: '/collections', label: 'Collections' },
-    { path: '/profile?tab=pantry', label: 'Pantry' }
+    { path: '/profile?tab=pantry', label: 'Pantry' },
+    { path: '/shopping-list', label: 'Shopping List', icon: ShoppingCart }
     // Shopping Lists and Meal Plans removed as requested
   ];
   

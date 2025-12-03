@@ -25,6 +25,8 @@ interface DesktopLayoutProps {
   handleAcceptChanges: () => void;
   setSelectedIngredient: (ingredient: Ingredient | null) => void;
   onSelectIngredient: (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => void;
+  onOpenShoppingList: () => void;
+  isAiModifying: boolean;
 }
 
 const DesktopLayout: React.FC<DesktopLayoutProps> = ({
@@ -36,7 +38,9 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   handleStartModification,
   handleAcceptChanges,
   setSelectedIngredient,
-  onSelectIngredient
+  onSelectIngredient,
+  onOpenShoppingList,
+  isAiModifying
 }) => {
   const { 
     selectedIngredients, 
@@ -57,14 +61,32 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const { toast } = useToast();
   const { user } = useAuth(); // Add user access for pantry loading
   const [leftPanelSize, setLeftPanelSize] = useState(5);
+  const [rightPanelSize, setRightPanelSize] = useState(95);
   const [isSaving, setIsSaving] = useState(false);
-  const [isAiModifying, setIsAiModifying] = useState(false);
+  const [isLocalAiModifying, setIsLocalAiModifying] = useState(false);
   const [isModificationComplete, setIsModificationComplete] = useState(false);
   const [hasUserManuallyResized, setHasUserManuallyResized] = useState(false);
   
   // Ref for sidebar panel and button positioning
   const sidebarPanelRef = useRef<HTMLDivElement>(null);
+  const resizablePanelRef = useRef<any>(null); // Ref for ResizablePanel component
   const [buttonPosition, setButtonPosition] = useState({ left: 0 });
+  
+  // Handle panel expansion/collapse when clicking overlay
+  const handleOverlayClick = () => {
+    console.log('🔍 handleOverlayClick called - current leftPanelSize:', leftPanelSize);
+    if (leftPanelSize >= 50) {
+      console.log('🔍 Collapsing panel from', leftPanelSize, 'to 5');
+      setLeftPanelSize(5);
+      setRightPanelSize(95);
+      setHasUserManuallyResized(true);
+    } else {
+      console.log('🔍 Expanding panel from', leftPanelSize, 'to 95');
+      setLeftPanelSize(95);
+      setRightPanelSize(5);
+      setHasUserManuallyResized(true);
+    }
+  };
   
   // UnifiedSidebar state management
   const {
@@ -111,8 +133,18 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const isActiveVersionTemporary = activeVersion?.isTemporary || false;
   
   useEffect(() => {
-    setLeftPanelSize(isPanelCollapsed ? 5 : 5);
-  }, [isPanelCollapsed]);
+    // Only auto-adjust panel size if user hasn't manually resized
+    if (!hasUserManuallyResized) {
+      if (isPanelCollapsed) {
+        setLeftPanelSize(5);
+        setRightPanelSize(95);
+      } else {
+        // Keep collapsed for viewing mode until user clicks to modify
+        setLeftPanelSize(5);
+        setRightPanelSize(95);
+      }
+    }
+  }, [isPanelCollapsed, hasUserManuallyResized]);
 
   // Load pantry items when user and pantry mode are available
   useEffect(() => {
@@ -202,7 +234,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const handleApplyModifications = async () => {
     if (!recipe) return;
     
-    setIsAiModifying(true);
+    setIsLocalAiModifying(true);
     setIsModificationComplete(false); // Reset completion state
     
     toast({ title: "Modifying Recipe...", description: "AI is modifying your recipe...", variant: "default" });
@@ -224,7 +256,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       return;
     }
 
-    setIsAiModifying(true);
+    setIsLocalAiModifying(true);
 
     // Show modification toast (matching RecipeCreatePage)
     toast({
@@ -354,7 +386,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         variant: "destructive"
       });
     } finally {
-      setIsAiModifying(false);
+      setIsLocalAiModifying(false);
     }
   };
 
@@ -377,13 +409,14 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             handleTogglePanel();
           }}
           onResize={(size) => {
+            console.log('🔍 onResize called - size:', size, 'type:', typeof size);
             setLeftPanelSize(size);
             // Track if user has manually resized (with tolerance for floating-point precision)
-            if (Math.abs(size - 5) > 2 && Math.abs(size - 95) > 2) {
+            if (Math.abs(size - 5) > 0.1 && Math.abs(size - 95) > 0.1) {
               setHasUserManuallyResized(true);
             }
           }}
-          onClick={handleLeftPanelBackgroundClick}
+          ref={resizablePanelRef}
           className={`relative transition-all duration-300 cursor-pointer ${
             isPanelCollapsed 
               ? "bg-sage-500 text-white" 
@@ -391,7 +424,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           }`}
         >
           <UnifiedSidebar
-            ref={sidebarPanelRef}
             mode="modify"
             recipe={recipe}
             isPanelCollapsed={isPanelCollapsed}
@@ -431,6 +463,37 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             isGenerating={isAiModifying}
             isSaving={isSaving}
           />
+          
+          {/* Clickable overlay for header area when expanded */}
+          {leftPanelSize >= 15 && (
+            <div 
+              onClick={handleOverlayClick}
+              className="absolute top-0 left-0 right-0 h-16 cursor-pointer z-10 hover:bg-sage-600/20 transition-colors"
+              style={{ pointerEvents: 'auto' }}
+            />
+          )}
+          
+          {/* Collapsed state indicator - arrow for expanding */}
+          {leftPanelSize < 15 && recipe && (
+            <div 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔍 Overlay clicked! Stopping propagation and calling handleOverlayClick');
+                handleOverlayClick();
+              }}
+              className="absolute inset-0 z-50 flex flex-col items-center justify-start pt-8 bg-sage-500 cursor-pointer hover:bg-sage-600 transition-colors"
+              style={{ pointerEvents: 'auto' }}
+            >
+              <ChevronRight className="h-4 w-4 text-white animate-pulse" />
+              <span 
+                className="text-xs text-white mt-2 font-medium"
+                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+              >
+                Modify Recipe
+              </span>
+            </div>
+          )}
         </ResizablePanel>
 
         <ResizableHandle withHandle />
@@ -443,6 +506,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               onModifyWithAI={handleTogglePanel}
               showModifyButton={isPanelCollapsed}
               isTemporary={isActiveVersionTemporary}
+              onOpenShoppingList={onOpenShoppingList}
             />
 
             <VersionManagement 

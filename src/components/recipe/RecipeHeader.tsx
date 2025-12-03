@@ -2,6 +2,8 @@
 import React, { useEffect } from "react";
 import { useRecipe } from "@/context/recipe";
 import { Recipe } from "@/types";
+import { Button } from "@/components/ui/button";
+import { ShoppingCart } from "lucide-react";
 
 interface RecipeHeaderProps {
   title?: string;
@@ -16,6 +18,7 @@ interface RecipeHeaderProps {
   onModifyWithAI?: () => void;
   showModifyButton?: boolean;
   isTemporary?: boolean;
+  onOpenShoppingList?: () => void;
 }
 
 const RecipeHeader: React.FC<RecipeHeaderProps> = ({
@@ -30,6 +33,7 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   onModifyWithAI,
   showModifyButton,
   isTemporary,
+  onOpenShoppingList,
 }) => {
   const { recipe: contextRecipe } = useRecipe();
   
@@ -109,6 +113,21 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
           </div>
         )}
       </div>
+
+      {/* Action Section */}
+      {onOpenShoppingList && recipeToUse?.ingredients && recipeToUse.ingredients.length > 0 && (
+        <div className="mt-6 mb-6">
+          <Button
+            onClick={onOpenShoppingList}
+            variant="outline"
+            className="flex items-center gap-2"
+            aria-label="Add recipe ingredients to shopping list"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            Add to Shopping List
+          </Button>
+        </div>
+      )}
 
       {/* Removed RecipeVersionTabs from here - it's now only in VersionManagement */}
     </div>

@@ -96,34 +96,7 @@ const IngredientsSection: React.FC<IngredientsSectionProps> = ({
       )}
       
       {ingredients.length > 0 ? (
-        <>
-          {console.log('🔍 DEBUG: Rendering legend, ingredients count:', ingredients.length)}
-          {/* Permanent legend above ingredients */}
-          <div className="flex items-center gap-4 mb-3 p-3 bg-red-50 rounded-md border-2 border-red-500">
-            <span className="text-xs font-medium text-red-700">🔍 DEBUG: Click ingredients to modify:</span>
-            <div className="flex items-center gap-3 text-xs text-red-600">
-              <span className="flex items-center gap-1">
-                <div className="w-4 h-4 rounded-full border border-green-400 bg-green-50 flex items-center justify-center">
-                  <span className="text-green-600 font-bold text-xs">+</span>
-                </div>
-                Increase amount
-              </span>
-              <span className="flex items-center gap-1">
-                <div className="w-4 h-4 rounded-full border border-amber-400 bg-amber-50 flex items-center justify-center">
-                  <span className="text-amber-600 font-bold text-xs">−</span>
-                </div>
-                Decrease amount
-              </span>
-              <span className="flex items-center gap-1">
-                <div className="w-4 h-4 rounded-full border border-red-400 bg-red-50 flex items-center justify-center">
-                  <span className="text-red-600 font-bold text-xs">×</span>
-                </div>
-                Remove or replace
-              </span>
-            </div>
-          </div>
-          
-          <div className="grid sm:grid-cols-2 gap-2">
+        <div className="grid sm:grid-cols-2 gap-2">
           {ingredients.map((ingredient) => {
             if (!ingredient || !ingredient.id) return null;
             
@@ -141,7 +114,6 @@ const IngredientsSection: React.FC<IngredientsSectionProps> = ({
             );
           })}
         </div>
-        </>
       ) : (
         <p className="text-gray-500 italic">No ingredients found for this recipe.</p>
       )}

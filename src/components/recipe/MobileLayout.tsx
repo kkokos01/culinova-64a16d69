@@ -30,7 +30,8 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   handleAcceptChanges,
   isAiModifying,
   selectedIngredients,
-  removeIngredientSelection
+  removeIngredientSelection,
+  onOpenShoppingList
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -85,6 +86,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
         isModified={isModified}
         onModifyWithAI={handleModifyWithAI}
         showModifyButton={false}
+        onOpenShoppingList={onOpenShoppingList}
       />
       
       {/* Add VersionManagement component here to ensure version tabs are shown on mobile */}

@@ -6,6 +6,7 @@ import DesktopLayout from "./DesktopLayout";
 import MobileLayout from "./MobileLayout";
 import { useRecipeDetail } from "@/hooks/useRecipeDetail";
 import { useRecipe } from "@/context/recipe";
+import { AddToShoppingListModal } from "@/components/shopping/AddToShoppingListModal";
 
 export interface MobileLayoutProps {
   recipe: Recipe;
@@ -20,6 +21,7 @@ export interface MobileLayoutProps {
   isAiModifying: boolean;
   selectedIngredients: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
   removeIngredientSelection: (id: string) => void;
+  onOpenShoppingList: () => void;
 }
 
 export interface DesktopLayoutProps {
@@ -33,10 +35,12 @@ export interface DesktopLayoutProps {
   handleStartModification: (modificationType: string) => void;
   handleAcceptChanges: () => Promise<void>;
   isAiModifying: boolean;
+  onOpenShoppingList: () => void;
 }
 
 const RecipeDetailContainer: React.FC = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const [isShoppingListModalOpen, setIsShoppingListModalOpen] = useState(false);
   
   // Get direct access to the recipe from the RecipeContext to ensure we're always using
   // the latest recipe data from the active version
@@ -63,6 +67,14 @@ const RecipeDetailContainer: React.FC = () => {
   // This ensures we always have the most up-to-date recipe data from the active version
   const recipe = contextRecipe || hookRecipe;
 
+  const handleOpenShoppingList = () => {
+    setIsShoppingListModalOpen(true);
+  };
+
+  const handleCloseShoppingList = () => {
+    setIsShoppingListModalOpen(false);
+  };
+
   // Log recipe content for debugging purposes
   useEffect(() => {
     if (recipe) {
@@ -79,34 +91,46 @@ const RecipeDetailContainer: React.FC = () => {
     return <div>Error loading recipe</div>;
   }
 
-  return isMobile ? (
-    <MobileLayout
-      recipe={recipe}
-      selectedIngredient={selectedIngredient}
-      isModified={isModified}
-      resetToOriginal={resetToOriginal}
-      handleModifyWithAI={handleModifyWithAI}
-      handleStartModification={handleStartModification}
-      handleAcceptChanges={handleAcceptChanges}
-      setSelectedIngredient={setSelectedIngredient}
-      handleSelectIngredient={handleSelectIngredient}
-      isAiModifying={isAiModifying}
-      selectedIngredients={selectedIngredients}
-      removeIngredientSelection={removeIngredientSelection}
-    />
-  ) : (
-    <DesktopLayout
-      recipe={recipe}
-      selectedIngredient={selectedIngredient}
-      isModified={isModified}
-      resetToOriginal={resetToOriginal}
-      handleModifyWithAI={handleModifyWithAI}
-      handleStartModification={handleStartModification}
-      handleAcceptChanges={handleAcceptChanges}
-      setSelectedIngredient={setSelectedIngredient}
-      onSelectIngredient={handleSelectIngredient}
-      isAiModifying={isAiModifying}
-    />
+  return (
+    <>
+      {isMobile ? (
+        <MobileLayout
+          recipe={recipe}
+          selectedIngredient={selectedIngredient}
+          isModified={isModified}
+          resetToOriginal={resetToOriginal}
+          handleModifyWithAI={handleModifyWithAI}
+          handleStartModification={handleStartModification}
+          handleAcceptChanges={handleAcceptChanges}
+          setSelectedIngredient={setSelectedIngredient}
+          handleSelectIngredient={handleSelectIngredient}
+          isAiModifying={isAiModifying}
+          selectedIngredients={selectedIngredients}
+          removeIngredientSelection={removeIngredientSelection}
+          onOpenShoppingList={handleOpenShoppingList}
+        />
+      ) : (
+        <DesktopLayout
+          recipe={recipe}
+          selectedIngredient={selectedIngredient}
+          isModified={isModified}
+          resetToOriginal={resetToOriginal}
+          handleModifyWithAI={handleModifyWithAI}
+          handleStartModification={handleStartModification}
+          handleAcceptChanges={handleAcceptChanges}
+          setSelectedIngredient={setSelectedIngredient}
+          onSelectIngredient={handleSelectIngredient}
+          isAiModifying={isAiModifying}
+          onOpenShoppingList={handleOpenShoppingList}
+        />
+      )}
+      
+      <AddToShoppingListModal
+        isOpen={isShoppingListModalOpen}
+        onClose={handleCloseShoppingList}
+        recipe={recipe}
+      />
+    </>
   );
 };
 

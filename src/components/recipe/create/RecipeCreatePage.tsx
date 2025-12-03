@@ -1004,33 +1004,6 @@ const RecipeCreatePage: React.FC = () => {
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-3">Ingredients</h3>
                       
-                      {/* Legend above ingredients */}
-                      {recipe.ingredients.length > 0 && (
-                        <div className="flex items-center gap-4 mb-3 p-3 bg-gray-50 rounded-md border border-gray-200">
-                          <span className="text-xs font-medium text-gray-600">Click ingredients to modify:</span>
-                          <div className="flex items-center gap-3 text-xs text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <div className="w-4 h-4 rounded-full border border-green-400 bg-green-50 flex items-center justify-center">
-                                <span className="text-green-600 font-bold text-xs">+</span>
-                              </div>
-                              Increase amount
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <div className="w-4 h-4 rounded-full border border-amber-400 bg-amber-50 flex items-center justify-center">
-                                <span className="text-amber-600 font-bold text-xs">−</span>
-                              </div>
-                              Decrease amount
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <div className="w-4 h-4 rounded-full border border-red-400 bg-red-50 flex items-center justify-center">
-                                <span className="text-red-600 font-bold text-xs">×</span>
-                              </div>
-                              Remove or replace
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                      
                       <div className="space-y-2">
                         {recipe.ingredients.map((ingredient, index) => {
                           const selectedIngredient = selectedIngredients.get(ingredient.id);
