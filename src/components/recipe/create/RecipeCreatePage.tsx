@@ -449,13 +449,6 @@ const RecipeCreatePage: React.FC = () => {
 
     setIsGenerating(true);
 
-    // Show modification toast
-    toast({
-      title: "Modifying Recipe...",
-      description: "AI is modifying your recipe based on your selections and instructions. This may take a moment.",
-      variant: "default",
-    });
-
     try {
       const modificationRequest: AIRecipeModificationRequest = {
         baseRecipe: recipe,
@@ -501,11 +494,6 @@ const RecipeCreatePage: React.FC = () => {
       setActiveVersionId(newVersion.id);
       setIsActiveVersionTemporary(true);
 
-      toast({
-        title: "Recipe Modified!",
-        description: "Your recipe has been updated. You can continue modifying or save it.",
-      });
-
       // Clear all input and selection states after successful modification
       setUserInput("");
       setSelectedQuickConcept("");
@@ -516,16 +504,6 @@ const RecipeCreatePage: React.FC = () => {
 
     } catch (error) {
       console.error('Modification error:', error);
-      setModificationError({
-        type: 'service_error',
-        message: 'Failed to modify recipe. Please try again.',
-        suggestions: ['Check your internet connection', 'Try different instructions']
-      });
-      toast({
-        title: "Modification Failed",
-        description: error instanceof Error ? error.message : "Failed to modify recipe. Please try again.",
-        variant: "destructive",
-      });
     } finally {
       setIsGenerating(false);
       
@@ -548,13 +526,14 @@ const RecipeCreatePage: React.FC = () => {
     const hasInspiration = selectedInspiration.length > 0;
     
     if (!hasIngredientSelections && !hasCustomInstructions && !hasQuickModifications && !hasUserInput && !hasQuickConcept && !hasInspiration) {
-      toast({
-        title: "No Modifications",
-        description: "Please select ingredient modifications, enter custom instructions, choose quick modifications, or any combination of these.",
-        variant: "destructive"
-      });
       return;
     }
+    
+    // Shrink panel immediately to show status indicator during modification
+    console.log('🔍 Modification started - shrinking panel to 5% to show status');
+    setLeftPanelSize(5);
+    setRightPanelSize(95);
+    setIsGenerating(true);
     
     // Build modification instructions from all sources
     let modificationInstructions = "";
@@ -1045,61 +1024,8 @@ const RecipeCreatePage: React.FC = () => {
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center h-64">
-                  {/* Clickable Inspiration Examples */}
-                  <div className="flex flex-wrap gap-3 justify-center max-w-lg">
-                    <button
-                      onClick={() => quickGenerateRecipe(
-                        "Spicy Thai basil chicken with jasmine rice and fresh vegetables",
-                        "Quick Pasta Dish"
-                      )}
-                      disabled={isGenerating}
-                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      🌶️ Spicy Thai Basil Chicken
-                    </button>
-                    <button
-                      onClick={() => quickGenerateRecipe(
-                        "Creamy vegan chocolate mousse with avocado and dark chocolate",
-                        "Quick Pasta Dish"
-                      )}
-                      disabled={isGenerating}
-                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      🍫 Vegan Chocolate Mousse
-                    </button>
-                    <button
-                      onClick={() => quickGenerateRecipe(
-                        "Mediterranean quinoa bowl with roasted vegetables and lemon tahini dressing",
-                        "Healthy Salad"
-                      )}
-                      disabled={isGenerating}
-                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      🥗 Mediterranean Quinoa Bowl
-                    </button>
-                    <button
-                      onClick={() => quickGenerateRecipe(
-                        "Classic Italian carbonara with crispy pancetta and pecorino cheese",
-                        "Quick Pasta Dish"
-                      )}
-                      disabled={isGenerating}
-                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      🍝 Authentic Carbonara
-                    </button>
-                    <button
-                      onClick={() => quickGenerateRecipe(
-                        "Japanese chicken teriyaki bowl with steamed rice and pickled vegetables",
-                        "Quick Pasta Dish"
-                      )}
-                      disabled={isGenerating}
-                      className="px-4 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-full text-sm font-medium transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      🍱 Chicken Teriyaki Bowl
-                    </button>
-                  </div>
-                </div>
+                // Empty state - right panel is minimal until recipe is generated
+                null
               )}
             </div>
           </ResizablePanel>

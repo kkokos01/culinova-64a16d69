@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Recipe } from '@/types';
 import { imageGenerator, ImageGenerationRequest, ImageGenerationResponse, ImageGenerationError } from '@/services/ai/imageGenerator';
 import { Button } from '@/components/ui/button';
@@ -19,12 +19,23 @@ const RecipeImageGenerator: React.FC<RecipeImageGeneratorProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(currentImageUrl || null);
   const [lastPrompt, setLastPrompt] = useState<string>('');
+  const [showPendingState, setShowPendingState] = useState(false);
   const { toast } = useToast();
+
+  // Auto-generate image when recipe becomes available
+  useEffect(() => {
+    if (recipe && !generatedImageUrl && !isGenerating) {
+      // Show pending state and start generation immediately
+      setShowPendingState(true);
+      handleGenerateImage('photorealistic');
+    }
+  }, [recipe?.id, recipe?.title, generatedImageUrl, isGenerating]);
 
   const handleGenerateImage = async (style: 'photorealistic' | 'artistic' | 'minimalist' = 'photorealistic') => {
     if (!recipe) return;
 
     setIsGenerating(true);
+    setShowPendingState(false); // Hide pending state when generation starts
     
     try {
       const request: ImageGenerationRequest = {
@@ -105,6 +116,15 @@ const RecipeImageGenerator: React.FC<RecipeImageGeneratorProps> = ({
             <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
               <Sparkles className="h-3 w-3" />
               AI Generated
+            </div>
+          </div>
+        ) : showPendingState ? (
+          <div className="relative bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 h-64 flex items-center justify-center overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-sage-50 to-sage-100 opacity-50"></div>
+            <div className="relative text-center">
+              <Loader2 className="h-12 w-12 text-sage-500 mx-auto mb-3 animate-spin" />
+              <p className="text-sage-600 font-medium mb-1">Image Generation Pending</p>
+              <p className="text-sage-500 text-sm">Creating your recipe image...</p>
             </div>
           </div>
         ) : (
