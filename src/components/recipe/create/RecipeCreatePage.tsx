@@ -26,9 +26,9 @@ const RecipeCreatePage: React.FC = () => {
   const { currentSpace, isLoading: spaceLoading } = useSpace();
   const { toast } = useToast();
 
-  // UI State - Start with 2/3 width for better input space
-  const [leftPanelSize, setLeftPanelSize] = useState(66);
-  const [rightPanelSize, setRightPanelSize] = useState(34);
+  // UI State - Start with 95% left for create mode
+  const [leftPanelSize, setLeftPanelSize] = useState(95);
+  const [rightPanelSize, setRightPanelSize] = useState(5);
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [hasUserManuallyResized, setHasUserManuallyResized] = useState(false);
@@ -120,16 +120,16 @@ const RecipeCreatePage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [generatedRecipe, setGeneratedRecipe] = useState<AIRecipeResponse | null>(null);
 
-  // Dynamic sidebar sizing - transition to 1/3 when recipe is generated
+  // Dynamic sidebar sizing - transition to 5% when recipe is generated (95% right for display)
   useEffect(() => {
     if (generatedRecipe && !hasUserManuallyResized) {
-      // Recipe exists and user hasn't manually resized - transition to 1/3
-      setLeftPanelSize(33);
-      setRightPanelSize(67);
+      // Recipe exists and user hasn't manually resized - transition to 5% left, 95% right
+      setLeftPanelSize(5);
+      setRightPanelSize(95);
     } else if (!generatedRecipe && !hasUserManuallyResized) {
-      // No recipe and user hasn't manually resized - reset to 2/3
-      setLeftPanelSize(66);
-      setRightPanelSize(34);
+      // No recipe and user hasn't manually resized - reset to 95% left, 5% right
+      setLeftPanelSize(95);
+      setRightPanelSize(5);
     }
   }, [generatedRecipe, hasUserManuallyResized]);
 
@@ -178,8 +178,8 @@ const RecipeCreatePage: React.FC = () => {
 
   // Effects
   useEffect(() => {
-    setLeftPanelSize(leftPanelCollapsed ? 4 : 35);
-  }, [leftPanelCollapsed]);
+    setLeftPanelCollapsed(leftPanelSize < 15);
+  }, [leftPanelSize]);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -250,6 +250,20 @@ const RecipeCreatePage: React.FC = () => {
     setLeftPanelCollapsed(!leftPanelCollapsed);
   };
 
+  // Handler for clicking on overlay to toggle panel size
+  const handleOverlayClick = () => {
+    console.log('🔍 Overlay clicked - Current size:', leftPanelSize);
+    if (leftPanelSize >= 50) {
+      console.log('🔍 Overlay: Setting to small: 5%');
+      setLeftPanelSize(5);
+      setRightPanelSize(95);
+    } else {
+      console.log('🔍 Overlay: Setting to large: 95%');
+      setLeftPanelSize(95);
+      setRightPanelSize(5);
+    }
+  };
+
   // Ingredient Selection Handlers
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
     if (!action) {
@@ -307,6 +321,10 @@ const RecipeCreatePage: React.FC = () => {
       return;
     }
 
+    // Shrink panel immediately to show status indicator during generation
+    console.log('🔍 Generation started - shrinking panel to 5% to show status');
+    setLeftPanelSize(5);
+    setRightPanelSize(95);
     setIsGenerating(true);
     setGenerationError(null);
 
@@ -721,49 +739,42 @@ const RecipeCreatePage: React.FC = () => {
         <div className="container mx-auto py-2 px-3">
         <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-100px)] rounded-lg border relative">
           <ResizablePanel 
-            defaultSize={66}
+            defaultSize={95}
             size={leftPanelSize}
-            minSize={8}
+            minSize={5}
             maxSize={100}
-            collapsible
-            collapsedSize={8}
-            onCollapse={() => setLeftPanelCollapsed(true)}
-            onExpand={() => setLeftPanelCollapsed(false)}
             onResize={(size) => {
+              console.log('🔍 onResize called - size:', size, 'type:', typeof size);
               setLeftPanelSize(size);
               // Track if user has manually resized (with tolerance for floating-point precision)
-              if (Math.abs(size - 66) > 2 && Math.abs(size - 33) > 2) {
+              if (Math.abs(size - 95) > 2 && Math.abs(size - 5) > 2) {
                 setHasUserManuallyResized(true);
               }
             }}
-            className={`relative transition-all duration-300 ${
-              leftPanelCollapsed ? "w-15" : "w-full"
-            } ${leftPanelCollapsed ? "bg-sage-500 text-white" : "bg-sage-500 text-white shadow-lg"}`}
+            className={`relative transition-all duration-300 bg-sage-500 text-white shadow-lg`}
           >
-            {/* Collapsed state indicator - positioned absolutely over sidebar */}
-            {(leftPanelCollapsed || leftPanelSize < 15) && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-sage-500 pointer-events-none">
-                <div className="text-white text-center">
-                  <div className="[writing-mode:vertical-lr] text-sm font-medium mb-2">
-                    {isModifyMode ? 'Modify' : 'Create'} recipe
-                  </div>
-                  <ChevronRight className="h-4 w-4 mx-auto animate-pulse" />
-                </div>
-              </div>
+            {/* Clickable overlay for header area only */}
+            {leftPanelSize >= 15 && (
+              <div 
+                onClick={handleOverlayClick}
+                className="absolute top-0 left-0 right-0 h-16 cursor-pointer z-10 hover:bg-sage-600/20 transition-colors"
+                style={{ pointerEvents: 'auto' }}
+              />
             )}
             
-            {/* UnifiedSidebar - only render when not collapsed/small */}
-            {!(leftPanelCollapsed || leftPanelSize < 15) && (
-              <UnifiedSidebar
-                ref={sidebarPanelRef}
-                mode={isModifyMode ? 'modify' : 'create'}
-                recipe={recipe}
-                isPanelCollapsed={leftPanelCollapsed}
-                onTogglePanel={handleTogglePanel}
-                
-                // User input
-                userInput={userInput}
-                onUserInputChange={setUserInput}
+            {/* UnifiedSidebar - only render when panel is expanded enough */}
+            {leftPanelSize >= 15 && (
+              <div className="relative">
+                <UnifiedSidebar
+                  ref={sidebarPanelRef}
+                  mode={isModifyMode ? 'modify' : 'create'}
+                  recipe={recipe}
+                  isPanelCollapsed={leftPanelCollapsed}
+                  onTogglePanel={handleTogglePanel}
+                  
+                  // User input
+                  userInput={userInput}
+                  onUserInputChange={setUserInput}
                 
                 // Quick concepts/modifications
                 selectedQuickConcept={selectedQuickConcept}
@@ -808,6 +819,17 @@ const RecipeCreatePage: React.FC = () => {
                 isGenerating={isGenerating}
                 isSaving={isSaving}
               />
+              </div>
+            )}
+            
+            {/* Collapsed state indicator - arrow for expanding */}
+            {leftPanelSize < 15 && (
+              <div 
+                onClick={handleOverlayClick}
+                className="absolute inset-0 z-50 flex items-center justify-center bg-sage-500 cursor-pointer hover:bg-sage-600 transition-colors"
+              >
+                <ChevronRight className="h-4 w-4 text-white animate-pulse" />
+              </div>
             )}
           </ResizablePanel>
 
@@ -824,7 +846,7 @@ const RecipeCreatePage: React.FC = () => {
             </div>
           </ResizableHandle>
 
-          <ResizablePanel defaultSize={34} size={rightPanelSize} className="bg-white overflow-y-auto">
+          <ResizablePanel defaultSize={5} size={rightPanelSize} className="bg-white overflow-y-auto">
             <div className="p-4">
               {/* Simple Version Management Tabs */}
               {isModifyMode && recipeVersions.length > 0 && (
@@ -1024,12 +1046,6 @@ const RecipeCreatePage: React.FC = () => {
                 </>
               ) : (
                 <div className="flex flex-col items-center justify-center h-64">
-                  <ChefHat className="h-16 w-16 mb-6 text-sage-500" />
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Ready to Create Something Delicious?</h2>
-                    <p className="text-gray-600">Try one of these ideas or describe your own recipe</p>
-                  </div>
-                  
                   {/* Clickable Inspiration Examples */}
                   <div className="flex flex-wrap gap-3 justify-center max-w-lg">
                     <button

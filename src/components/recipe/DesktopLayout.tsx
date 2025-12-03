@@ -56,10 +56,11 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const { currentSpace } = useSpace();
   const { toast } = useToast();
   const { user } = useAuth(); // Add user access for pantry loading
-  const [leftPanelSize, setLeftPanelSize] = useState(4);
+  const [leftPanelSize, setLeftPanelSize] = useState(5);
   const [isSaving, setIsSaving] = useState(false);
   const [isAiModifying, setIsAiModifying] = useState(false);
   const [isModificationComplete, setIsModificationComplete] = useState(false);
+  const [hasUserManuallyResized, setHasUserManuallyResized] = useState(false);
   
   // Ref for sidebar panel and button positioning
   const sidebarPanelRef = useRef<HTMLDivElement>(null);
@@ -110,7 +111,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const isActiveVersionTemporary = activeVersion?.isTemporary || false;
   
   useEffect(() => {
-    setLeftPanelSize(isPanelCollapsed ? 4 : 35);
+    setLeftPanelSize(isPanelCollapsed ? 5 : 5);
   }, [isPanelCollapsed]);
 
   // Load pantry items when user and pantry mode are available
@@ -151,6 +152,22 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
     return () => resizeObserver.disconnect();
   }, [leftPanelSize, isPanelCollapsed, isAiModifying]);
+
+  // Handler for clicking on left panel background to toggle between 95% and 5% states
+  const handleLeftPanelBackgroundClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    // Only trigger if clicking directly on the panel (not on child elements)
+    if (event.target === event.currentTarget) {
+      if (leftPanelSize >= 50) {
+        // Currently large, make it small
+        setLeftPanelSize(5);
+        setHasUserManuallyResized(true); // Mark as manually resized to prevent auto-switching
+      } else {
+        // Currently small, make it large
+        setLeftPanelSize(95);
+        setHasUserManuallyResized(true); // Mark as manually resized to prevent auto-switching
+      }
+    }
+  };
 
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
     onSelectIngredient(ingredient, action);
@@ -347,12 +364,12 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     <div className="container mx-auto py-2 px-3">
       <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-100px)] rounded-lg border">
         <ResizablePanel 
-          defaultSize={4}
+          defaultSize={5}
           size={leftPanelSize}
-          minSize={8}
+          minSize={5}
           maxSize={100}
           collapsible
-          collapsedSize={4}
+          collapsedSize={5}
           onCollapse={() => {
             handleTogglePanel();
           }}
@@ -361,8 +378,13 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           }}
           onResize={(size) => {
             setLeftPanelSize(size);
+            // Track if user has manually resized (with tolerance for floating-point precision)
+            if (Math.abs(size - 5) > 2 && Math.abs(size - 95) > 2) {
+              setHasUserManuallyResized(true);
+            }
           }}
-          className={`relative transition-all duration-300 ${
+          onClick={handleLeftPanelBackgroundClick}
+          className={`relative transition-all duration-300 cursor-pointer ${
             isPanelCollapsed 
               ? "bg-sage-500 text-white" 
               : "bg-sage-500 text-white shadow-lg"
