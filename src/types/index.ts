@@ -27,6 +27,10 @@ export interface Space {
   max_users: number;
   is_active: boolean;
   is_default: boolean;
+  is_public?: boolean;
+  description?: string;
+  member_count?: number;
+  recipe_count?: number;
   created_at: string;
 }
 
@@ -182,6 +186,8 @@ export interface Recipe {
   steps?: Step[];
   user?: User;
   calories_per_serving?: number;
+  parent_recipe_id?: string;
+  forked_count?: number;
 }
 
 export interface RecipeCreate {
@@ -194,12 +200,13 @@ export interface RecipeCreate {
   difficulty?: 'easy' | 'medium' | 'hard';
   is_public?: boolean;
   privacy_level?: 'private' | 'space' | 'public' | 'shared';
-  space_id?: string;
-  user_id: string;
   tags?: string[];
   ingredients?: IngredientCreate[];
   steps?: StepCreate[];
   calories_per_serving?: number;
+  user_id: string;
+  space_id?: string;
+  user_name?: string; // Added for activity logging
 }
 
 export interface RecipeUpdate {
@@ -216,6 +223,8 @@ export interface RecipeUpdate {
   ingredients?: IngredientCreate[];
   steps?: StepCreate[];
   calories_per_serving?: number;
+  user_id?: string;
+  user_name?: string; // Added for activity logging
 }
 
 // Shopping List Types
@@ -312,4 +321,27 @@ export interface PantryItemUpdate {
   quantity?: string;
   storage_type?: StorageType;
   is_staple?: boolean;
+}
+
+// Activity Feed Types
+export interface Activity {
+  id: string;
+  space_id: string;
+  actor_id: string;
+  action_type: 'recipe_created' | 'recipe_modified' | 'recipe_forked' | 'user_joined';
+  entity_id: string;
+  entity_type: 'recipe' | 'member';
+  details: {
+    title?: string;
+    actor_name?: string;
+    original_author_name?: string;
+    [key: string]: any;
+  };
+  created_at: string;
+  actor?: {
+    id: string;
+    email: string;
+    name?: string;
+    avatar_url?: string;
+  };
 }

@@ -1,6 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Recipe, RecipeCreate, RecipeUpdate, Ingredient, IngredientCreate, Step, Space, User } from '@/types';
 import { useToast } from "@/hooks/use-toast";
+import { socialService } from './socialService';
+import { useAuth } from '@/context/AuthContext';
 
 /**
  * Helper function to normalize food and unit data from Supabase
@@ -103,9 +105,11 @@ export const recipeService = {
         ...recipeData,
         difficulty: recipeData.difficulty as 'easy' | 'medium' | 'hard',
         privacy_level: recipeData.privacy_level as 'public' | 'private' | 'space' | 'shared',
-        calories_per_serving: recipeData.calories_per_serving,
+        calories_per_serving: (recipeData as any).calories_per_serving || undefined,
         ingredients: normalizedIngredients,
-        steps: steps || []
+        steps: steps || [],
+        parent_recipe_id: (recipeData as any).parent_recipe_id || undefined,
+        forked_count: (recipeData as any).forked_count || 0
       };
       
       return completeRecipe;
@@ -154,13 +158,15 @@ export const recipeService = {
       ) : [];
       
       // Initialize empty arrays for recipes without them
-      const processedRecipes = validRecipes.map(recipe => ({
+      const processedRecipes = validRecipes.map((recipe: any): Recipe => ({
         ...recipe,
         difficulty: recipe.difficulty as 'easy' | 'medium' | 'hard',
         privacy_level: recipe.privacy_level as 'public' | 'private' | 'space' | 'shared',
-        calories_per_serving: recipe.calories_per_serving,
+        calories_per_serving: recipe.calories_per_serving || undefined,
         ingredients: recipe.ingredients || [],
-        steps: recipe.steps || []
+        steps: recipe.steps || [],
+        parent_recipe_id: recipe.parent_recipe_id || undefined,
+        forked_count: recipe.forked_count || 0
       }));
       
       return processedRecipes as Recipe[];
@@ -274,7 +280,23 @@ export const recipeService = {
       }
       
       // Return the complete recipe with ingredients and steps
-      return await this.getRecipe(recipe.id);
+      const completeRecipe = await this.getRecipe(recipe.id);
+      
+      // Log activity after successful creation (non-blocking)
+      if (completeRecipe && recipeData.space_id) {
+        socialService.logActivity({
+          spaceId: recipeData.space_id,
+          actorId: recipeData.user_id,
+          actionType: 'recipe_created',
+          entityId: recipe.id,
+          details: { 
+            title: recipeData.title,
+            actor_name: recipeData.user_name || 'User' // Use provided user name or fallback
+          }
+        }).catch(console.warn);
+      }
+      
+      return completeRecipe;
       
     } catch (error) {
       console.error('Error in recipeService.createRecipe:', error);
@@ -289,21 +311,24 @@ export const recipeService = {
     try {
       console.log('Updating recipe:', recipeId, 'with data:', recipeData);
       
+      // Extract user_id from recipeData for activity logging, but don't include it in the update
+      const { user_id: activityUserId, ...updateData } = recipeData;
+      
       // Update basic recipe fields (excluding ingredients and steps for now)
       const { data: recipe, error: recipeError } = await supabase
         .from('recipes')
         .update({
-          title: recipeData.title,
-          description: recipeData.description,
-          image_url: recipeData.image_url,
-          prep_time_minutes: recipeData.prep_time_minutes,
-          cook_time_minutes: recipeData.cook_time_minutes,
-          servings: recipeData.servings,
-          difficulty: recipeData.difficulty,
-          is_public: recipeData.is_public,
-          privacy_level: recipeData.privacy_level,
-          tags: recipeData.tags,
-          calories_per_serving: recipeData.calories_per_serving,
+          title: updateData.title,
+          description: updateData.description,
+          image_url: updateData.image_url,
+          prep_time_minutes: updateData.prep_time_minutes,
+          cook_time_minutes: updateData.cook_time_minutes,
+          servings: updateData.servings,
+          difficulty: updateData.difficulty,
+          is_public: updateData.is_public,
+          privacy_level: updateData.privacy_level,
+          tags: updateData.tags,
+          calories_per_serving: updateData.calories_per_serving,
           updated_at: new Date().toISOString(),
         })
         .eq('id', recipeId)
@@ -365,7 +390,23 @@ export const recipeService = {
       }
       
       // Return the updated complete recipe
-      return await this.getRecipe(recipeId);
+      const updatedRecipe = await this.getRecipe(recipeId);
+      
+      // Log activity after successful update (non-blocking)
+      if (updatedRecipe && updatedRecipe.space_id) {
+        socialService.logActivity({
+          spaceId: updatedRecipe.space_id,
+          actorId: activityUserId || updatedRecipe.user_id,
+          actionType: 'recipe_modified',
+          entityId: recipeId,
+          details: { 
+            title: updateData.title || updatedRecipe.title,
+            actor_name: (updateData as any).user_name || 'User' // Use provided user name or fallback
+          }
+        }).catch(console.warn);
+      }
+      
+      return updatedRecipe;
       
     } catch (error) {
       console.error('Error in recipeService.updateRecipe:', error);
@@ -489,9 +530,11 @@ export const recipeService = {
           ...recipeData,
           difficulty: recipeData.difficulty as 'easy' | 'medium' | 'hard',
           privacy_level: recipeData.privacy_level as 'public' | 'private' | 'space' | 'shared',
-          calories_per_serving: recipeData.calories_per_serving,
+          calories_per_serving: (recipeData as any).calories_per_serving || undefined,
           ingredients: ingredientsData?.map(normalizeIngredient) || [],
           steps: stepsData || [],
+          parent_recipe_id: (recipeData as any).parent_recipe_id || undefined,
+          forked_count: (recipeData as any).forked_count || 0,
           user: {
             id: recipeData.user_id,
             email: '',

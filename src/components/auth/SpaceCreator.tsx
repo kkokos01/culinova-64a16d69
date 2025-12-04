@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { PlusCircle } from "lucide-react";
 
-export function SpaceCreator() {
+export function SpaceCreator({ refreshSpaces }: { refreshSpaces?: () => Promise<void> }) {
   const { createSpace } = useSpace();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +41,10 @@ export function SpaceCreator() {
       if (result) {
         setIsOpen(false);
         setSpaceName("");
+        // Call the parent refreshSpaces callback if provided
+        if (refreshSpaces) {
+          await refreshSpaces();
+        }
       }
     } finally {
       setIsLoading(false);
@@ -52,7 +56,7 @@ export function SpaceCreator() {
       <DialogTrigger asChild>
         <Button variant="outline">
           <PlusCircle className="mr-2 h-4 w-4" />
-          Create Space
+          Create Collection
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

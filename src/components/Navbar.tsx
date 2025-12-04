@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChefHat, Search, User, LogOut, ShoppingCart } from 'lucide-react';
+import { Menu, X, ChefHat, Search, User, LogOut, ShoppingCart, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -42,7 +42,7 @@ const Navbar = () => {
   
   const navLinks = [
     { path: '/', label: 'Home' },
-    { path: '/collections', label: 'Collections' },
+    { path: '/collections', label: 'Collections', isDropdown: true },
     { path: '/profile?tab=pantry', label: 'Pantry' },
     { path: '/shopping-list', label: 'Shopping List', icon: ShoppingCart }
     // Shopping Lists and Meal Plans removed as requested
@@ -73,18 +73,50 @@ const Navbar = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
           {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-sage-400 focus-ring rounded-md px-2 py-1",
-                isActive(link.path) 
-                  ? "text-sage-400 font-semibold" 
-                  : "text-white"
-              )}
-            >
-              {link.label}
-            </Link>
+            link.isDropdown ? (
+              <DropdownMenu key={link.path}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={cn(
+                      "text-sm font-medium transition-colors hover:text-sage-400 focus-ring rounded-md px-2 py-1 flex items-center gap-1",
+                      isActive(link.path) 
+                        ? "text-sage-400 font-semibold" 
+                        : "text-white"
+                    )}
+                  >
+                    <FolderOpen className="h-4 w-4" />
+                    {link.label}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem asChild>
+                    <Link to="/collections" className="flex items-center">
+                      <FolderOpen className="mr-2 h-4 w-4" />
+                      <span>My Collections</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/publiccollections" className="flex items-center">
+                      <FolderOpen className="mr-2 h-4 w-4" />
+                      <span>Public Collections</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={cn(
+                  "text-sm font-medium transition-colors hover:text-sage-400 focus-ring rounded-md px-2 py-1",
+                  isActive(link.path) 
+                    ? "text-sage-400 font-semibold" 
+                    : "text-white"
+                )}
+              >
+                {link.label}
+              </Link>
+            )
           ))}
         </nav>
         

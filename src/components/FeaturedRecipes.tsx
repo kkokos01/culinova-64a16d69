@@ -41,24 +41,22 @@ const FeaturedRecipes = () => {
   
   return (
     <section className="container mx-auto px-4 py-16">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
           <h2 className="text-3xl font-display font-semibold text-slate-800 mb-2">
-            Latest Recipes
+            Your Recipe History
           </h2>
           <p className="text-slate-600 max-w-2xl">
             Your most recent recipe creations. Keep cooking and building your personal collection!
           </p>
         </div>
-        <Button 
-          asChild
-          variant="outline" 
-          className="mt-4 md:mt-0"
-        >
-          <Link to="/collections" className="flex items-center">
-            View All <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
+        
+        <Link to="/collections">
+          <Button variant="outline" className="mt-4 md:mt-0">
+            View All Recipes
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </Link>
       </div>
       
       {isLoading ? (

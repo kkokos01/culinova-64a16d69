@@ -10,6 +10,8 @@ import { RecipeProvider } from "@/context/recipe/RecipeContext";
 import { ToastProvider } from "@/components/ui/use-toast";
 import Index from "./pages/Index";
 import Collections from "./pages/Collections";
+import PublicCollections from "./pages/PublicCollections";
+import { Explore } from "./pages/Explore";
 import NotFound from "./pages/NotFound";
 import SupabaseRecipes from "./pages/SupabaseRecipes";
 import RecipeDetail from "./pages/RecipeDetail";
@@ -56,6 +58,8 @@ function App() {
                         <Routes>
                           <Route path="/" element={<Index />} />
                           <Route path="/collections" element={<Collections />} />
+                          <Route path="/publiccollections" element={<PublicCollections />} />
+                          <Route path="/explore" element={<Explore />} />
                           <Route path="/supabase-recipes" element={<SupabaseRecipes />} />
                           <Route path="/create" element={<RecipeCreate />} />
                           <Route path="/recipes/create" element={<RecipeCreate />} />

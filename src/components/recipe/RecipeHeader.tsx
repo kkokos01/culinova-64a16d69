@@ -1,10 +1,14 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRecipe } from "@/context/recipe";
+import { useAuth } from "@/context/AuthContext";
+import { useSpace } from "@/context/SpaceContext";
 import { Recipe } from "@/types";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Flame, ChefHat } from "lucide-react";
+import { ShoppingCart, Flame, ChefHat, Copy } from "lucide-react";
+import { socialService } from "@/services/supabase/socialService";
+import { useToast } from "@/hooks/use-toast";
 
 interface RecipeHeaderProps {
   title?: string;
@@ -38,6 +42,10 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const { recipe: contextRecipe } = useRecipe();
+  const { user } = useAuth();
+  const { currentSpace } = useSpace();
+  const { toast } = useToast();
+  const [isForking, setIsForking] = useState(false);
   
   // Log for debugging
   useEffect(() => {
@@ -61,6 +69,46 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   
   // Calculate total time
   const totalTime = (displayPrepTime || 0) + (displayCookTime || 0);
+  
+  // Check if user can fork this recipe
+  const canFork = recipeToUse?.privacy_level === 'public' && 
+                  user?.id && 
+                  currentSpace?.id && 
+                  recipeToUse?.user_id !== user.id;
+  
+  // Handle forking a recipe
+  const handleForkRecipe = async () => {
+    if (!canFork || !recipeToUse?.id) return;
+    
+    try {
+      setIsForking(true);
+      
+      const forkedRecipe = await socialService.forkRecipe(
+        recipeToUse.id,
+        currentSpace.id,
+        user.id,
+        user?.user_metadata?.name || user?.email || 'User'
+      );
+
+      toast({
+        title: 'Recipe Forked!',
+        description: `"${recipeToUse.title}" has been added to ${currentSpace.name}.`,
+      });
+
+      // Optionally navigate to the forked recipe
+      // navigate(`/recipes/${forkedRecipe.id}`);
+      
+    } catch (error) {
+      console.error('Failed to fork recipe:', error);
+      toast({
+        title: 'Fork Failed',
+        description: error instanceof Error ? error.message : 'Could not save recipe to your space.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsForking(false);
+    }
+  };
   
   // Format time to display in hours and minutes if needed
   const formatTime = (minutes: number) => {
@@ -145,6 +193,29 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
           >
             <ShoppingCart className="h-4 w-4" />
             Add to Shopping List
+          </Button>
+        )}
+        
+        {/* Fork Button - only for public recipes the user doesn't own */}
+        {canFork && (
+          <Button
+            onClick={handleForkRecipe}
+            disabled={isForking}
+            variant="outline"
+            className="flex items-center gap-2"
+            aria-label="Save a copy of this recipe to your space"
+          >
+            {isForking ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4" />
+                Save Copy
+              </>
+            )}
           </Button>
         )}
       </div>

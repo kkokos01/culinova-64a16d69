@@ -652,6 +652,7 @@ const RecipeCreatePage: React.FC = () => {
           instruction: step,
         })),
         user_id: user.id,
+        user_name: user?.user_metadata?.name || user?.email || 'User', // Add user name for activity logging
         space_id: currentSpace.id,
       };
 

@@ -38,13 +38,13 @@ const SpacesList = ({ userId, spaces, memberships, refreshSpaces }: SpacesListPr
             Manage your recipe collections
           </CardDescription>
         </div>
-        <SpaceCreator />
+        <SpaceCreator refreshSpaces={refreshSpaces} />
       </CardHeader>
       <CardContent>
         {spaces.length === 0 ? (
           <div className="text-center py-8 text-slate-500">
             <p className="mb-4">You don't have any spaces yet. Create one to get started!</p>
-            <SpaceCreator />
+            <SpaceCreator refreshSpaces={refreshSpaces} />
           </div>
         ) : (
           <div className="space-y-4">
