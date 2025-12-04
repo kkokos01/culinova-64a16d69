@@ -181,6 +181,7 @@ export interface Recipe {
   ingredients?: Ingredient[];
   steps?: Step[];
   user?: User;
+  calories_per_serving?: number;
 }
 
 export interface RecipeCreate {
@@ -198,6 +199,7 @@ export interface RecipeCreate {
   tags?: string[];
   ingredients?: IngredientCreate[];
   steps?: StepCreate[];
+  calories_per_serving?: number;
 }
 
 export interface RecipeUpdate {
@@ -213,6 +215,7 @@ export interface RecipeUpdate {
   tags?: string[];
   ingredients?: IngredientCreate[];
   steps?: StepCreate[];
+  calories_per_serving?: number;
 }
 
 // Shopping List Types

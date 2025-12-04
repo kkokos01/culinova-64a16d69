@@ -33,10 +33,26 @@ const CookStepAccordion: React.FC<CookStepAccordionProps> = ({ steps, fontSize }
     
     if (parsedTime) {
       const duration = timeToSeconds(parsedTime);
+      // Create a brief description from the step instruction
+      let briefDescription = instructionText
+        .replace(parsedTime.originalText, '') // Remove the time part
+        .replace(/^(cook|bake|simmer|boil|fry|sauté|heat|warm|let|rest|stand|wait|mix|stir|beat|whisk|chop|cut|slice|dice|grate|peel|wash|rinse|dry|season|add|remove|transfer|pour|drain|serve|enjoy)\s+/i, '') // Remove common verbs
+        .replace(/[.,!?;:]$/, '') // Remove trailing punctuation
+        .trim();
+      
+      // Truncate to 60 characters at word boundaries and add ellipsis if needed
+      if (briefDescription.length > 60) {
+        const truncated = briefDescription.substring(0, 60);
+        const lastSpace = truncated.lastIndexOf(' ');
+        briefDescription = lastSpace > 40 ? truncated.substring(0, lastSpace) : truncated;
+        briefDescription += '...';
+      }
+      
       addTimer({
         duration,
         remaining: duration,
         label: parsedTime.originalText,
+        description: briefDescription || 'Step ' + (stepIndex + 1),
         isActive: true,
       });
     }

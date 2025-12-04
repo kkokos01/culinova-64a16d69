@@ -101,6 +101,9 @@ export const recipeService = {
       // Combine into recipe object with correct structure
       const completeRecipe: Recipe = {
         ...recipeData,
+        difficulty: recipeData.difficulty as 'easy' | 'medium' | 'hard',
+        privacy_level: recipeData.privacy_level as 'public' | 'private' | 'space' | 'shared',
+        calories_per_serving: recipeData.calories_per_serving,
         ingredients: normalizedIngredients,
         steps: steps || []
       };
@@ -153,6 +156,9 @@ export const recipeService = {
       // Initialize empty arrays for recipes without them
       const processedRecipes = validRecipes.map(recipe => ({
         ...recipe,
+        difficulty: recipe.difficulty as 'easy' | 'medium' | 'hard',
+        privacy_level: recipe.privacy_level as 'public' | 'private' | 'space' | 'shared',
+        calories_per_serving: recipe.calories_per_serving,
         ingredients: recipe.ingredients || [],
         steps: recipe.steps || []
       }));
@@ -212,6 +218,7 @@ export const recipeService = {
           privacy_level: recipeData.privacy_level || 'private',
           space_id: recipeData.space_id || null,
           user_id: recipeData.user_id,
+          calories_per_serving: recipeData.calories_per_serving || null,
         })
         .select()
         .single();
@@ -222,7 +229,7 @@ export const recipeService = {
       
       // Create ingredients if provided
       if (recipeData.ingredients && recipeData.ingredients.length > 0) {
-        const ingredientsWithRecipeId: IngredientCreate[] = recipeData.ingredients.map(ingredient => ({
+        const ingredientsWithRecipeId = recipeData.ingredients.map(ingredient => ({
           recipe_id: recipe.id,
           food_id: ingredient.food_id || null,
           unit_id: ingredient.unit_id || null,
@@ -296,6 +303,7 @@ export const recipeService = {
           is_public: recipeData.is_public,
           privacy_level: recipeData.privacy_level,
           tags: recipeData.tags,
+          calories_per_serving: recipeData.calories_per_serving,
           updated_at: new Date().toISOString(),
         })
         .eq('id', recipeId)
@@ -313,7 +321,7 @@ export const recipeService = {
         
         // Create new ingredients if any
         if (recipeData.ingredients.length > 0) {
-          const ingredientsWithRecipeId: IngredientCreate[] = recipeData.ingredients.map(ingredient => ({
+          const ingredientsWithRecipeId = recipeData.ingredients.map(ingredient => ({
             recipe_id: recipeId,
             food_id: ingredient.food_id || null,
             unit_id: ingredient.unit_id || null,
@@ -479,6 +487,9 @@ export const recipeService = {
         // Construct the recipe object
         const recipe: Recipe = {
           ...recipeData,
+          difficulty: recipeData.difficulty as 'easy' | 'medium' | 'hard',
+          privacy_level: recipeData.privacy_level as 'public' | 'private' | 'space' | 'shared',
+          calories_per_serving: recipeData.calories_per_serving,
           ingredients: ingredientsData?.map(normalizeIngredient) || [],
           steps: stepsData || [],
           user: {

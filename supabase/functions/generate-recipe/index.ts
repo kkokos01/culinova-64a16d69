@@ -246,6 +246,7 @@ IMPORTANT constraints:
 - Ensure "prepTimeMinutes" and "cookTimeMinutes" are numbers.
 - If "pantryItems" are provided, strictly follow the "pantryMode" logic (e.g. if 'strict', do not add extra items).
 - Make the recipe practical and realistic.
+- Estimate calories per serving based on the ingredients and their quantities. Be realistic but conservative in your estimate.
 
 Respond with ONLY valid JSON matching this exact schema:
 {
@@ -259,7 +260,8 @@ Respond with ONLY valid JSON matching this exact schema:
     { "name": "string", "amount": "string", "unit": "string", "notes": "string" }
   ],
   "steps": ["string (step 1)", "string (step 2)"],
-  "tags": ["string"]
+  "tags": ["string"],
+  "caloriesPerServing": number
 }`;
 
   return prompt;
@@ -293,7 +295,8 @@ Ingredients:
   }
 
   prompt += `\nModification Instructions: ${modificationInstructions}\n\n`;
-  prompt += `IMPORTANT: Do NOT include "Undefined" or any placeholder text in the title. Provide a complete, descriptive title for the modified recipe.\n\n`;
+  prompt += `IMPORTANT: Do NOT include "Undefined" or any placeholder text in the title. Provide a complete, descriptive title for the modified recipe.\n`;
+  prompt += `Re-calculate calories per serving based on the modified ingredients and their quantities. Be realistic but conservative in your estimate.\n\n`;
   prompt += `Respond with ONLY valid JSON matching this exact schema:
 {
   "title": "string",
@@ -306,7 +309,8 @@ Ingredients:
     { "name": "string", "amount": "string", "unit": "string", "notes": "string" }
   ],
   "steps": ["string (step 1)", "string (step 2)"],
-  "tags": ["string"]
+  "tags": ["string"],
+  "caloriesPerServing": number
 }
 
 Keep the ingredients and steps realistic and practical. Make sure the JSON is valid and properly formatted.`;

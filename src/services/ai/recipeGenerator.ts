@@ -37,6 +37,7 @@ export interface AIRecipeResponse {
   steps: string[];
   tags: string[];
   imageUrl?: string;
+  caloriesPerServing?: number;
 }
 
 export interface AIRecipeError {

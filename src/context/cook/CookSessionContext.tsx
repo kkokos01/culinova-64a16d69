@@ -5,6 +5,7 @@ export interface CookTimer {
   duration: number; // in seconds
   remaining: number; // in seconds
   label: string;
+  description?: string;
   isActive: boolean;
 }
 

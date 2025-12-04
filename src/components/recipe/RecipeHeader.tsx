@@ -1,9 +1,10 @@
 
 import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useRecipe } from "@/context/recipe";
 import { Recipe } from "@/types";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Flame, ChefHat } from "lucide-react";
 
 interface RecipeHeaderProps {
   title?: string;
@@ -35,6 +36,7 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   isTemporary,
   onOpenShoppingList,
 }) => {
+  const navigate = useNavigate();
   const { recipe: contextRecipe } = useRecipe();
   
   // Log for debugging
@@ -112,11 +114,29 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
             <span className="font-medium">Difficulty:</span> {displayDifficulty}
           </div>
         )}
+        {recipeToUse?.calories_per_serving && (
+          <div className="flex items-center">
+            <Flame className="h-4 w-4 mr-1 text-orange-500" />
+            <span className="font-medium">Calories:</span> {recipeToUse.calories_per_serving} per serving
+          </div>
+        )}
       </div>
 
       {/* Action Section */}
-      {onOpenShoppingList && recipeToUse?.ingredients && recipeToUse.ingredients.length > 0 && (
-        <div className="mt-6 mb-6">
+      <div className="mt-6 mb-6 flex gap-2 flex-wrap">
+        {/* Start Cooking Button - appears when recipe has steps */}
+        {recipeToUse?.steps && recipeToUse.steps.length > 0 && (
+          <Button
+            onClick={() => navigate(`/recipes/${recipeToUse.id}/cook`)}
+            className="bg-orange-600 hover:bg-orange-700 text-white"
+          >
+            <ChefHat className="w-4 h-4 mr-2" />
+            Start Cooking
+          </Button>
+        )}
+        
+        {/* Shopping List Button */}
+        {onOpenShoppingList && recipeToUse?.ingredients && recipeToUse.ingredients.length > 0 && (
           <Button
             onClick={onOpenShoppingList}
             variant="outline"
@@ -126,8 +146,8 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
             <ShoppingCart className="h-4 w-4" />
             Add to Shopping List
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Removed RecipeVersionTabs from here - it's now only in VersionManagement */}
     </div>

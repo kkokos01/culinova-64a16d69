@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { CookSessionProvider } from "@/context/cook/CookSessionContext";
 import { useWakeLock } from "@/hooks/useWakeLock";
@@ -13,6 +13,7 @@ import { recipeService } from "@/services/supabase/recipeService";
 const CookMode = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -33,10 +34,19 @@ const CookMode = () => {
         }
         
         console.log("CookMode: Fetching recipe:", id);
-        const recipeData = await recipeService.getRecipe(id);
-        console.log("CookMode: Fetched recipe:", recipeData.title);
-        setRecipe(recipeData);
-        setError(null);
+        
+        // Check if this is an unsaved recipe with data in navigation state
+        if (id === "generated" && location.state?.recipe) {
+          console.log("CookMode: Using recipe from navigation state");
+          setRecipe(location.state.recipe);
+          setError(null);
+        } else {
+          // Fetch from database for saved recipes
+          const recipeData = await recipeService.getRecipe(id);
+          console.log("CookMode: Fetched recipe from database:", recipeData.title);
+          setRecipe(recipeData);
+          setError(null);
+        }
       } catch (err) {
         console.error("CookMode: Error fetching recipe:", err);
         setError(err as Error);
@@ -47,7 +57,7 @@ const CookMode = () => {
     };
 
     fetchRecipe();
-  }, [id]);
+  }, [id, location.state]);
 
   // Request wake lock when component mounts and page is visible
   useEffect(() => {

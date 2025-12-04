@@ -17,7 +17,7 @@ import IngredientItem from "../IngredientItem";
 import RecipeImageGenerator from "../RecipeImageGenerator";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles, Loader2, Save, ChefHat, Wand2, Plus, Minus, RotateCcw, ChevronRight } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, Save, ChefHat, Wand2, Plus, Minus, RotateCcw, ChevronRight, Flame } from "lucide-react";
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
 import AILoadingProgress from "@/components/ui/AILoadingProgress";
 
@@ -129,6 +129,7 @@ const RecipeCreatePage: React.FC = () => {
 
   // Version Management State
   const [recipeVersions, setRecipeVersions] = useState<RecipeVersion[]>([]);
+  const [savedRecipeId, setSavedRecipeId] = useState<string | null>(null);
   const [activeVersionId, setActiveVersionId] = useState<string | null>(null);
   const [isActiveVersionTemporary, setIsActiveVersionTemporary] = useState(false);
   const [generationError, setGenerationError] = useState<AIRecipeError | null>(null);
@@ -191,6 +192,11 @@ const RecipeCreatePage: React.FC = () => {
   const adjustServings = (increment: number) => {
     const newServings = Math.max(1, currentServings + increment);
     setCurrentServings(newServings);
+  };
+
+  // Helper function to reset servings to original
+  const resetServings = () => {
+    setCurrentServings(originalServings);
   };
 
   // Effects
@@ -372,6 +378,9 @@ const RecipeCreatePage: React.FC = () => {
 
       setGeneratedRecipe(response);
 
+      // Debug: Log AI response calories immediately
+      console.log('AI Response received - caloriesPerServing:', response.caloriesPerServing);
+
       // Set original and current servings from generated recipe
       setOriginalServings(response.servings);
       setCurrentServings(response.servings);
@@ -431,12 +440,6 @@ const RecipeCreatePage: React.FC = () => {
       setSelectedIngredients(new Map());
       setSelectedQuickModifications([]);
       setCustomInstructions("");
-
-      toast({
-        title: "Recipe Generated!",
-        description: "Your recipe has been created successfully. You can now modify it or save it.",
-        variant: "default",
-      });
 
     } catch (error: any) {
       console.error('Generation error:', error);
@@ -609,9 +612,13 @@ const RecipeCreatePage: React.FC = () => {
   const handleSaveRecipe = async () => {
     if (!generatedRecipe || !user || !currentSpace) return;
 
+    console.log('🔥 Cook Mode Debug: Save button clicked');
     setIsSaving(true);
 
     try {
+      // Debug: Log AI response calories
+      console.log('AI Response calories:', generatedRecipe.caloriesPerServing);
+
       const ingredients = await Promise.all(
         generatedRecipe.ingredients.map(async (ing) => {
           const foodResult = await foodUnitMapper.findOrCreateFood(ing.name, currentSpace.id);
@@ -638,6 +645,7 @@ const RecipeCreatePage: React.FC = () => {
         is_public: false,
         privacy_level: "private" as const,
         tags: generatedRecipe.tags,
+        calories_per_serving: generatedRecipe.caloriesPerServing,
         ingredients,
         steps: generatedRecipe.steps.map((step, index) => ({
           order_number: index + 1,
@@ -647,7 +655,13 @@ const RecipeCreatePage: React.FC = () => {
         space_id: currentSpace.id,
       };
 
+      // Debug: Log recipe data being saved
+      console.log('Recipe data being saved:', recipeData);
+
       const savedRecipe = await recipeService.createRecipe(recipeData);
+
+      // Debug: Log saved recipe from database
+      console.log('Saved recipe from DB:', savedRecipe);
 
       // Mark the current active version as saved
       setRecipeVersions(prev => 
@@ -658,10 +672,8 @@ const RecipeCreatePage: React.FC = () => {
         )
       );
 
-      toast({
-        title: "Recipe saved to Collection!",
-        description: `"${savedRecipe.title}" has been added to your Collection. You can continue modifying or view it in your Collections.`,
-      });
+      // Set saved recipe ID for Cook Mode button
+      setSavedRecipeId(savedRecipe.id);
 
       // Don't navigate away - preserve temporary versions
 
@@ -692,6 +704,7 @@ const RecipeCreatePage: React.FC = () => {
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     tags: generatedRecipe.tags,
+    calories_per_serving: generatedRecipe.caloriesPerServing,
     ingredients: generatedRecipe.ingredients.map((ing, index) => ({
       id: `ing-${index}`,
       food_id: null,
@@ -711,8 +724,12 @@ const RecipeCreatePage: React.FC = () => {
       email: user.email || "",
       name: user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
       avatar_url: user.user_metadata?.avatar_url,
-    },
+    }
   } : null;
+
+  // Debug: Log recipe object for UI display
+  console.log('Recipe object for UI:', recipe);
+  console.log('Recipe calories_per_serving value:', recipe?.calories_per_serving);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -899,23 +916,45 @@ const RecipeCreatePage: React.FC = () => {
                   <div className="mb-6">
                     <div className="flex items-center justify-between">
                       <h1 className="text-2xl font-bold text-gray-900">{recipe.title}</h1>
-                      <Button
-                        onClick={handleSaveRecipe}
-                        disabled={isSaving}
-                        className="bg-sage-600 hover:bg-sage-700 text-white"
-                      >
-                        {isSaving ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Saving...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="text-sage-400 mr-2 h-4 w-4" />
-                            Save Recipe
-                          </>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          onClick={handleSaveRecipe}
+                          disabled={isSaving}
+                          className="bg-sage-600 hover:bg-sage-700 text-white h-10 px-4"
+                        >
+                          {isSaving ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="text-sage-400 mr-2 h-4 w-4" />
+                              Save Recipe
+                            </>
+                          )}
+                        </Button>
+                        
+                        {/* Start Cooking Button - appears after recipe is generated or saved */}
+                        {(savedRecipeId || (recipe?.steps && recipe.steps.length > 0)) && (
+                          <Button
+                            onClick={() => {
+                              const recipeId = savedRecipeId || recipe.id;
+                              if (recipeId === "generated") {
+                                // Pass recipe data via state for unsaved recipes
+                                navigate(`/recipes/generated/cook`, { state: { recipe } });
+                              } else {
+                                // For saved recipes, just navigate normally
+                                navigate(`/recipes/${recipeId}/cook`);
+                              }
+                            }}
+                            className="bg-orange-600 hover:bg-orange-700 text-white h-10 px-4"
+                          >
+                            <ChefHat className="w-4 h-4 mr-2" />
+                            Start Cooking
+                          </Button>
                         )}
-                      </Button>
+                      </div>
                     </div>
                     {recipe.description && (
                       <p className="text-gray-600 mt-2">{recipe.description}</p>
@@ -947,28 +986,24 @@ const RecipeCreatePage: React.FC = () => {
                               size="sm"
                               onClick={() => adjustServings(-1)}
                               className="h-6 w-6 p-0"
-                              disabled={currentServings <= 1}
                             >
-                              <Minus className="h-3 w-3" />
+                              -
                             </Button>
-                            <span className="px-2 py-1 text-sm font-medium">
-                              {currentServings}
-                            </span>
+                            <span className="w-8 text-center">{currentServings}</span>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => adjustServings(1)}
                               className="h-6 w-6 p-0"
                             >
-                              <Plus className="h-3 w-3" />
+                              +
                             </Button>
                             {currentServings !== originalServings && (
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setCurrentServings(originalServings)}
+                                onClick={() => resetServings()}
                                 className="h-6 w-6 p-0 ml-1"
-                                title="Reset to original servings"
                               >
                                 <RotateCcw className="h-3 w-3" />
                               </Button>
@@ -984,6 +1019,12 @@ const RecipeCreatePage: React.FC = () => {
                       {recipe.difficulty && (
                         <div>
                           <span className="font-medium">Difficulty:</span> {recipe.difficulty.charAt(0).toUpperCase() + recipe.difficulty.slice(1)}
+                        </div>
+                      )}
+                      {recipe.calories_per_serving && (
+                        <div className="flex items-center">
+                          <Flame className="h-4 w-4 mr-1 text-orange-500" />
+                          <span className="font-medium">Calories:</span> {recipe.calories_per_serving} per serving
                         </div>
                       )}
                     </div>

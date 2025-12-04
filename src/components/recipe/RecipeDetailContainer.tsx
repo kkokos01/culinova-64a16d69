@@ -135,18 +135,6 @@ const RecipeDetailContainer: React.FC = () => {
         />
       )}
       
-      {/* Start Cooking FAB */}
-      {recipe?.steps && recipe.steps.length > 0 && (
-        <Button
-          onClick={handleStartCooking}
-          size="lg"
-          className="fixed bottom-6 right-6 z-30 h-14 px-6 shadow-lg bg-green-600 hover:bg-green-700 text-white font-semibold"
-        >
-          <ChefHat className="w-5 h-5 mr-2" />
-          Start Cooking
-        </Button>
-      )}
-      
       <AddToShoppingListModal
         isOpen={isShoppingListModalOpen}
         onClose={handleCloseShoppingList}

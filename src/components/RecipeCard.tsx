@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Clock, Users } from "lucide-react";
+import { Clock, Users, Flame } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Recipe } from "@/types";
 import { cn } from "@/lib/utils";
@@ -130,6 +130,12 @@ const RecipeCard = ({ recipe, className }: RecipeCardProps) => {
             <Users className="h-4 w-4 mr-1" />
             <span>{servings} serving{servings !== 1 ? 's' : ''}</span>
           </div>
+          {recipe.calories_per_serving && (
+            <div className="flex items-center">
+              <Flame className="h-4 w-4 mr-1 text-orange-500" />
+              <span>{recipe.calories_per_serving} cal</span>
+            </div>
+          )}
         </CardFooter>
       </Card>
     </Link>

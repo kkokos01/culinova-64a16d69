@@ -1,14 +1,47 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X, Timer, Clock } from 'lucide-react';
 import { useCookSession, type CookTimer } from '@/context/cook/CookSessionContext';
 import { formatSeconds } from '@/utils/parseTimeFromText';
 
+// Initialize audio context once at module level
+const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+const playNotificationSound = () => {
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  oscillator.frequency.value = 800; // Notification frequency
+  oscillator.type = 'sine';
+  
+  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+  
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.5);
+};
+
 const TimerWidget: React.FC = () => {
   const { state, removeTimer, updateTimer } = useCookSession();
   const { timers } = state;
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [completedTimers, setCompletedTimers] = useState<Set<string>>(new Set());
+
+  // Play notification sound (memoized)
+  const handleTimerComplete = useCallback((timerId: string) => {
+    if (!completedTimers.has(timerId)) {
+      setCompletedTimers(prev => new Set(prev).add(timerId));
+      try {
+        playNotificationSound();
+      } catch (error) {
+        console.warn('Could not play notification sound:', error);
+      }
+    }
+  }, [completedTimers]);
 
   // Update timers every second
   useEffect(() => {
@@ -21,6 +54,7 @@ const TimerWidget: React.FC = () => {
           // Auto-stop timer when it reaches zero
           if (newRemaining === 0) {
             updateTimer(timer.id, { isActive: false });
+            handleTimerComplete(timer.id);
           }
         }
       });
@@ -31,7 +65,21 @@ const TimerWidget: React.FC = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [timers, updateTimer]);
+  }, [timers, updateTimer, handleTimerComplete]);
+
+  // Clean up completed timers when they're removed
+  useEffect(() => {
+    const currentTimerIds = new Set(timers.map(t => t.id));
+    setCompletedTimers(prev => {
+      const updated = new Set<string>();
+      prev.forEach(id => {
+        if (currentTimerIds.has(id)) {
+          updated.add(id);
+        }
+      });
+      return updated;
+    });
+  }, [timers]);
 
   if (timers.length === 0) {
     return null;
@@ -62,17 +110,17 @@ const TimerCard: React.FC<TimerCardProps> = ({ timer, onRemove, onToggle }) => {
   const isActive = timer.isActive && timer.remaining > 0;
 
   return (
-    <Card className={`shadow-lg border-2 transition-all duration-300 ${
+    <Card className={`shadow-lg border-2 transition-all duration-300 backdrop-blur-sm ${
       isCompleted 
-        ? 'border-red-500 bg-red-50 animate-pulse' 
+        ? 'border-red-500 bg-red-50/75 animate-pulse' 
         : isActive 
-          ? 'border-blue-500 bg-blue-50' 
-          : 'border-gray-200 bg-white'
+          ? 'border-blue-500 bg-blue-50/75' 
+          : 'border-gray-200 bg-white/75'
     }`}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-1">
-            <div className={`p-2 rounded-full ${
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className={`p-2 rounded-full flex-shrink-0 ${
               isCompleted 
                 ? 'bg-red-500 text-white' 
                 : isActive 
@@ -86,10 +134,15 @@ const TimerCard: React.FC<TimerCardProps> = ({ timer, onRemove, onToggle }) => {
               )}
             </div>
             
-            <div className="flex-1">
-              <div className="font-semibold text-sm text-gray-900">
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-sm text-gray-900 truncate">
                 {timer.label}
               </div>
+              {timer.description && (
+                <div className="text-xs text-gray-600 mt-1 break-words">
+                  {timer.description}
+                </div>
+              )}
               <div className={`text-lg font-mono ${
                 isCompleted 
                   ? 'text-red-600' 
@@ -102,7 +155,7 @@ const TimerCard: React.FC<TimerCardProps> = ({ timer, onRemove, onToggle }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             {timer.remaining > 0 && (
               <Button
                 size="sm"
@@ -134,6 +187,11 @@ const TimerCard: React.FC<TimerCardProps> = ({ timer, onRemove, onToggle }) => {
             <span className="text-sm font-semibold text-red-600 animate-pulse">
               ⏰ Timer Complete!
             </span>
+            {timer.description && (
+              <div className="text-xs text-gray-600 mt-1 break-words">
+                {timer.description}
+              </div>
+            )}
           </div>
         )}
       </CardContent>
