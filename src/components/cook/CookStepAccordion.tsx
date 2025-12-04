@@ -103,34 +103,29 @@ const CookStepAccordion: React.FC<CookStepAccordionProps> = ({ steps, fontSize }
     return words.length > 6 ? shortText + '...' : shortText;
   };
 
-  // Get font size classes based on current setting
-  const getFontSizeClasses = () => {
-    switch (fontSize) {
-      case 'small':
-        return {
-          instruction: 'text-sm',
-          title: 'text-base',
-          button: 'text-sm',
-          stepNumber: 'text-sm'
-        };
-      case 'large':
-        return {
-          instruction: 'text-2xl',
-          title: 'text-xl',
-          button: 'text-xl',
-          stepNumber: 'text-lg'
-        };
-      default: // standard
-        return {
-          instruction: 'text-lg',
-          title: 'text-base',
-          button: 'text-lg',
-          stepNumber: 'text-base'
-        };
+  // Font size classes for different size options
+  const fontSizeClasses = {
+    small: {
+      instruction: 'text-lg',
+      title: 'text-lg',
+      button: 'text-lg',
+      stepNumber: 'text-base'
+    },
+    standard: {
+      instruction: 'text-xl',
+      title: 'text-xl',
+      button: 'text-xl',
+      stepNumber: 'text-lg'
+    },
+    large: {
+      instruction: 'text-2xl',
+      title: 'text-2xl',
+      button: 'text-2xl',
+      stepNumber: 'text-xl'
     }
   };
 
-  const fontClasses = getFontSizeClasses();
+  const fontClasses = fontSizeClasses[fontSize];
 
   return (
     <div className="w-full max-w-4xl mx-auto">
