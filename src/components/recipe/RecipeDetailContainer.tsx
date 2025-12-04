@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Recipe, Ingredient } from "@/types";
 import { useMediaQuery } from "@/hooks/use-mobile";
 import DesktopLayout from "./DesktopLayout";
@@ -7,6 +8,8 @@ import MobileLayout from "./MobileLayout";
 import { useRecipeDetail } from "@/hooks/useRecipeDetail";
 import { useRecipe } from "@/context/recipe";
 import { AddToShoppingListModal } from "@/components/shopping/AddToShoppingListModal";
+import { Button } from "@/components/ui/button";
+import { ChefHat } from "lucide-react";
 
 export interface MobileLayoutProps {
   recipe: Recipe;
@@ -41,6 +44,7 @@ export interface DesktopLayoutProps {
 const RecipeDetailContainer: React.FC = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [isShoppingListModalOpen, setIsShoppingListModalOpen] = useState(false);
+  const navigate = useNavigate();
   
   // Get direct access to the recipe from the RecipeContext to ensure we're always using
   // the latest recipe data from the active version
@@ -73,6 +77,12 @@ const RecipeDetailContainer: React.FC = () => {
 
   const handleCloseShoppingList = () => {
     setIsShoppingListModalOpen(false);
+  };
+
+  const handleStartCooking = () => {
+    if (recipe?.id) {
+      navigate(`/recipes/${recipe.id}/cook`);
+    }
   };
 
   // Log recipe content for debugging purposes
@@ -123,6 +133,18 @@ const RecipeDetailContainer: React.FC = () => {
           isAiModifying={isAiModifying}
           onOpenShoppingList={handleOpenShoppingList}
         />
+      )}
+      
+      {/* Start Cooking FAB */}
+      {recipe?.steps && recipe.steps.length > 0 && (
+        <Button
+          onClick={handleStartCooking}
+          size="lg"
+          className="fixed bottom-6 right-6 z-30 h-14 px-6 shadow-lg bg-green-600 hover:bg-green-700 text-white font-semibold"
+        >
+          <ChefHat className="w-5 h-5 mr-2" />
+          Start Cooking
+        </Button>
       )}
       
       <AddToShoppingListModal

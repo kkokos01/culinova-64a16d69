@@ -13,6 +13,7 @@ import Collections from "./pages/Collections";
 import NotFound from "./pages/NotFound";
 import SupabaseRecipes from "./pages/SupabaseRecipes";
 import RecipeDetail from "./pages/RecipeDetail";
+import CookMode from "./pages/CookMode";
 import RecipeCreate from "./pages/RecipeCreate";
 import ShoppingList from "./pages/ShoppingList";
 import SignIn from "./pages/auth/SignIn";
@@ -59,6 +60,7 @@ function App() {
                           <Route path="/create" element={<RecipeCreate />} />
                           <Route path="/recipes/create" element={<RecipeCreate />} />
                           <Route path="/recipes/:id" element={<RecipeDetail />} />
+                          <Route path="/recipes/:id/cook" element={<CookMode />} />
                           <Route path="/shopping-list" element={<ShoppingList />} />
                           <Route path="/sign-in" element={<SignIn />} />
                           <Route path="/sign-up" element={<SignUp />} />

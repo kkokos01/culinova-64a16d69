@@ -90,15 +90,6 @@ const Navbar = () => {
         
         {/* Desktop Action Buttons */}
         <div className="hidden md:flex items-center space-x-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white hover:text-sage-400 hover:bg-slate-700"
-            aria-label="Search"
-          >
-            <Search className="h-5 w-5" />
-          </Button>
-          
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -181,14 +172,6 @@ const Navbar = () => {
             </Link>
           ))}
           <div className="pt-4 border-t border-slate-700 flex flex-col space-y-4">
-            <Link 
-              to="/search" 
-              className="flex items-center space-x-2 text-white hover:text-sage-400"
-            >
-              <Search className="h-5 w-5" />
-              <span>Search</span>
-            </Link>
-            
             {user ? (
               <>
                 <Link 
