@@ -16,6 +16,7 @@ import UnifiedSidebar from "./UnifiedSidebar";
 import IngredientItem from "../IngredientItem";
 import RecipeImageGenerator from "../RecipeImageGenerator";
 import Navbar from "@/components/Navbar";
+import { AddToCollectionButton } from "../AddToCollectionButton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles, Loader2, Save, ChefHat, Wand2, Plus, Minus, RotateCcw, ChevronRight, Flame } from "lucide-react";
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
@@ -918,23 +919,32 @@ const RecipeCreatePage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <h1 className="text-2xl font-bold text-gray-900">{recipe.title}</h1>
                       <div className="flex gap-2 flex-wrap">
-                        <Button
-                          onClick={handleSaveRecipe}
-                          disabled={isSaving}
-                          className="bg-sage-600 hover:bg-sage-700 text-white h-10 px-4"
-                        >
-                          {isSaving ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Saving...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="text-sage-400 mr-2 h-4 w-4" />
-                              Save Recipe
-                            </>
-                          )}
-                        </Button>
+                        {savedRecipeId ? (
+                          <AddToCollectionButton
+                            recipeId={savedRecipeId}
+                            currentSpaceId={currentSpace?.id}
+                            variant="default"
+                            size="default"
+                          />
+                        ) : (
+                          <Button
+                            onClick={handleSaveRecipe}
+                            disabled={isSaving}
+                            className="bg-sage-600 hover:bg-sage-700 text-white h-10 px-4"
+                          >
+                            {isSaving ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              <>
+                                <Save className="text-sage-400 mr-2 h-4 w-4" />
+                                Save Recipe
+                              </>
+                            )}
+                          </Button>
+                        )}
                         
                         {/* Start Cooking Button - appears after recipe is generated or saved */}
                         {(savedRecipeId || (recipe?.steps && recipe.steps.length > 0)) && (

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import { Space, UserSpace } from "@/types";
 import { useSpace } from "@/context/SpaceContext";
+import { SpaceManagementDropdown } from "./SpaceManagementDropdown";
 import { Settings, Share2, Users } from "lucide-react";
 import { SpaceCreator } from "./SpaceCreator";
 
@@ -27,6 +28,10 @@ const SpacesList = ({ userId, spaces, memberships, refreshSpaces }: SpacesListPr
       title: "Space selected",
       description: `You are now working in "${space.name}"`
     });
+  };
+
+  const handleSpaceUpdated = () => {
+    refreshSpaces();
   };
 
   return (
@@ -85,18 +90,12 @@ const SpacesList = ({ userId, spaces, memberships, refreshSpaces }: SpacesListPr
                       {isActive ? "Current Space" : "Select Space"}
                     </Button>
                     
-                    <div className="flex space-x-2">
-                      {membership?.role === 'admin' && (
-                        <>
-                          <Button size="sm" variant="outline">
-                            <Settings className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Share2 className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
+                    <SpaceManagementDropdown
+                      space={space}
+                      membership={membership}
+                      memberships={memberships}
+                      onSpaceUpdated={handleSpaceUpdated}
+                    />
                   </CardFooter>
                 </Card>
               );

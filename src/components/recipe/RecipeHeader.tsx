@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useSpace } from "@/context/SpaceContext";
 import { Recipe } from "@/types";
 import { Button } from "@/components/ui/button";
+import { AddToCollectionButton } from "./AddToCollectionButton";
 import { ShoppingCart, Flame, ChefHat, Copy } from "lucide-react";
 import { socialService } from "@/services/supabase/socialService";
 import { useToast } from "@/hooks/use-toast";
@@ -181,6 +182,16 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
             <ChefHat className="w-4 h-4 mr-2" />
             Start Cooking
           </Button>
+        )}
+        
+        {/* Add to Collection Button */}
+        {recipeToUse?.id && recipeToUse.id !== "generated" && (
+          <AddToCollectionButton
+            recipeId={recipeToUse.id}
+            currentSpaceId={recipeToUse.space_id}
+            variant="outline"
+            size="default"
+          />
         )}
         
         {/* Shopping List Button */}
