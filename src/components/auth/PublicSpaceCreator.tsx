@@ -46,9 +46,11 @@ export function PublicSpaceCreator({ children, refreshSpaces }: PublicSpaceCreat
     
     setIsLoading(true);
     try {
-      // TODO: Update createSpace to handle public spaces with description
-      // For now, create as private space and we'll update the backend
-      const result = await createSpace(spaceName);
+      // Create public space with description and public flag
+      const result = await createSpace(spaceName, { 
+        description: spaceDescription, 
+        isPublic: true 
+      });
       if (result) {
         setIsOpen(false);
         setSpaceName("");

@@ -11,7 +11,7 @@ interface SpaceContextType {
   isLoading: boolean;
   setCurrentSpace: (space: Space | null) => void;
   refreshSpaces: () => Promise<void>;
-  createSpace: (name: string) => Promise<Space | null>;
+  createSpace: (name: string, options?: { description?: string, isPublic?: boolean }) => Promise<Space | null>;
   userRole: 'admin' | 'editor' | 'viewer' | null;
   canManageSpace: boolean;
   canEditContent: boolean;
@@ -134,7 +134,7 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const createSpace = async (name: string): Promise<Space | null> => {
+  const createSpace = async (name: string, options?: { description?: string, isPublic?: boolean }): Promise<Space | null> => {
     if (!user?.id) return null;
     
     try {
@@ -149,7 +149,9 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
           max_recipes: 100,
           max_users: 5,
           is_active: true,
-          is_default: false // Not setting as default for additional spaces
+          is_default: false, // Not setting as default for additional spaces
+          ...(options?.description && { description: options.description }),
+          ...(options?.isPublic !== undefined && { is_public: options.isPublic })
         })
         .select()
         .single();
