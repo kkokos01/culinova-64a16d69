@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Space, UserSpace } from "@/types";
 import { useSpace } from "@/context/SpaceContext";
 import { SpaceManagementDropdown } from "./SpaceManagementDropdown";
-import { Settings, Share2, Users } from "lucide-react";
+import { MemberManagement } from "./MemberManagement";
+import { Settings, Share2, Users, ChevronDown, ChevronUp } from "lucide-react";
 import { SpaceCreator } from "./SpaceCreator";
 
 type SpacesListProps = {
@@ -19,8 +20,9 @@ type SpacesListProps = {
 
 const SpacesList = ({ userId, spaces, memberships, refreshSpaces }: SpacesListProps) => {
   const { toast } = useToast();
-  const { currentSpace, setCurrentSpace } = useSpace();
+  const { currentSpace, setCurrentSpace, canManageSpace } = useSpace();
   const [isLoading, setIsLoading] = useState(false);
+  const [expandedMembers, setExpandedMembers] = useState<string[]>([]);
 
   const selectSpace = (space: Space) => {
     setCurrentSpace(space);
@@ -32,6 +34,14 @@ const SpacesList = ({ userId, spaces, memberships, refreshSpaces }: SpacesListPr
 
   const handleSpaceUpdated = () => {
     refreshSpaces();
+  };
+
+  const toggleMembersSection = (spaceId: string) => {
+    setExpandedMembers(prev => 
+      prev.includes(spaceId) 
+        ? prev.filter(id => id !== spaceId)
+        : [...prev, spaceId]
+    );
   };
 
   return (
@@ -82,21 +92,52 @@ const SpacesList = ({ userId, spaces, memberships, refreshSpaces }: SpacesListPr
                     </div>
                   </CardContent>
                   <CardFooter className="pt-2 flex justify-between">
-                    <Button 
-                      size="sm" 
-                      variant={isActive ? "default" : "outline"}
-                      onClick={() => selectSpace(space)}
-                    >
-                      {isActive ? "Current Space" : "Select Space"}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {membership?.role === 'admin' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => toggleMembersSection(space.id)}
+                          className="flex items-center gap-2"
+                        >
+                          <Users className="h-4 w-4" />
+                          Manage Members
+                          {expandedMembers.includes(space.id) ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
                     
-                    <SpaceManagementDropdown
-                      space={space}
-                      membership={membership}
-                      memberships={memberships}
-                      onSpaceUpdated={handleSpaceUpdated}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        size="sm" 
+                        variant={isActive ? "default" : "outline"}
+                        onClick={() => selectSpace(space)}
+                      >
+                        {isActive ? "Current Space" : "Select Space"}
+                      </Button>
+                      
+                      <SpaceManagementDropdown
+                        space={space}
+                        membership={membership}
+                        memberships={memberships}
+                        onSpaceUpdated={handleSpaceUpdated}
+                      />
+                    </div>
                   </CardFooter>
+                  
+                  {/* Collapsible Member Management Section */}
+                  {membership?.role === 'admin' && expandedMembers.includes(space.id) && (
+                    <div className="border-t px-6 pb-6">
+                      <MemberManagement
+                        spaceId={space.id}
+                        onMembersChange={handleSpaceUpdated}
+                      />
+                    </div>
+                  )}
                 </Card>
               );
             })}

@@ -24,6 +24,8 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import AuthCallback from "./pages/auth/AuthCallback";
 import UpdatePassword from "./pages/auth/UpdatePassword";
 import Profile from "./pages/auth/Profile";
+import UsernameSetup from "./pages/auth/UsernameSetup";
+import UsernameRequired from "./components/auth/UsernameRequired";
 import SupabaseHealth from "./pages/SupabaseHealth";
 
 // Configure React Query to prevent unnecessary refetches on window focus
@@ -57,20 +59,57 @@ function App() {
                       <BrowserRouter>
                         <Routes>
                           <Route path="/" element={<Index />} />
-                          <Route path="/collections" element={<Collections />} />
-                          <Route path="/publiccollections" element={<PublicCollections />} />
-                          <Route path="/explore" element={<Explore />} />
+                          <Route path="/collections" element={
+                            <UsernameRequired>
+                              <Collections />
+                            </UsernameRequired>
+                          } />
+                          <Route path="/publiccollections" element={
+                            <UsernameRequired>
+                              <PublicCollections />
+                            </UsernameRequired>
+                          } />
+                          <Route path="/explore" element={
+                            <UsernameRequired>
+                              <Explore />
+                            </UsernameRequired>
+                          } />
                           <Route path="/supabase-recipes" element={<SupabaseRecipes />} />
-                          <Route path="/create" element={<RecipeCreate />} />
-                          <Route path="/recipes/create" element={<RecipeCreate />} />
-                          <Route path="/recipes/:id" element={<RecipeDetail />} />
-                          <Route path="/recipes/:id/cook" element={<CookMode />} />
-                          <Route path="/shopping-list" element={<ShoppingList />} />
+                          <Route path="/create" element={
+                            <UsernameRequired>
+                              <RecipeCreate />
+                            </UsernameRequired>
+                          } />
+                          <Route path="/recipes/create" element={
+                            <UsernameRequired>
+                              <RecipeCreate />
+                            </UsernameRequired>
+                          } />
+                          <Route path="/recipes/:id" element={
+                            <UsernameRequired>
+                              <RecipeDetail />
+                            </UsernameRequired>
+                          } />
+                          <Route path="/recipes/:id/cook" element={
+                            <UsernameRequired>
+                              <CookMode />
+                            </UsernameRequired>
+                          } />
+                          <Route path="/shopping-list" element={
+                            <UsernameRequired>
+                              <ShoppingList />
+                            </UsernameRequired>
+                          } />
                           <Route path="/sign-in" element={<SignIn />} />
                           <Route path="/sign-up" element={<SignUp />} />
+                          <Route path="/username-setup" element={<UsernameSetup />} />
                           <Route path="/reset-password" element={<ResetPassword />} />
                           <Route path="/update-password" element={<UpdatePassword />} />
-                          <Route path="/profile" element={<Profile />} />
+                          <Route path="/profile" element={
+                            <UsernameRequired>
+                              <Profile />
+                            </UsernameRequired>
+                          } />
                           <Route path="/auth/v1/callback" element={<AuthCallback />} />
                           <Route path="/supabase-health" element={<SupabaseHealth />} />
                           <Route path="*" element={<NotFound />} />

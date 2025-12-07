@@ -5,27 +5,50 @@ import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ProfileSettings from "@/components/auth/ProfileSettings";
 import SpacesList from "@/components/auth/SpacesList";
 import PantryManager from "@/components/pantry/PantryManager";
+import { NotificationsList } from "@/components/notifications/NotificationsList";
 import { useUserData } from "@/hooks/useUserData";
 import { useSpace } from "@/context/SpaceContext";
-import { LogOut } from "lucide-react";
+import { InvitationService } from "@/services/supabase/invitationService";
+import { LogOut, Bell } from "lucide-react";
 
 const Profile = () => {
   const [searchParams] = useSearchParams();
   const { user, signOut } = useAuth();
   const { currentSpace } = useSpace();
   const [activeTab, setActiveTab] = useState("profile");
+  const [pendingInvitationsCount, setPendingInvitationsCount] = useState(0);
   
   // Set active tab from URL parameter on mount
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'pantry' || tabParam === 'spaces' || tabParam === 'profile') {
+    if (tabParam === 'pantry' || tabParam === 'spaces' || tabParam === 'profile' || tabParam === 'notifications') {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
+
+  // Fetch pending invitations count
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const count = await InvitationService.getPendingInvitationsCount();
+        setPendingInvitationsCount(count);
+      } catch (error) {
+        console.error('Error fetching pending invitations count:', error);
+      }
+    };
+
+    fetchPendingCount();
+    
+    // Set up periodic refresh for notifications
+    const interval = setInterval(fetchPendingCount, 30000); // Refresh every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
   
   const { 
     profileData, 
@@ -92,10 +115,19 @@ const Profile = () => {
         <div className="bg-white rounded-lg shadow-sm border">
           <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab}>
             <div className="px-6 pt-6">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="profile">Profile Settings</TabsTrigger>
                 <TabsTrigger value="spaces">Spaces</TabsTrigger>
                 <TabsTrigger value="pantry">My Pantry</TabsTrigger>
+                <TabsTrigger value="notifications" className="flex items-center gap-2">
+                  <Bell className="h-4 w-4" />
+                  Notifications
+                  {pendingInvitationsCount > 0 && (
+                    <Badge className="bg-red-500 text-white text-xs min-w-[20px] h-5">
+                      {pendingInvitationsCount}
+                    </Badge>
+                  )}
+                </TabsTrigger>
               </TabsList>
             </div>
             
@@ -131,6 +163,15 @@ const Profile = () => {
               
               <TabsContent value="pantry">
                 <PantryManager />
+              </TabsContent>
+              
+              <TabsContent value="notifications">
+                <NotificationsList 
+                  onInvitationAction={() => {
+                    // Refresh pending count when invitations are acted upon
+                    InvitationService.getPendingInvitationsCount().then(setPendingInvitationsCount);
+                  }}
+                />
               </TabsContent>
             </div>
           </Tabs>

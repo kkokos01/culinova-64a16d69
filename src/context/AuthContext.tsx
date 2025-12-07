@@ -8,7 +8,8 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  needsUsername: boolean;
+  signUp: (email: string, password: string, userData?: Record<string, any>) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -17,11 +18,40 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [needsUsername, setNeedsUsername] = useState(false);
   const { toast } = useToast();
+
+  const checkUserHasUsername = async (userId: string) => {
+    try {
+      // Add a small delay to allow AuthCallback to save username from email verification
+      // This prevents race condition where needsUsername check fires before username is saved
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      console.log("🔍 Checking username for user:", userId);
+      
+      const { data: profile, error } = await supabase
+        .from('user_profiles')
+        .select('display_name')
+        .eq('user_id', userId)
+        .single();
+
+      console.log("🔍 Profile query result:", { profile, error: error?.message });
+      
+      const hasUsername = !!profile?.display_name;
+      console.log("🔍 Username check result:", { hasUsername, displayName: profile?.display_name });
+      
+      setNeedsUsername(!hasUsername);
+      return hasUsername;
+    } catch (error) {
+      console.error('Error checking username:', error);
+      setNeedsUsername(true);
+      return false;
+    }
+  };
 
   useEffect(() => {
     // Check if Supabase is properly configured before making requests
@@ -29,6 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         setSession(session);
         setUser(session?.user ?? null);
+        if (session?.user) {
+          checkUserHasUsername(session.user.id);
+        } else {
+          setNeedsUsername(false);
+        }
         setIsLoading(false);
       }).catch((error) => {
         console.error('Failed to get session:', error);
@@ -40,10 +75,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
         console.log("Auth state changed:", _event);
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Only check username on SIGNED_IN events, not INITIAL_SESSION
+        // This prevents race condition after email verification callback
+        if (_event === 'SIGNED_IN' && session?.user) {
+          await checkUserHasUsername(session.user.id);
+        } else {
+          setNeedsUsername(false);
+        }
+        
         setIsLoading(false);
       });
 
@@ -54,19 +98,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, userData?: Record<string, any>) => {
     setIsLoading(true);
-    
-    // Update to use the v1 path for email auth as well
     const redirectUrl = new URL('/auth/v1/callback', window.location.origin).toString();
     
-    const { error } = await supabase.auth.signUp({
+    const signUpOptions: any = {
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
       },
-    });
+    };
+    
+    // Add user data to metadata if provided
+    if (userData) {
+      signUpOptions.options.data = userData;
+    }
+    
+    const { error } = await supabase.auth.signUp(signUpOptions);
     setIsLoading(false);
     
     if (!error) {
@@ -122,12 +171,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     setIsLoading(true);
-    await supabase.auth.signOut();
-    setIsLoading(false);
-    toast({
-      title: "Signed out",
-      description: "You have been signed out successfully",
-    });
+    try {
+      // Use timeout to prevent hanging on OAuth sessions
+      const signOutPromise = supabase.auth.signOut();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Sign out timeout')), 3000)
+      );
+      
+      await Promise.race([signOutPromise, timeoutPromise]);
+      
+      setUser(null);
+      setSession(null);
+      setNeedsUsername(false);
+      
+      toast({ 
+        title: "Signed out",
+        description: "You have been successfully signed out"
+      });
+      
+      // Navigate to home page after successful sign-out
+      window.location.href = '/';
+    } catch (error) {
+      // Force local sign-out even if Supabase call fails or times out
+      setUser(null);
+      setSession(null);
+      setNeedsUsername(false);
+      
+      toast({ 
+        title: "Signed out",
+        description: "You have been successfully signed out"
+      });
+      
+      // Navigate to home page even if there was an error
+      window.location.href = '/';
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const resetPassword = async (email: string) => {
@@ -152,6 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     session,
     isLoading,
+    needsUsername,
     signUp,
     signIn,
     signInWithGoogle,

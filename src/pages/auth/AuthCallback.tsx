@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 // This component handles authentication callbacks from Supabase
 // It works with the /auth/v1/callback path for both email and Google OAuth
 const AuthCallback = () => {
+  console.log("🔍 AuthCallback component MOUNTING");
+  
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -42,8 +44,8 @@ const AuthCallback = () => {
               description: "You are now signed in",
             });
             
-            // Redirect to home page
-            navigate("/", { replace: true });
+            // Redirect to collections page
+            navigate("/collections", { replace: true });
             return;
           }
           
@@ -89,8 +91,8 @@ const AuthCallback = () => {
           description: "You are now signed in",
         });
         
-        // Redirect to home page after successful auth
-        navigate("/", { replace: true });
+        // Redirect to collections page after successful auth
+        navigate("/collections", { replace: true });
       } catch (err: any) {
         console.error("Auth callback error:", err);
         

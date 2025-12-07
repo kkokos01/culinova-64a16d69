@@ -59,7 +59,7 @@ export function SpaceInviteModal({ space, children }: SpaceInviteModalProps) {
       if (success) {
         toast({
           title: "Invitation sent",
-          description: `Invitation sent to ${email} to join "${space.name}" as ${role}.`,
+          description: `Invitation sent to ${email} to join "${space.name}" as ${role}. They will need to accept the invitation to join.`,
         });
         setEmail("");
         setRole('viewer');

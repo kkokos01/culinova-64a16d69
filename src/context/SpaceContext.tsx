@@ -278,16 +278,50 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
   };
 
   const inviteToSpace = async (email: string, role: 'admin' | 'editor' | 'viewer', spaceId: string): Promise<boolean> => {
-    if (!user?.id || !currentSpace || !canManageSpace) return false;
+    if (!user?.id || !canManageSpace) return false;
     
-    // For now, we'll just show a toast since we need to implement user lookup by email
-    // and proper invitation flow in later changes
-    toast({
-      title: "Invitation feature coming soon",
-      description: `This would invite ${email} as a ${role} to your space.`,
-    });
-    
-    return true;
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase.rpc('invite_user_to_space' as any, {
+        email_to_invite: email,
+        space_id_param: spaceId,
+        user_role: role,
+        invitation_message: null // No message field in UI yet, pass null
+      });
+      
+      if (error) throw error;
+      
+      const result = data as { success: boolean; error?: string; message?: string };
+      
+      if (result.success) {
+        toast({
+          title: "Invitation sent",
+          description: result.message || "User successfully added to collection.",
+        });
+        
+        // Refresh spaces to update member count and memberships
+        await fetchSpaces();
+        return true;
+      } else {
+        toast({
+          title: "Invitation failed",
+          description: result.error || "Failed to add user to collection.",
+          variant: "destructive",
+        });
+        return false;
+      }
+    } catch (error: any) {
+      console.error("Error inviting user to space:", error);
+      toast({
+        title: "Error sending invitation",
+        description: error.message || "Failed to send invitation. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,37 +11,145 @@ import { ChefHat } from "lucide-react";
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [usernameError, setUsernameError] = useState("");
   const [success, setSuccess] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
+
+  const checkUsernameAvailability = async (username: string) => {
+    if (username.length < 3) {
+      setUsernameError("Username must be at least 3 characters");
+      return false;
+    }
+    
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      setUsernameError("Username can only contain letters, numbers, and underscores");
+      return false;
+    }
+
+    try {
+      const { data, error } = await (supabase.rpc as any)('check_username_availability', {
+        username: username
+      });
+      
+      if (error) throw error;
+      
+      if (!data[0]?.is_available) {
+        const suggestions = data[0]?.suggestions || [];
+        setUsernameError(`Username taken. Try: ${suggestions.slice(0, 3).join(', ')}`);
+        return false;
+      }
+      
+      setUsernameError("");
+      return true;
+    } catch (error) {
+      console.error('Error checking username:', error);
+      return false;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage("");
+    setUsernameError("");
+
+    console.log("🔍 Starting signup process");
 
     if (password !== confirmPassword) {
+      console.log("❌ Passwords don't match");
       setErrorMessage("Passwords do not match");
       setIsSubmitting(false);
       return;
     }
 
     if (password.length < 6) {
+      console.log("❌ Password too short");
       setErrorMessage("Password must be at least 6 characters");
       setIsSubmitting(false);
       return;
     }
 
-    const { error } = await signUp(email, password);
+    if (username.length < 3) {
+      console.log("❌ Username too short");
+      setUsernameError("Username must be at least 3 characters");
+      setIsSubmitting(false);
+      return;
+    }
+
+    console.log("✅ Form validation passed, checking username availability...");
+
+    // Check username availability with detailed error logging
+    let isUsernameAvailable = false;
+    try {
+      console.log("🔍 Calling RPC function check_username_availability with username:", username);
+      
+      const { data, error } = await (supabase.rpc as any)('check_username_availability', {
+        username: username
+      });
+      
+      console.log("🔍 RPC function response:", { data, error: error?.message });
+      
+      if (error) {
+        console.error("❌ RPC function error:", error);
+        setUsernameError(`Username check failed: ${error.message}`);
+        setIsSubmitting(false);
+        return;
+      }
+      
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        console.error("❌ RPC function returned invalid data:", data);
+        setUsernameError("Username check failed: Invalid response from server");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const result = data[0];
+      console.log("🔍 RPC function result:", result);
+      
+      if (!result.is_available) {
+        const suggestions = result.suggestions || [];
+        setUsernameError(`Username taken. Try: ${suggestions.slice(0, 3).join(', ')}`);
+        setIsSubmitting(false);
+        return;
+      }
+      
+      isUsernameAvailable = true;
+      console.log("✅ Username is available");
+      
+    } catch (err) {
+      console.error("❌ Unexpected error during username check:", err);
+      setUsernameError(`Username check failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!isUsernameAvailable) {
+      console.log("❌ Username not available");
+      setIsSubmitting(false);
+      return;
+    }
+
+    console.log("✅ Username available, signing up with metadata...");
+
+    // SignUp with Metadata - The Fix: Pass username directly to Supabase Auth
+    const { error } = await signUp(email, password, {
+      username: username, // <--- Sent to DB immediately via metadata
+    });
+    
+    console.log("🔍 signUp() result:", { error: error?.message });
     
     if (error) {
+      console.error("❌ signUp() failed:", error);
       setErrorMessage(error.message);
       setIsSubmitting(false);
     } else {
+      console.log("✅ signUp() succeeded - username saved in metadata");
       setSuccess(true);
       setIsSubmitting(false);
     }
@@ -108,6 +217,21 @@ const SignUp = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="Choose a username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                onBlur={() => username && checkUsernameAvailability(username)}
+                required
+              />
+              {usernameError && (
+                <p className="text-sm text-red-500">{usernameError}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
