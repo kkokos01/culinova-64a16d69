@@ -11,12 +11,6 @@ interface RecipeCardProps {
 }
 
 const RecipeCard = ({ recipe, className }: RecipeCardProps) => {
-  // Debug logging to inspect recipe data structure
-  console.log("RecipeCard - recipe data:", recipe);
-  console.log("RecipeCard - prep_time_minutes:", recipe.prep_time_minutes);
-  console.log("RecipeCard - cook_time_minutes:", recipe.cook_time_minutes);
-  console.log("RecipeCard - servings:", recipe.servings);
-  console.log("RecipeCard - difficulty:", recipe.difficulty);
   
   // Handle potential undefined/null values with fallbacks
   const prepTime = recipe.prep_time_minutes || 0;

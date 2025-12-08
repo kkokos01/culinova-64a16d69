@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      activities: {
+        Row: {
+          action_type: string
+          actor_id: string | null
+          created_at: string
+          details: Json | null
+          entity_id: string
+          entity_type: string | null
+          id: string
+          space_id: string | null
+        }
+        Insert: {
+          action_type: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json | null
+          entity_id: string
+          entity_type?: string | null
+          id?: string
+          space_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json | null
+          entity_id?: string
+          entity_type?: string | null
+          id?: string
+          space_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_units: {
         Row: {
           abbreviation: string
@@ -330,6 +371,50 @@ export type Database = {
           },
         ]
       }
+      pantry_items: {
+        Row: {
+          created_at: string
+          id: string
+          is_staple: boolean | null
+          name: string
+          quantity: string | null
+          space_id: string | null
+          storage_type: Database["public"]["Enums"]["storage_type_enum"] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_staple?: boolean | null
+          name: string
+          quantity?: string | null
+          space_id?: string | null
+          storage_type?: Database["public"]["Enums"]["storage_type_enum"] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_staple?: boolean | null
+          name?: string
+          quantity?: string | null
+          space_id?: string | null
+          storage_type?: Database["public"]["Enums"]["storage_type_enum"] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pantry_items_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipe_version_ingredients: {
         Row: {
           amount: number
@@ -473,13 +558,16 @@ export type Database = {
       }
       recipes: {
         Row: {
+          calories_per_serving: number | null
           cook_time_minutes: number
           created_at: string
           description: string
           difficulty: string
+          forked_count: number | null
           id: string
           image_url: string | null
           is_public: boolean
+          parent_recipe_id: string | null
           prep_time_minutes: number
           privacy_level: string
           servings: number
@@ -489,13 +577,16 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          calories_per_serving?: number | null
           cook_time_minutes: number
           created_at?: string
           description: string
           difficulty: string
+          forked_count?: number | null
           id?: string
           image_url?: string | null
           is_public?: boolean
+          parent_recipe_id?: string | null
           prep_time_minutes: number
           privacy_level?: string
           servings: number
@@ -505,13 +596,16 @@ export type Database = {
           user_id: string
         }
         Update: {
+          calories_per_serving?: number | null
           cook_time_minutes?: number
           created_at?: string
           description?: string
           difficulty?: string
+          forked_count?: number | null
           id?: string
           image_url?: string | null
           is_public?: boolean
+          parent_recipe_id?: string | null
           prep_time_minutes?: number
           privacy_level?: string
           servings?: number
@@ -521,6 +615,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "recipes_parent_recipe_id_fkey"
+            columns: ["parent_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "recipes_space_id_fkey"
             columns: ["space_id"]
@@ -553,6 +654,60 @@ export type Database = {
           version?: string
         }
         Relationships: []
+      }
+      shopping_list_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          from_recipe_id: string | null
+          id: string
+          is_checked: boolean | null
+          name: string
+          quantity: string | null
+          space_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          from_recipe_id?: string | null
+          id?: string
+          is_checked?: boolean | null
+          name: string
+          quantity?: string | null
+          space_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          from_recipe_id?: string | null
+          id?: string
+          is_checked?: boolean | null
+          name?: string
+          quantity?: string | null
+          space_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_list_items_from_recipe_id_fkey"
+            columns: ["from_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_items_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       space_category_settings: {
         Row: {
@@ -605,36 +760,101 @@ export type Database = {
           },
         ]
       }
+      space_invitations: {
+        Row: {
+          created_at: string
+          email_address: string
+          expires_at: string
+          id: string
+          inviter_id: string
+          message: string | null
+          recipient_id: string
+          responded_at: string | null
+          role: string
+          space_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_address: string
+          expires_at?: string
+          id?: string
+          inviter_id: string
+          message?: string | null
+          recipient_id: string
+          responded_at?: string | null
+          role: string
+          space_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_address?: string
+          expires_at?: string
+          id?: string
+          inviter_id?: string
+          message?: string | null
+          recipient_id?: string
+          responded_at?: string | null
+          role?: string
+          space_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_invitations_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spaces: {
         Row: {
           created_at: string
           created_by: string
+          description: string | null
           id: string
           is_active: boolean
           is_default: boolean
+          is_public: boolean | null
           max_recipes: number
           max_users: number
+          member_count: number | null
           name: string
+          recipe_count: number | null
         }
         Insert: {
           created_at?: string
           created_by: string
+          description?: string | null
           id?: string
           is_active?: boolean
           is_default?: boolean
+          is_public?: boolean | null
           max_recipes?: number
           max_users?: number
+          member_count?: number | null
           name: string
+          recipe_count?: number | null
         }
         Update: {
           created_at?: string
           created_by?: string
+          description?: string | null
           id?: string
           is_active?: boolean
           is_default?: boolean
+          is_public?: boolean | null
           max_recipes?: number
           max_users?: number
+          member_count?: number | null
           name?: string
+          recipe_count?: number | null
         }
         Relationships: []
       }
@@ -854,7 +1074,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_space_invitation: {
+        Args: { invitation_id_param: string }
+        Returns: Json
+      }
       add_tikka_masala_recipe: { Args: never; Returns: string }
+      check_username_availability: {
+        Args: { username: string }
+        Returns: {
+          is_available: boolean
+          suggestions: string[]
+        }[]
+      }
+      cleanup_expired_invitations: { Args: never; Returns: number }
       convert_units: {
         Args: {
           input_food_id?: string
@@ -878,6 +1110,10 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: string
       }
+      create_user_profile_with_username: {
+        Args: { user_id_param: string; username_param: string }
+        Returns: boolean
+      }
       find_or_create_food: {
         Args: {
           p_category_id?: string
@@ -898,6 +1134,7 @@ export type Database = {
         }[]
       }
       fix_default_spaces: { Args: never; Returns: number }
+      get_auth_users: { Args: { user_ids: string[] }; Returns: string[] }
       get_food_ancestors: {
         Args: { food_path: unknown }
         Returns: {
@@ -1011,6 +1248,31 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: string
       }
+      get_user_emails: {
+        Args: { user_ids: string[] }
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
+      invite_user_to_space:
+        | {
+            Args: {
+              email_to_invite: string
+              space_id_param: string
+              user_role?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              email_to_invite: string
+              invitation_message?: string
+              space_id_param: string
+              user_role?: string
+            }
+            Returns: Json
+          }
       is_admin: { Args: { user_id: string }; Returns: boolean }
       is_member_of_space: {
         Args: { _space_id: string; _user_id: string }
@@ -1021,6 +1283,10 @@ export type Database = {
         Returns: boolean
       }
       migrate_recipes_to_default_spaces: { Args: never; Returns: number }
+      reject_space_invitation: {
+        Args: { invitation_id_param: string }
+        Returns: Json
+      }
       repair_missing_memberships: { Args: never; Returns: number }
       search_foods: {
         Args: { search_query: string; space_id: string }
@@ -1070,6 +1336,7 @@ export type Database = {
         | "vitamin_c"
         | "calcium"
         | "iron"
+      storage_type_enum: "pantry" | "fridge" | "freezer" | "produce" | "spice"
       unit_type: "mass" | "volume" | "count" | "temperature" | "length" | "area"
     }
     CompositeTypes: {
@@ -1213,6 +1480,7 @@ export const Constants = {
         "calcium",
         "iron",
       ],
+      storage_type_enum: ["pantry", "fridge", "freezer", "produce", "spice"],
       unit_type: ["mass", "volume", "count", "temperature", "length", "area"],
     },
   },

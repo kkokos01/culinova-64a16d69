@@ -24,10 +24,10 @@ export const useSupabaseRecipes = () => {
       console.log("Current user:", user?.id);
       console.log("Current space:", currentSpace?.id);
       
-      // Start building our query
+      // Optimized query with all existing database fields
       let query = supabase
         .from('recipes')
-        .select('*');
+        .select('id, title, description, image_url, prep_time_minutes, cook_time_minutes, servings, difficulty, is_public, privacy_level, created_at, updated_at, user_id, space_id, calories_per_serving');
       
       // Apply filtering based on space or user
       if (currentSpace?.id) {
@@ -56,54 +56,6 @@ export const useSupabaseRecipes = () => {
       // Log the raw data for debugging
       console.log("Raw recipe data:", data);
       
-      // Check for the special case where we want to find Tikka Masala
-      if ((!data || data.length === 0) && user?.id) {
-        console.log("No recipes found. Looking for Tikka Masala recipe...");
-        const { data: tikkaData, error: tikkaError } = await supabase
-          .from('recipes')
-          .select('*')
-          .ilike('title', '%tikka masala%')
-          .limit(1);
-          
-        if (!tikkaError && tikkaData && tikkaData.length > 0) {
-          console.log("Found Tikka Masala recipe:", tikkaData[0]);
-          
-          // If Tikka Masala recipe exists but is not associated with the user
-          // Let's update it to associate with the current user and space
-          if (tikkaData[0].user_id !== user.id) {
-            const { error: updateError } = await supabase
-              .from('recipes')
-              .update({ 
-                user_id: user.id,
-                space_id: currentSpace?.id || null 
-              })
-              .eq('id', tikkaData[0].id);
-              
-            if (updateError) {
-              console.error("Error associating Tikka Masala with user:", updateError);
-            } else {
-              console.log("Successfully associated Tikka Masala with user");
-              // Re-fetch the updated recipe
-              const { data: updatedRecipe } = await supabase
-                .from('recipes')
-                .select('*')
-                .eq('id', tikkaData[0].id)
-                .single();
-                
-              if (updatedRecipe) {
-                // Use this as our recipe data
-                console.log("Using updated Tikka Masala recipe");
-                data.push(updatedRecipe);
-              }
-            }
-          } else {
-            // Use the found Tikka Masala recipe even if it doesn't match our filters
-            console.log("Using existing Tikka Masala recipe");
-            data.push(tikkaData[0]);
-          }
-        }
-      }
-      
       // Filter out recipes that don't have the necessary details
       const validRecipes = data ? data.filter(recipe => 
         recipe && recipe.id && recipe.title
@@ -111,14 +63,8 @@ export const useSupabaseRecipes = () => {
 
       console.log("Filtered valid recipes:", validRecipes.length);
       
-      // Make sure each recipe has at least empty arrays for ingredients and steps
-      const processedRecipes = validRecipes.map(recipe => ({
-        ...recipe,
-        ingredients: recipe.ingredients || [],
-        steps: recipe.steps || []
-      }));
-      
-      setRecipes(processedRecipes as Recipe[]);
+      // Set recipes directly - ingredients and steps are stored in separate tables
+      setRecipes(validRecipes as Recipe[]);
       
       if (validRecipes.length === 0) {
         console.log("No recipes found. Consider adding some test recipes to the database.");

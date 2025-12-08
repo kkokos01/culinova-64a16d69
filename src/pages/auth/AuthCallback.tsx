@@ -30,16 +30,29 @@ const AuthCallback = () => {
         if (!code) {
           logger.debug("No authentication code in URL, checking for active session", null, "AuthCallback");
           
-          // Database triggers handle username creation atomically - no delay needed
+          // For OAuth flows, tokens may be in hash fragment and need time to process
+          // Add retry logic to handle this timing issue
+          let session = null;
+          let retries = 0;
+          const maxRetries = 5;
           
-          // If there's no code, check if we still have a valid session
-          // This can happen with some OAuth providers where the flow is different
-          const { data: { session } } = await supabase.auth.getSession();
-          logger.debug("Session check without code", { session: !!session }, "AuthCallback");
+          while (!session && retries < maxRetries) {
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            session = currentSession;
+            
+            if (session) {
+              break;
+            }
+            
+            logger.debug(`No session yet, retrying... (${retries + 1}/${maxRetries})`, null, "AuthCallback");
+            await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
+            retries++;
+          }
+          
+          logger.debug("Session check after retries", { session: !!session, attempts: retries }, "AuthCallback");
           
           if (session) {
-            logger.debug("Active session found despite no code parameter", null, "AuthCallback");
-            // We have a session, so the auth likely succeeded through another flow
+            logger.debug("Active session found after OAuth processing", null, "AuthCallback");
             toast({
               title: "Authentication successful",
               description: "You are now signed in",
@@ -50,8 +63,8 @@ const AuthCallback = () => {
             return;
           }
           
-          // No code and no session means authentication failed
-          console.error("No authentication code provided and no active session");
+          // No code and no session after retries means authentication failed
+          console.error("No authentication code provided and no active session after retries");
           toast({
             title: "Authentication failed",
             description: "Please try signing in again",
