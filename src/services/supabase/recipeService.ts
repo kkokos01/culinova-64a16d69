@@ -130,10 +130,10 @@ export const recipeService = {
     try {
       console.log("Fetching recipes with options:", options);
       
-      // Start building the query
+      // Start building the query with optimized field selection
       let query = supabase
         .from('recipes')
-        .select('*');
+        .select('id, title, image_url, description, prep_time_minutes, cook_time_minutes, servings, difficulty, created_at, calories_per_serving, user_id, space_id');
       
       // Apply filtering based on options
       if (options.spaceId) {
@@ -460,16 +460,16 @@ export const recipeService = {
   },
 
   /**
-   * Get user's recipes with optional limit
+   * Get user's recipes with optional limit (optimized for collections page)
    * @param userId - The user ID to fetch recipes for
    * @param limit - Optional limit on number of recipes to return
-   * @returns Array of user's recipes
+   * @returns Array of user's recipes (basic fields only for performance)
    */
   async getUserRecipes(userId: string, limit?: number): Promise<Recipe[]> {
     try {
       let query = supabase
         .from('recipes')
-        .select('*')
+        .select('id, title, image_url, description, prep_time_minutes, cook_time_minutes, servings, difficulty, created_at, calories_per_serving, user_id, space_id')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
@@ -483,70 +483,15 @@ export const recipeService = {
         throw new Error(`Failed to fetch user recipes: ${recipesError.message}`);
       }
 
-      if (!recipesData || recipesData.length === 0) {
-        return [];
-      }
-
-      // Fetch ingredients and steps for each recipe separately (like getRecipe method)
-      const recipes: Recipe[] = [];
-      
-      for (const recipeData of recipesData) {
-        // Fetch ingredients for this recipe
-        const { data: ingredientsData, error: ingredientsError } = await supabase
-          .from('ingredients')
-          .select(`
-            id, 
-            recipe_id,
-            food_id,
-            unit_id,
-            food_name,
-            unit_name,
-            amount,
-            order_index,
-            food:food_id(id, name, description, is_validated, confidence_score, source),
-            unit:unit_id(id, name, abbreviation)
-          `)
-          .eq('recipe_id', recipeData.id);
-
-        if (ingredientsError) {
-          console.error(`Failed to fetch ingredients for recipe ${recipeData.id}:`, ingredientsError);
-          continue; // Skip this recipe but continue with others
-        }
-
-        // Fetch steps for this recipe
-        const { data: stepsData, error: stepsError } = await supabase
-          .from('steps')
-          .select('*')
-          .eq('recipe_id', recipeData.id)
-          .order('order_number');
-
-        if (stepsError) {
-          console.error(`Failed to fetch steps for recipe ${recipeData.id}:`, stepsError);
-          continue; // Skip this recipe but continue with others
-        }
-
-        // Construct the recipe object
-        const recipe: Recipe = {
-          ...recipeData,
-          difficulty: recipeData.difficulty as 'easy' | 'medium' | 'hard',
-          privacy_level: recipeData.privacy_level as 'public' | 'private' | 'space' | 'shared',
-          calories_per_serving: (recipeData as any).calories_per_serving || undefined,
-          ingredients: ingredientsData?.map(normalizeIngredient) || [],
-          steps: stepsData || [],
-          parent_recipe_id: (recipeData as any).parent_recipe_id || undefined,
-          forked_count: (recipeData as any).forked_count || 0,
-          user: {
-            id: recipeData.user_id,
-            email: '',
-            name: '',
-            avatar_url: null,
-          }
-        };
-
-        recipes.push(recipe);
-      }
-
-      return recipes;
+      // Return basic recipe data for collections page (no ingredients/steps needed)
+      // This eliminates the N+1 query problem that was causing 12-second load times
+      return recipesData?.map((recipe: any): Recipe => ({
+        ...recipe,
+        difficulty: recipe.difficulty as 'easy' | 'medium' | 'hard',
+        privacy_level: recipe.privacy_level as 'public' | 'private' | 'space' | 'shared',
+        ingredients: [], // Collections page doesn't need ingredients
+        steps: [], // Collections page doesn't need steps
+      })) || [];
 
     } catch (error) {
       console.error('Error in recipeService.getUserRecipes:', error);

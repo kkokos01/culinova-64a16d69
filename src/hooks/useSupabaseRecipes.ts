@@ -24,10 +24,10 @@ export const useSupabaseRecipes = () => {
       console.log("Current user:", user?.id);
       console.log("Current space:", currentSpace?.id);
       
-      // Optimized query with all existing database fields
+      // Optimized query with only essential fields for collections page
       let query = supabase
         .from('recipes')
-        .select('id, title, description, image_url, prep_time_minutes, cook_time_minutes, servings, difficulty, is_public, privacy_level, created_at, updated_at, user_id, space_id, calories_per_serving');
+        .select('id, title, image_url, description, prep_time_minutes, cook_time_minutes, servings, difficulty, created_at, calories_per_serving, user_id, space_id');
       
       // Apply filtering based on space or user
       if (currentSpace?.id) {
