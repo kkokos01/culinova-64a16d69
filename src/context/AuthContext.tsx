@@ -194,6 +194,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // 3. Tell Supabase server to kill the session
       await supabase.auth.signOut();
     } catch (error) {
+      // Non-critical error logging
       logger.debug("Supabase signOut failed (non-critical)", error, "AuthContext");
     } finally {
       setIsLoading(false);
@@ -202,11 +203,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "You have been successfully signed out"
       });
       
-      // 4. SOFT REDIRECT: Do NOT use window.location.href. 
-      // Since AuthProvider wraps the Router, we can't use useNavigate here directly.
-      // But clearing the 'user' state above will automatically trigger 
-      // any ProtectedRoute components to redirect the user to /sign-in.
-      // If you are on a public page, you simply stay there as a guest.
+      // 4. SOFT REDIRECT: Let React Router handle the transition
+      // The ProtectedRoute component will automatically detect user=null 
+      // and redirect to /sign-in without a page reload.
     }
   };
 
