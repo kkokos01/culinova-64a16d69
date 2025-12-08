@@ -170,30 +170,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     setIsLoading(true);
     
-    // Force immediate local sign-out to prevent navigation race condition
-    localStorage.removeItem('supabase.auth.token');
-    sessionStorage.removeItem('supabase.auth.token');
+    // 1. SMART CLEANUP: Find and remove the actual Supabase token
+    // Supabase keys start with 'sb-' and end with '-auth-token'
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        localStorage.removeItem(key);
+      }
+    });
     
-    // Clear React state immediately
+    // Also clear the specific session storage if used
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+
+    // 2. Clear React State Immediately (Updates UI to "Signed Out" state)
     setUser(null);
     setSession(null);
     setNeedsUsername(false);
     
     try {
-      // Call Supabase signOut without timeout (it might hang but we're already signed out locally)
+      // 3. Tell Supabase server to kill the session
       await supabase.auth.signOut();
     } catch (error) {
-      // Local sign-out already worked, Supabase call failure is non-critical
-      logger.debug("Supabase signOut failed (but local sign-out worked)", error, "AuthContext");
+      logger.debug("Supabase signOut failed (non-critical)", error, "AuthContext");
+    } finally {
+      setIsLoading(false);
+      toast({ 
+        title: "Signed out",
+        description: "You have been successfully signed out"
+      });
+      
+      // 4. SOFT REDIRECT: Do NOT use window.location.href. 
+      // Since AuthProvider wraps the Router, we can't use useNavigate here directly.
+      // But clearing the 'user' state above will automatically trigger 
+      // any ProtectedRoute components to redirect the user to /sign-in.
+      // If you are on a public page, you simply stay there as a guest.
     }
-    
-    toast({ 
-      title: "Signed out",
-      description: "You have been successfully signed out"
-    });
-    
-    // Navigate to home page after sign-out
-    window.location.href = '/';
   };
 
   const resetPassword = async (email: string) => {
