@@ -49,7 +49,7 @@ const SignUp = () => {
       setUsernameError("");
       return true;
     } catch (error) {
-      console.error('Error checking username:', error);
+      logger.error('Error checking username', error, "SignUp");
       return false;
     }
   };
@@ -63,21 +63,21 @@ const SignUp = () => {
     logger.debug("Starting signup process", null, "SignUp");
 
     if (password !== confirmPassword) {
-      console.log("❌ Passwords don't match");
+      logger.debug("Passwords don't match", null, "SignUp");
       setErrorMessage("Passwords do not match");
       setIsSubmitting(false);
       return;
     }
 
     if (password.length < 6) {
-      console.log("❌ Password too short");
+      logger.debug("Password too short", null, "SignUp");
       setErrorMessage("Password must be at least 6 characters");
       setIsSubmitting(false);
       return;
     }
 
     if (username.length < 3) {
-      console.log("❌ Username too short");
+      logger.debug("Username too short", null, "SignUp");
       setUsernameError("Username must be at least 3 characters");
       setIsSubmitting(false);
       return;
@@ -97,14 +97,14 @@ const SignUp = () => {
       logger.debug("RPC function response", { data, error: error?.message }, "SignUp");
       
       if (error) {
-        console.error("❌ RPC function error:", error);
+        logger.error("RPC function error", error, "SignUp");
         setUsernameError(`Username check failed: ${error.message}`);
         setIsSubmitting(false);
         return;
       }
       
       if (!data || !Array.isArray(data) || data.length === 0) {
-        console.error("❌ RPC function returned invalid data:", data);
+        logger.error("RPC function returned invalid data", data, "SignUp");
         setUsernameError("Username check failed: Invalid response from server");
         setIsSubmitting(false);
         return;
@@ -121,17 +121,17 @@ const SignUp = () => {
       }
       
       isUsernameAvailable = true;
-      console.log("✅ Username is available");
+      logger.debug("Username is available", null, "SignUp");
       
     } catch (err) {
-      console.error("❌ Unexpected error during username check:", err);
+      logger.error("Unexpected error during username check", err, "SignUp");
       setUsernameError(`Username check failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
       setIsSubmitting(false);
       return;
     }
 
     if (!isUsernameAvailable) {
-      console.log("❌ Username not available");
+      logger.debug("Username not available", null, "SignUp");
       setIsSubmitting(false);
       return;
     }
@@ -146,7 +146,7 @@ const SignUp = () => {
     logger.debug("signUp() result", { error: error?.message }, "SignUp");
     
     if (error) {
-      console.error("❌ signUp() failed:", error);
+      logger.error("signUp() failed", error, "SignUp");
       setErrorMessage(error.message);
       setIsSubmitting(false);
     } else {
