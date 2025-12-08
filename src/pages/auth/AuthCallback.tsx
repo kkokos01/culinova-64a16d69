@@ -1,14 +1,16 @@
-
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { logger } from "@/utils/logger";
+import Navbar from "@/components/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // This component handles authentication callbacks from Supabase
 // It works with the /auth/v1/callback path for both email and Google OAuth
 const AuthCallback = () => {
-  console.log("🔍 AuthCallback component MOUNTING");
+  logger.debug("AuthCallback component MOUNTING", null, "AuthCallback");
   
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -23,21 +25,20 @@ const AuthCallback = () => {
         const type = searchParams.get("type");
         const provider = searchParams.get("provider");
         
-        console.log("Auth callback params:", { code, type, provider });
+        logger.debug("Auth callback params", { code, type, provider }, "AuthCallback");
         
         if (!code) {
-          console.log("No authentication code in URL, checking for active session");
+          logger.debug("No authentication code in URL, checking for active session", null, "AuthCallback");
           
-          // Introduce a small delay to ensure auth state is properly initialized
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          // Database triggers handle username creation atomically - no delay needed
           
           // If there's no code, check if we still have a valid session
           // This can happen with some OAuth providers where the flow is different
           const { data: { session } } = await supabase.auth.getSession();
-          console.log("Session check without code:", !!session);
+          logger.debug("Session check without code", { session: !!session }, "AuthCallback");
           
           if (session) {
-            console.log("Active session found despite no code parameter");
+            logger.debug("Active session found despite no code parameter", null, "AuthCallback");
             // We have a session, so the auth likely succeeded through another flow
             toast({
               title: "Authentication successful",
@@ -63,26 +64,24 @@ const AuthCallback = () => {
         }
 
         // Exchange the code for a session
-        console.log("Exchanging code for session...");
+        logger.debug("Exchanging code for session", null, "AuthCallback");
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         
         if (error) {
-          console.error("Auth session exchange error:", error);
+          logger.error("Auth session exchange error", error, "AuthCallback");
           throw error;
         }
 
-        console.log("Code exchange successful, waiting for session setup...");
+        logger.debug("Code exchange successful, waiting for session setup", null, "AuthCallback");
         
-        // After successful code exchange, give a longer delay to ensure
-        // the auth state is properly updated across the application
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Database triggers handle auth state atomically - no delay needed
 
         // Get the current session to verify it worked
         const { data: { session } } = await supabase.auth.getSession();
-        console.log("Session established:", !!session);
+        logger.debug("Session established", { session: !!session }, "AuthCallback");
 
         if (!session) {
-          console.error("Failed to establish session after successful code exchange");
+          logger.error("Failed to establish session after successful code exchange", null, "AuthCallback");
           throw new Error("Failed to establish session");
         }
 

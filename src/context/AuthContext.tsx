@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/utils/logger';
 
 type AuthContextType = {
   user: User | null;
@@ -27,11 +28,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkUserHasUsername = async (userId: string) => {
     try {
-      // Add a small delay to allow AuthCallback to save username from email verification
-      // This prevents race condition where needsUsername check fires before username is saved
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      console.log("🔍 Checking username for user:", userId);
+      // Database triggers handle username creation atomically - no delay needed
+      logger.debug("Checking username for user", userId, "AuthContext");
       
       const { data: profile, error } = await supabase
         .from('user_profiles')
@@ -39,15 +37,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq('user_id', userId)
         .single();
 
-      console.log("🔍 Profile query result:", { profile, error: error?.message });
+      logger.debug("Profile query result", { profile, error: error?.message }, "AuthContext");
       
       const hasUsername = !!profile?.display_name;
-      console.log("🔍 Username check result:", { hasUsername, displayName: profile?.display_name });
+      logger.debug("Username check result", { hasUsername, displayName: profile?.display_name }, "AuthContext");
       
       setNeedsUsername(!hasUsername);
       return hasUsername;
     } catch (error) {
-      console.error('Error checking username:', error);
+      logger.error('Error checking username', error, "AuthContext");
       setNeedsUsername(true);
       return false;
     }
@@ -171,42 +169,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     setIsLoading(true);
+    
+    // Force immediate local sign-out to prevent navigation race condition
+    localStorage.removeItem('supabase.auth.token');
+    sessionStorage.removeItem('supabase.auth.token');
+    
+    // Clear React state immediately
+    setUser(null);
+    setSession(null);
+    setNeedsUsername(false);
+    
     try {
-      // Use timeout to prevent hanging on OAuth sessions
-      const signOutPromise = supabase.auth.signOut();
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Sign out timeout')), 3000)
-      );
-      
-      await Promise.race([signOutPromise, timeoutPromise]);
-      
-      setUser(null);
-      setSession(null);
-      setNeedsUsername(false);
-      
-      toast({ 
-        title: "Signed out",
-        description: "You have been successfully signed out"
-      });
-      
-      // Navigate to home page after successful sign-out
-      window.location.href = '/';
+      // Call Supabase signOut without timeout (it might hang but we're already signed out locally)
+      await supabase.auth.signOut();
     } catch (error) {
-      // Force local sign-out even if Supabase call fails or times out
-      setUser(null);
-      setSession(null);
-      setNeedsUsername(false);
-      
-      toast({ 
-        title: "Signed out",
-        description: "You have been successfully signed out"
-      });
-      
-      // Navigate to home page even if there was an error
-      window.location.href = '/';
-    } finally {
-      setIsLoading(false);
+      // Local sign-out already worked, Supabase call failure is non-critical
+      logger.debug("Supabase signOut failed (but local sign-out worked)", error, "AuthContext");
     }
+    
+    toast({ 
+      title: "Signed out",
+      description: "You have been successfully signed out"
+    });
+    
+    // Navigate to home page after sign-out
+    window.location.href = '/';
   };
 
   const resetPassword = async (email: string) => {

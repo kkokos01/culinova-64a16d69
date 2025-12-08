@@ -68,11 +68,13 @@ const DatabaseTester = () => {
     setErrorMessages(errors);
   };
 
-  useEffect(() => {
-    if (user) {
-      runAllTests();
-    }
-  }, [user]);
+  // Auto-run tests disabled to prevent infinite loading
+// Users can manually run tests using the button below
+// useEffect(() => {
+//   if (user) {
+//     runAllTests();
+//   }
+// }, [user]);
 
   return (
     <Card className="w-full">

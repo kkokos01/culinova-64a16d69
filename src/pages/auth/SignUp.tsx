@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChefHat } from "lucide-react";
+import { logger } from "@/utils/logger";
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -59,7 +60,7 @@ const SignUp = () => {
     setErrorMessage("");
     setUsernameError("");
 
-    console.log("🔍 Starting signup process");
+    logger.debug("Starting signup process", null, "SignUp");
 
     if (password !== confirmPassword) {
       console.log("❌ Passwords don't match");
@@ -82,18 +83,18 @@ const SignUp = () => {
       return;
     }
 
-    console.log("✅ Form validation passed, checking username availability...");
+    logger.debug("Form validation passed, checking username availability", null, "SignUp");
 
     // Check username availability with detailed error logging
     let isUsernameAvailable = false;
     try {
-      console.log("🔍 Calling RPC function check_username_availability with username:", username);
+      logger.debug("Calling RPC function check_username_availability", { username }, "SignUp");
       
       const { data, error } = await (supabase.rpc as any)('check_username_availability', {
         username: username
       });
       
-      console.log("🔍 RPC function response:", { data, error: error?.message });
+      logger.debug("RPC function response", { data, error: error?.message }, "SignUp");
       
       if (error) {
         console.error("❌ RPC function error:", error);
@@ -110,7 +111,7 @@ const SignUp = () => {
       }
       
       const result = data[0];
-      console.log("🔍 RPC function result:", result);
+      logger.debug("RPC function result", result, "SignUp");
       
       if (!result.is_available) {
         const suggestions = result.suggestions || [];
@@ -135,21 +136,21 @@ const SignUp = () => {
       return;
     }
 
-    console.log("✅ Username available, signing up with metadata...");
+    logger.debug("Username available, signing up with metadata", null, "SignUp");
 
     // SignUp with Metadata - The Fix: Pass username directly to Supabase Auth
     const { error } = await signUp(email, password, {
       username: username, // <--- Sent to DB immediately via metadata
     });
     
-    console.log("🔍 signUp() result:", { error: error?.message });
+    logger.debug("signUp() result", { error: error?.message }, "SignUp");
     
     if (error) {
       console.error("❌ signUp() failed:", error);
       setErrorMessage(error.message);
       setIsSubmitting(false);
     } else {
-      console.log("✅ signUp() succeeded - username saved in metadata");
+      logger.debug("signUp() succeeded - username saved in metadata", null, "SignUp");
       setSuccess(true);
       setIsSubmitting(false);
     }

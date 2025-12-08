@@ -27,6 +27,8 @@ import Profile from "./pages/auth/Profile";
 import UsernameSetup from "./pages/auth/UsernameSetup";
 import UsernameRequired from "./components/auth/UsernameRequired";
 import SupabaseHealth from "./pages/SupabaseHealth";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import DatabaseTester from "./components/auth/DatabaseTester";
 
 // Configure React Query to prevent unnecessary refetches on window focus
 const queryClient = new QueryClient({
@@ -109,6 +111,11 @@ function App() {
                             <UsernameRequired>
                               <Profile />
                             </UsernameRequired>
+                          } />
+                          <Route path="/admin/diagnostics" element={
+                            <ProtectedRoute requireAdmin={true}>
+                              <DatabaseTester />
+                            </ProtectedRoute>
                           } />
                           <Route path="/auth/v1/callback" element={<AuthCallback />} />
                           <Route path="/supabase-health" element={<SupabaseHealth />} />
