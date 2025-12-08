@@ -171,16 +171,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     
     // 1. SMART CLEANUP: Find and remove the actual Supabase token
-    // Supabase keys start with 'sb-' and end with '-auth-token'
+    // Use expanded pattern to catch all possible Supabase key formats
     Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+      if (key.startsWith('sb-') || key.includes('auth') || key.includes('token')) {
         localStorage.removeItem(key);
       }
     });
     
     // Also clear the specific session storage if used
     Object.keys(sessionStorage).forEach(key => {
-      if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+      if (key.startsWith('sb-') || key.includes('auth') || key.includes('token')) {
         sessionStorage.removeItem(key);
       }
     });
