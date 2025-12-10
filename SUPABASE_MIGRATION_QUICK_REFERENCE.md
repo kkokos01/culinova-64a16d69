@@ -6,7 +6,7 @@
 ```
 Production: https://zujlsbkxxsmiiwgyodph.supabase.co
 Development: https://aajeyifqrupykjyapoft.supabase.co
-Dev Secret Key: sb_secret__cdpOoJN96JA0ihT4rQcDQ_CvNSjllG
+Dev Secret Key: sb_secret__YOUR_DEV_SECRET_KEY_HERE
 ```
 
 ### Critical Migration Steps
