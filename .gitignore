@@ -26,15 +26,13 @@ dist-ssr
 # Environment files
 .env
 .env.production
+.env.development
 .env.docker
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 *.har
-
-# Allow .env.development (contains safe dev keys only)
-!.env.development
 
 # Migration backups and sensitive data
 production-backup/
