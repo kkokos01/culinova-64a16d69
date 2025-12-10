@@ -31,3 +31,15 @@ dist-ssr
 .env.test.local
 .env.production.local
 *.har
+
+# Migration backups and sensitive data
+production-backup/
+orphaned-records.log
+*.backup
+
+# Test files with hardcoded keys
+*_test.html
+test_*.html
+complete_test.html
+quick_ltree_test.html
+test_fixes.html
