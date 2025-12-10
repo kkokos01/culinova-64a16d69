@@ -20,6 +20,21 @@ export class GlobalErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
+    
+    // Send to Sentry in production
+    if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+      import('@sentry/react').then(Sentry => {
+        Sentry.captureException(error, {
+          contexts: {
+            react: {
+              componentStack: errorInfo.componentStack,
+            },
+          },
+        });
+      }).catch(() => {
+        // Silently fail if Sentry is not available
+      });
+    }
   }
 
   public render() {
