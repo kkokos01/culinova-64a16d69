@@ -26,6 +26,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [needsUsername, setNeedsUsername] = useState(false);
   const { toast } = useToast();
 
+  // Track signOut calls to debug auth issues
+  useEffect(() => {
+    const originalSignOut = supabase.auth.signOut;
+    supabase.auth.signOut = async (...args) => {
+      console.trace('signOut called from:', new Error().stack);
+      console.log('signOut args:', args);
+      return originalSignOut.apply(supabase.auth, args);
+    };
+    
+    return () => {
+      supabase.auth.signOut = originalSignOut;
+    };
+  }, []);
+
   const checkUserHasUsername = async (userId: string) => {
     try {
       // Database triggers handle username creation atomically - no delay needed

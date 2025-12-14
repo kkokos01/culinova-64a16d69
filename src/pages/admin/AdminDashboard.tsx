@@ -90,11 +90,20 @@ const AdminDashboard: React.FC = () => {
   }, [adminSpaces, toast]);
 
   useEffect(() => {
+    console.log('AdminDashboard useEffect:', {
+      spacesLoading,
+      hasUser: !!user,
+      adminSpacesCount: adminSpaces.length,
+      adminSpaces: adminSpaces.map(s => ({ id: s.id, name: s.name }))
+    });
+    
     if (!spacesLoading && (!user || adminSpaces.length === 0)) {
+      console.log('Redirecting to home - not admin or no user');
       navigate("/");
       return;
     }
     if (user && adminSpaces.length > 0) {
+      console.log('Fetching pending counts - user is admin');
       fetchPendingCounts();
     }
   }, [user, adminSpaces.length, navigate, spacesLoading, fetchPendingCounts]);
