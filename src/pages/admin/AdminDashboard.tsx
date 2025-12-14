@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Space } from "@/types";
 import RecipeStatusBadge from "@/components/recipe/RecipeStatusBadge";
+import Navbar from "@/components/Navbar";
 
 interface PendingRecipeCount {
   space_id: string;
@@ -146,8 +147,10 @@ const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white pt-16">
-      <div className="container mx-auto px-4 py-8">
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-white pt-16">
+        <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
           <p className="text-gray-600">
@@ -316,6 +319,7 @@ const AdminDashboard: React.FC = () => {
         </Tabs>
       </div>
     </div>
+    </>
   );
 };
 

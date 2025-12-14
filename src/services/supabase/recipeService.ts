@@ -621,6 +621,7 @@ export const recipeService = {
    */
   async getPublicRecipes(limit?: number): Promise<any[]> {
     try {
+      console.log('Fetching public recipes...');
       // Use proper typing to avoid type inference issues
       let query = supabase
         .from('recipes')
@@ -637,6 +638,11 @@ export const recipeService = {
 
       if (error) {
         throw new Error(`Failed to fetch public recipes: ${error.message}`);
+      }
+
+      console.log('Found public recipes:', recipes?.length || 0);
+      if (recipes && recipes.length > 0) {
+        console.log('First recipe:', recipes[0]);
       }
 
       if (!recipes || recipes.length === 0) {
