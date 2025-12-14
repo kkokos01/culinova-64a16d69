@@ -47,30 +47,40 @@ const RecipeReview: React.FC = () => {
 
   const fetchPendingRecipes = async () => {
     try {
-      // Use direct SQL query since the view isn't in TypeScript types yet
-      const { data, error } = await supabase
+      // Use separate queries to avoid foreign key issues
+      const { data: recipes, error } = await supabase
         .from('recipes')
-        .select(`
-          *,
-          user_profiles!recipes_user_id_fkey (
-            display_name,
-            avatar_url
-          ),
-          spaces!recipes_space_id_fkey (
-            name
-          )
-        `)
+        .select<'*', any>('*')
         .in('qa_status', ['pending', 'flag'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
+      if (!recipes || recipes.length === 0) {
+        setRecipes([]);
+        return;
+      }
+
+      // Fetch user profiles for all recipes
+      const userIds = [...new Set(recipes.map(r => r.user_id))];
+      const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', userIds);
+
+      // Fetch spaces for all recipes
+      const spaceIds = [...new Set(recipes.map(r => r.space_id).filter(Boolean))];
+      const { data: spaces } = await supabase
+        .from('spaces')
+        .select('id, name')
+        .in('id', spaceIds as string[]);
+      
       // Transform the data to match our interface
-      const transformedData = (data || []).map((recipe: any) => ({
+      const transformedData = recipes.map((recipe: any) => ({
         ...recipe,
-        uploader_name: recipe.user_profiles?.display_name,
-        uploader_avatar: recipe.user_profiles?.avatar_url,
-        space_name: recipe.spaces?.name
+        uploader_name: profiles?.find(p => p.user_id === recipe.user_id)?.display_name,
+        uploader_avatar: profiles?.find(p => p.user_id === recipe.user_id)?.avatar_url,
+        space_name: spaces?.find(s => s.id === recipe.space_id)?.name
       }));
       
       setRecipes(transformedData);
