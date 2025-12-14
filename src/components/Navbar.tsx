@@ -1,10 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChefHat, Search, User, LogOut, ShoppingCart, FolderOpen } from 'lucide-react';
+import { Menu, X, ChefHat, Search, User, LogOut, ShoppingCart, FolderOpen, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
+import { useSpace } from '@/context/SpaceContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -13,12 +15,45 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { recipeService } from '@/services/supabase/recipeService';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { memberships, spaces } = useSpace();
+  
+  // Check if user is admin of any space
+  const isAdmin = spaces.some(space => 
+    memberships.some(m => m.space_id === space.id && m.role === 'admin' && m.is_active)
+  );
+  
+  // Fetch pending recipe count for admins
+  useEffect(() => {
+    if (isAdmin && user) {
+      const fetchPendingCount = async () => {
+        try {
+          const pendingRecipes = await recipeService.getPendingApprovalRecipes();
+          // Filter to only spaces where user is admin
+          const adminSpaceIds = spaces
+            .filter(space => memberships.some(m => m.space_id === space.id && m.role === 'admin' && m.is_active))
+            .map(s => s.id);
+          
+          const count = pendingRecipes.filter(r => 
+            r.space_id && adminSpaceIds.includes(r.space_id)
+          ).length;
+          
+          setPendingCount(count);
+        } catch (error) {
+          console.error('Error fetching pending count:', error);
+        }
+      };
+      
+      fetchPendingCount();
+    }
+  }, [isAdmin, user, spaces, memberships]);
   
   useEffect(() => {
     const handleScroll = () => {
@@ -44,9 +79,17 @@ const Navbar = () => {
     { path: '/', label: 'Home' },
     { path: '/collections', label: 'Collections', isDropdown: true },
     { path: '/profile?tab=pantry', label: 'Pantry' },
-    { path: '/shopping-list', label: 'Shopping List', icon: ShoppingCart }
+    { path: '/shopping-list', label: 'Shopping List', icon: ShoppingCart },
     // Shopping Lists and Meal Plans removed as requested
   ];
+  
+  // Admin link - only shown if user is admin of any space
+  const adminLink = {
+    path: '/admin/dashboard',
+    label: 'Admin',
+    icon: Settings,
+    badge: pendingCount
+  };
   
   const isActive = (path: string) => {
     if (path === '/' && location.pathname === '/') return true;
@@ -108,16 +151,38 @@ const Navbar = () => {
                 key={link.path}
                 to={link.path}
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-sage-400 focus-ring rounded-md px-2 py-1",
+                  "text-sm font-medium transition-colors hover:text-sage-400 focus-ring rounded-md px-2 py-1 flex items-center gap-1",
                   isActive(link.path) 
                     ? "text-sage-400 font-semibold" 
                     : "text-white"
                 )}
               >
+                {link.icon && <link.icon className="h-4 w-4 mr-1" />}
                 {link.label}
               </Link>
             )
           ))}
+          
+          {/* Admin link - only shown if user is admin */}
+          {isAdmin && (
+            <Link
+              to={adminLink.path}
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-sage-400 focus-ring rounded-md px-2 py-1 flex items-center gap-1",
+                isActive(adminLink.path) 
+                  ? "text-sage-400 font-semibold" 
+                  : "text-white"
+              )}
+            >
+              <adminLink.icon className="h-4 w-4" />
+              {adminLink.label}
+              {adminLink.badge > 0 && (
+                <Badge variant="destructive" className="h-5 px-1.5 text-xs">
+                  {adminLink.badge}
+                </Badge>
+              )}
+            </Link>
+          )}
         </nav>
         
         {/* Desktop Action Buttons */}
@@ -194,15 +259,33 @@ const Navbar = () => {
               key={link.path}
               to={link.path}
               className={cn(
-                "text-lg font-medium transition-colors hover:text-sage-400 focus:outline-none focus:text-sage-400",
-                isActive(link.path) 
-                  ? "text-sage-400 font-semibold" 
-                  : "text-white"
+                "text-lg font-medium transition-colors hover:text-sage-400 flex items-center gap-2",
+                isActive(link.path) ? "text-sage-400 font-semibold" : "text-white"
               )}
             >
+              {link.icon && <link.icon className="h-5 w-5" />}
               {link.label}
             </Link>
           ))}
+          
+          {/* Admin link in mobile menu */}
+          {isAdmin && (
+            <Link
+              to={adminLink.path}
+              className={cn(
+                "text-lg font-medium transition-colors hover:text-sage-400 flex items-center gap-2",
+                isActive(adminLink.path) ? "text-sage-400 font-semibold" : "text-white"
+              )}
+            >
+              <adminLink.icon className="h-5 w-5" />
+              {adminLink.label}
+              {adminLink.badge > 0 && (
+                <Badge variant="destructive" className="h-6 px-2 text-sm">
+                  {adminLink.badge}
+                </Badge>
+              )}
+            </Link>
+          )}
           <div className="pt-4 border-t border-slate-700 flex flex-col space-y-4">
             {user ? (
               <>

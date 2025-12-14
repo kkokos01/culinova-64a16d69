@@ -11,6 +11,7 @@ import { ToastProvider } from "@/components/ui/use-toast";
 import Index from "./pages/Index";
 import Collections from "./pages/Collections";
 import PublicCollections from "./pages/PublicCollections";
+import PublicRecipes from "./pages/PublicRecipes";
 import { Explore } from "./pages/Explore";
 import NotFound from "./pages/NotFound";
 import SupabaseRecipes from "./pages/SupabaseRecipes";
@@ -29,6 +30,8 @@ import UsernameRequired from "./components/auth/UsernameRequired";
 import SupabaseHealth from "./pages/SupabaseHealth";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import DatabaseTester from "./components/auth/DatabaseTester";
+import RecipeReview from "./pages/admin/RecipeReview";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 // Configure React Query to prevent unnecessary refetches on window focus
 const queryClient = new QueryClient({
@@ -69,6 +72,21 @@ function App() {
                           <Route path="/publiccollections" element={
                             <UsernameRequired>
                               <PublicCollections />
+                            </UsernameRequired>
+                          } />
+                          <Route path="/public-recipes" element={
+                            <UsernameRequired>
+                              <PublicRecipes />
+                            </UsernameRequired>
+                          } />
+                          <Route path="/admin/review" element={
+                            <UsernameRequired>
+                              <RecipeReview />
+                            </UsernameRequired>
+                          } />
+                          <Route path="/admin/dashboard" element={
+                            <UsernameRequired>
+                              <AdminDashboard />
                             </UsernameRequired>
                           } />
                           <Route path="/explore" element={

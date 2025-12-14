@@ -1,0 +1,143 @@
+{
+  "title": "Chilaquiles Rojos de Abuela Sofia",
+  "description": "Ay, mijo/mija, prepare yourself for a taste of home! These Chilaquiles Rojos are just like the ones I used to make, full of rich tomato and chile flavor, with those perfectly crisp tortillas that soften just a bit in the sauce. It\u2019s a hearty dish, perfect for breakfast, lunch, or even a light dinner. We make it with love, and you'll taste it in every bite. Don't be shy with the toppings, eh?",
+  "prep_time_minutes": 25,
+  "cook_time_minutes": 45,
+  "servings": 4,
+  "difficulty": "medium",
+  "ingredients": [
+    {
+      "item": "Corn Tortillas (stale preferred)",
+      "amount": 12.0,
+      "unit": "pieces",
+      "category": "Pantry"
+    },
+    {
+      "item": "Vegetable Oil (for frying and sauce)",
+      "amount": 2.0,
+      "unit": "cup",
+      "category": "Pantry"
+    },
+    {
+      "item": "Roma Tomatoes",
+      "amount": 4.0,
+      "unit": "medium",
+      "category": "Produce"
+    },
+    {
+      "item": "White Onion",
+      "amount": 0.5,
+      "unit": "medium",
+      "category": "Produce"
+    },
+    {
+      "item": "Garlic Cloves",
+      "amount": 2.0,
+      "unit": "pieces",
+      "category": "Produce"
+    },
+    {
+      "item": "Guajillo Chiles (dried)",
+      "amount": 2.0,
+      "unit": "pieces",
+      "category": "Pantry"
+    },
+    {
+      "item": "Chile de \u00c1rbol (dried)",
+      "amount": 4.0,
+      "unit": "pieces",
+      "category": "Pantry"
+    },
+    {
+      "item": "Chicken Bouillon (powdered)",
+      "amount": 1.0,
+      "unit": "teaspoon",
+      "category": "Pantry"
+    },
+    {
+      "item": "Kosher Salt",
+      "amount": 0.5,
+      "unit": "teaspoon",
+      "category": "Spice"
+    },
+    {
+      "item": "Black Pepper",
+      "amount": 0.5,
+      "unit": "teaspoon",
+      "category": "Spice"
+    },
+    {
+      "item": "Dried Oregano",
+      "amount": 1.0,
+      "unit": "teaspoon",
+      "category": "Spice"
+    },
+    {
+      "item": "Mexican Crema",
+      "amount": 0.5,
+      "unit": "cup",
+      "category": "Dairy"
+    },
+    {
+      "item": "Queso Fresco (crumbled)",
+      "amount": 0.5,
+      "unit": "cup",
+      "category": "Dairy"
+    },
+    {
+      "item": "Avocado (sliced)",
+      "amount": 1.0,
+      "unit": "medium",
+      "category": "Produce"
+    },
+    {
+      "item": "Fresh Cilantro (minced)",
+      "amount": 0.25,
+      "unit": "cup",
+      "category": "Produce"
+    },
+    {
+      "item": "Eggs (optional, for frying)",
+      "amount": 4.0,
+      "unit": "large",
+      "category": "Dairy"
+    }
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "instruction": "First, let's get those chiles ready, mi amor. Carefully remove the stems and seeds from the guajillo and chile de \u00e1rbol. If you like a little extra kick, you can leave a few seeds in the chile de \u00e1rbol, but don't overdo it!",
+      "duration_minutes": 5
+    },
+    {
+      "order": 2,
+      "instruction": "Now, for our beautiful sauce! In a medium saucepan, combine the cleaned chiles, roma tomatoes (halved), half of the white onion (roughly chopped), and the garlic cloves. Cover them with about 3 cups of water \u2013 just enough to submerge everything. Bring this to a gentle boil over medium-high heat, then reduce to medium-low and let it simmer for about 10 minutes, until the tomatoes are soft and the chiles are rehydrated and plump.",
+      "duration_minutes": 15
+    },
+    {
+      "order": 3,
+      "instruction": "Once cooked, let the mixture cool for a moment. Then, carefully transfer it to your blender with about 1.5 cups of the cooking water, the chicken bouillon, kosher salt, black pepper, and dried oregano. Blend until it's wonderfully smooth. For a truly silky sauce, pass it through a fine-mesh strainer into a clean bowl, pressing down on the solids to extract all the flavor. You can discard the leftover pulp. If the sauce is too thick, add a little more of the reserved cooking water; if it's too thin, we'll simmer it down later.",
+      "duration_minutes": 5
+    },
+    {
+      "order": 4,
+      "instruction": "In a large, deep skillet, add about 1 tablespoon of the vegetable oil and heat it over medium heat. Pour in your blended sauce (be careful, it might sizzle!). Bring it to a gentle simmer and let it cook for about 5 to 7 minutes, stirring occasionally, until the sauce darkens slightly and thickens a bit. Taste it, and adjust the salt if it needs a little more love.",
+      "duration_minutes": 7
+    },
+    {
+      "order": 5,
+      "instruction": "While our sauce is simmering, let's prepare the tortillas. If you're using fresh corn tortillas, cut them into sturdy triangles. Heat the remaining vegetable oil (about 1.75 cups) in a separate large pan over medium-high heat. Fry the tortilla pieces in batches until they are golden and crispy, about 2-3 minutes per batch. You want them crunchy, but not burnt! Transfer the fried chips to a paper towel-lined plate to drain any excess oil. If you wish to add eggs, now is a good time to fry them to your liking, perhaps a sunny-side up or scrambled, as some like.",
+      "duration_minutes": 20
+    },
+    {
+      "order": 6,
+      "instruction": "Now for the magic, mijo! Add the crispy tortilla chips directly into the simmering red sauce in the skillet. Gently fold them with a spatula until all the chips are beautifully coated. Let them cook together for just 1 to 2 minutes. We want them warm and coated, not soggy, so don't leave them too long! Remove from heat immediately.",
+      "duration_minutes": 2
+    },
+    {
+      "order": 7,
+      "instruction": "Serve your Chilaquiles Rojos right away, while they are still warm and inviting. Divide them among plates. Drizzle generously with Mexican crema, crumble fresh queso fresco over the top, add slices of avocado, a sprinkle of fresh cilantro, and a little bit of the remaining diced white onion for garnish. If you made eggs, place one on top of each serving. Ay, qu\u00e9 rico! Enjoy with a warm hug from Abuela.",
+      "duration_minutes": 1
+    }
+  ]
+}

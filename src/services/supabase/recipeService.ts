@@ -497,5 +497,176 @@ export const recipeService = {
       console.error('Error in recipeService.getUserRecipes:', error);
       throw error;
     }
+  },
+
+  /**
+   * Approve a recipe for public visibility
+   * @param recipeId - The recipe ID to approve
+   * @param approverId - The user ID of the approver
+   * @returns Success status
+   */
+  async approveRecipePublic(recipeId: string, approverId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('recipes')
+        .update({ 
+          qa_status: 'approved_public',
+          is_public: true,
+          privacy_level: 'public',
+          approved_by: approverId,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', recipeId);
+
+      if (error) {
+        throw new Error(`Failed to approve recipe: ${error.message}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in recipeService.approveRecipePublic:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Reject a recipe with feedback
+   * @param recipeId - The recipe ID to reject
+   * @param approverId - The user ID of the approver
+   * @param feedback - The rejection feedback
+   * @returns Success status
+   */
+  async rejectRecipePublic(recipeId: string, approverId: string, feedback: string): Promise<boolean> {
+    try {
+      // First get the current recipe to preserve description
+      const { data: currentRecipe } = await supabase
+        .from('recipes')
+        .select('description')
+        .eq('id', recipeId)
+        .single();
+
+      const { error } = await supabase
+        .from('recipes')
+        .update({ 
+          qa_status: 'rejected_public',
+          description: `REJECTED: ${feedback}\n\n${currentRecipe?.description || ""}`,
+          approved_by: approverId,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', recipeId);
+
+      if (error) {
+        throw new Error(`Failed to reject recipe: ${error.message}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in recipeService.rejectRecipePublic:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get recipes pending approval
+   * @returns Array of recipes pending approval
+   */
+  async getPendingApprovalRecipes(): Promise<any[]> {
+    try {
+      // Use proper typing to avoid both type instantiation and GenericStringError issues
+      const { data: recipes, error } = await supabase
+        .from('recipes')
+        .select<'*', any>('*')
+        .in('qa_status', ['pending', 'flag'])
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw new Error(`Failed to fetch pending recipes: ${error.message}`);
+      }
+
+      if (!recipes || recipes.length === 0) {
+        return [];
+      }
+
+      // Fetch user profiles for all recipes
+      const userIds = [...new Set(recipes.map((r: any) => r.user_id))];
+      const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', userIds);
+
+      // Fetch spaces for all recipes
+      const spaceIds = [...new Set(recipes.map((r: any) => r.space_id).filter(Boolean))];
+      const { data: spaces } = await supabase
+        .from('spaces')
+        .select('id, name')
+        .in('id', spaceIds as string[]);
+
+      // Transform the data
+      return recipes.map((recipe: any) => ({
+        ...recipe,
+        uploader_name: profiles?.find(p => p.user_id === recipe.user_id)?.display_name,
+        uploader_avatar: profiles?.find(p => p.user_id === recipe.user_id)?.avatar_url,
+        space_name: spaces?.find(s => s.id === recipe.space_id)?.name
+      }));
+    } catch (error) {
+      console.error('Error in recipeService.getPendingApprovalRecipes:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get public recipes for browsing
+   * @param limit - Optional limit
+   * @returns Array of approved public recipes
+   */
+  async getPublicRecipes(limit?: number): Promise<any[]> {
+    try {
+      // Use proper typing to avoid type inference issues
+      let query = supabase
+        .from('recipes')
+        .select<'*', any>('*')
+        .eq('qa_status', 'approved_public')
+        .eq('is_public', true)
+        .order('approved_at', { ascending: false });
+
+      if (limit) {
+        query = query.limit(limit);
+      }
+
+      const { data: recipes, error } = await query;
+
+      if (error) {
+        throw new Error(`Failed to fetch public recipes: ${error.message}`);
+      }
+
+      if (!recipes || recipes.length === 0) {
+        return [];
+      }
+
+      // Fetch user profiles for all recipes
+      const userIds = [...new Set(recipes.map((r: any) => r.user_id))];
+      const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', userIds);
+
+      // Fetch spaces for all recipes
+      const spaceIds = [...new Set(recipes.map((r: any) => r.space_id).filter(Boolean))];
+      const { data: spaces } = await supabase
+        .from('spaces')
+        .select('id, name')
+        .in('id', spaceIds as string[]);
+
+      // Transform the data to match expected format
+      return recipes.map((recipe: any) => ({
+        ...recipe,
+        author_name: profiles?.find(p => p.user_id === recipe.user_id)?.display_name,
+        author_avatar: profiles?.find(p => p.user_id === recipe.user_id)?.avatar_url,
+        space_name: spaces?.find(s => s.id === recipe.space_id)?.name
+      }));
+    } catch (error) {
+      console.error('Error in recipeService.getPublicRecipes:', error);
+      throw error;
+    }
   }
 };
