@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-12-14T10:30:28.594147",
+  "input_file": "checked_20251214_102946_batch_1765726099.json",
+  "batch_id": "e9378ad1-5cd3-4700-9f40-cadd3d12c50b",
+  "space_id": "e5d604e7-36eb-4ce2-b40b-4ab491d80c27",
+  "stats": {
+    "success": 0,
+    "failed": 0,
+    "skipped": 4
+  }
+}
