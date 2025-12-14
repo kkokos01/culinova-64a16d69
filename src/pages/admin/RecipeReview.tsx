@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useSpace } from "@/context/SpaceContext";
 import { useToast } from "@/hooks/use-toast";
@@ -9,8 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Eye, Check, X, Clock, AlertTriangle, User, Calendar, ChefHat } from "lucide-react";
+import { Loader2, Eye, Check, X, Clock, AlertTriangle, User, Calendar, ChefHat, ArrowLeft } from "lucide-react";
 import { Recipe } from "@/types";
+import Navbar from "@/components/Navbar";
 
 interface RecipeWithDetails extends Recipe {
   qa_status: string;
@@ -24,6 +25,7 @@ const RecipeReview: React.FC = () => {
   const { user } = useAuth();
   const { memberships, isLoading: spacesLoading } = useSpace();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   
   const [recipes, setRecipes] = useState<RecipeWithDetails[]>([]);
@@ -31,6 +33,9 @@ const RecipeReview: React.FC = () => {
   const [reviewing, setReviewing] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ [key: string]: string }>({});
   const [selectedRecipe, setSelectedRecipe] = useState<RecipeWithDetails | null>(null);
+
+  // Get space ID from URL parameter
+  const spaceId = searchParams.get('space');
 
   // Check if user is admin of any space
   const isAdmin = memberships.some(m => m.role === 'admin' && m.is_active);
@@ -48,10 +53,17 @@ const RecipeReview: React.FC = () => {
   const fetchPendingRecipes = async () => {
     try {
       // Use separate queries to avoid foreign key issues
-      const { data: recipes, error } = await supabase
+      let query = supabase
         .from('recipes')
         .select<'*', any>('*')
-        .in('qa_status', ['pending', 'flag'])
+        .in('qa_status', ['pending', 'flag']);
+      
+      // Filter by space if specified
+      if (spaceId) {
+        query = query.eq('space_id', spaceId);
+      }
+      
+      const { data: recipes, error } = await query
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -133,7 +145,11 @@ const RecipeReview: React.FC = () => {
     }
   };
 
-  const handleReject = async (recipeId: string) => {
+  const handleReject = (recipeId: string) => {
+    setReviewing(recipeId);
+  };
+
+  const confirmReject = async (recipeId: string) => {
     if (!user) return;
     
     const feedbackText = feedback[recipeId];
@@ -146,7 +162,6 @@ const RecipeReview: React.FC = () => {
       return;
     }
 
-    setReviewing(recipeId);
     try {
       const currentRecipe = recipes.find(r => r.id === recipeId);
       const { error } = await supabase
@@ -204,14 +219,17 @@ const RecipeReview: React.FC = () => {
 
   if (spacesLoading || loading) {
     return (
-      <div className="min-h-screen bg-white pt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Loading pending recipes...</span>
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-white pt-16">
+          <div className="container mx-auto px-4 py-8">
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Loading pending recipes...</span>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -230,14 +248,24 @@ const RecipeReview: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white pt-16">
+      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/admin/dashboard')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Recipe Review</h1>
           <p className="text-gray-600">
             Review and approve recipes for public visibility
+            {spaceId && ` - Filtered by specific space`}
           </p>
         </div>
-
+        
         {recipes.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
@@ -269,75 +297,28 @@ const RecipeReview: React.FC = () => {
                             {recipe.space_name}
                           </span>
                         )}
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {new Date(recipe.created_at).toLocaleDateString()}
-                        </span>
                       </CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedRecipe(recipe)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Preview
-                      </Button>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {/* Recipe Summary */}
-                    <div className="grid grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium">Prep time:</span> {recipe.prep_time_minutes}m
-                      </div>
-                      <div>
-                        <span className="font-medium">Cook time:</span> {recipe.cook_time_minutes}m
-                      </div>
-                      <div>
-                        <span className="font-medium">Servings:</span> {recipe.servings}
-                      </div>
-                      <div>
-                        <span className="font-medium">Difficulty:</span> {recipe.difficulty}
-                      </div>
+                  <p className="text-gray-700 mb-4">{recipe.description}</p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <span>Servings: {recipe.servings}</span>
+                      <span>Prep: {recipe.prep_time_minutes}min</span>
+                      <span>Cook: {recipe.cook_time_minutes}min</span>
                     </div>
-
-                    {/* Description */}
-                    {recipe.description && (
-                      <div>
-                        <h4 className="font-medium mb-2">Description</h4>
-                        <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                          {recipe.description}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Feedback for rejection */}
-                    <div>
-                      <h4 className="font-medium mb-2">Review Feedback</h4>
-                      <Textarea
-                        placeholder="Provide feedback for rejection (required when rejecting)..."
-                        value={feedback[recipe.id] || ""}
-                        onChange={(e) => setFeedback(prev => ({ 
-                          ...prev, 
-                          [recipe.id]: e.target.value 
-                        }))}
-                        rows={3}
-                      />
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3 pt-4 border-t">
+                    <div className="flex gap-2">
                       <Button
+                        variant="default"
                         onClick={() => handleApprove(recipe.id)}
                         disabled={reviewing === recipe.id}
                         className="flex items-center gap-2"
                       >
                         <Check className="h-4 w-4" />
-                        Approve for Public
+                        Approve
                         {reviewing === recipe.id && <Loader2 className="h-4 w-4 animate-spin" />}
                       </Button>
                       <Button
@@ -352,19 +333,36 @@ const RecipeReview: React.FC = () => {
                       </Button>
                     </div>
                   </div>
+                  
+                  {/* Feedback textarea for rejection */}
+                  {reviewing === recipe.id && (
+                    <div className="mt-4">
+                      <Textarea
+                        placeholder="Please provide feedback for rejection..."
+                        value={feedback[recipe.id] || ''}
+                        onChange={(e) => setFeedback(prev => ({ ...prev, [recipe.id]: e.target.value }))}
+                        className="min-h-[100px]"
+                      />
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setReviewing(null)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => confirmReject(recipe.id)}
+                        >
+                          Confirm Rejection
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
           </div>
-        )}
-
-        {/* Recipe Preview Modal */}
-        {selectedRecipe && (
-          <RecipePreviewModal
-            recipe={selectedRecipe}
-            isOpen={!!selectedRecipe}
-            onClose={() => setSelectedRecipe(null)}
-          />
         )}
       </div>
     </div>
