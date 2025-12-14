@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useSpace } from "@/context/SpaceContext";
@@ -47,17 +47,7 @@ const AdminDashboard: React.FC = () => {
 
   const isAdmin = adminSpaces.length > 0;
 
-  useEffect(() => {
-    if (!spacesLoading && (!user || !isAdmin)) {
-      navigate("/");
-      return;
-    }
-    if (user && isAdmin) {
-      fetchPendingCounts();
-    }
-  }, [user, isAdmin, navigate, spacesLoading]);
-
-  const fetchPendingCounts = async () => {
+  const fetchPendingCounts = useCallback(async () => {
     try {
       setLoading(true);
       const pendingRecipes = await recipeService.getPendingApprovalRecipes();
@@ -97,7 +87,17 @@ const AdminDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [adminSpaces, toast]);
+
+  useEffect(() => {
+    if (!spacesLoading && (!user || adminSpaces.length === 0)) {
+      navigate("/");
+      return;
+    }
+    if (user && adminSpaces.length > 0) {
+      fetchPendingCounts();
+    }
+  }, [user, adminSpaces.length, navigate, spacesLoading, fetchPendingCounts]);
 
   const handleReviewRecipes = (spaceId?: string) => {
     const url = spaceId ? `/admin/review?space=${spaceId}` : '/admin/review';
