@@ -1,6 +1,14 @@
 -- Recipe Approval Workflow Migration
 -- Run this in Supabase SQL Editor for dev environment
 
+-- Step 0: Add qa_status column if it doesn't exist (for environments that don't have it)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='recipes' AND column_name='qa_status') THEN
+        ALTER TABLE recipes ADD COLUMN qa_status TEXT NOT NULL DEFAULT 'pending';
+    END IF;
+END $$;
+
 -- Step 1: Add audit fields to recipes table
 ALTER TABLE recipes 
 ADD COLUMN IF NOT EXISTS approved_by UUID REFERENCES auth.users(id),
