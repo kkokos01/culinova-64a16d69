@@ -102,11 +102,11 @@ const AdminDashboard: React.FC = () => {
       navigate("/");
       return;
     }
-    if (user && adminSpaces.length > 0) {
+    if (user && adminSpaces.length > 0 && loading) {
       console.log('Fetching pending counts - user is admin');
       fetchPendingCounts();
     }
-  }, [user, adminSpaces.length, navigate, spacesLoading, fetchPendingCounts]);
+  }, [user, adminSpaces.length, navigate, spacesLoading]);
 
   const handleReviewRecipes = (spaceId?: string) => {
     const url = spaceId ? `/admin/review?space=${spaceId}` : '/admin/review';
