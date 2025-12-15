@@ -40,7 +40,9 @@ const RecipeCreatePage: React.FC = () => {
   // Set initial recipe if coming from import
   useEffect(() => {
     if (mode === 'import' && initialRecipe && !generatedRecipe) {
-      console.log('Loading imported recipe:', initialRecipe);
+      console.log('Loading imported recipe:', JSON.stringify(initialRecipe, null, 2));
+      console.log('Ingredients count:', initialRecipe.ingredients?.length || 0);
+      console.log('Steps count:', initialRecipe.steps?.length || 0);
       setGeneratedRecipe(initialRecipe);
       
       // Set original and current servings from imported recipe

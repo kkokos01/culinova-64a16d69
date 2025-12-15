@@ -169,7 +169,9 @@ export class AIRecipeGenerator {
     }
 
     // Gemini returns the JSON as a string in 'response'
-    return JSON.parse(data.response);
+    const parsedResponse = JSON.parse(data.response);
+    console.log('AI Response:', JSON.stringify(parsedResponse, null, 2));
+    return parsedResponse;
   }
 
   private parseAIResponse(response: any): AIRecipeResponse {
