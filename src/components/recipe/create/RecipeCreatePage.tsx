@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Recipe, Ingredient } from "@/types";
 import { RecipeVersion } from "@/context/recipe/types";
 import { useAuth } from "@/context/AuthContext";
@@ -21,12 +21,80 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles, Loader2, Save, ChefHat, Wand2, Plus, Minus, RotateCcw, ChevronRight, Flame } from "lucide-react";
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
 import AILoadingProgress from "@/components/ui/AILoadingProgress";
+import RecipeCreateForm from "./RecipeCreateForm";
 
 const RecipeCreatePage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading } = useAuth();
   const { currentSpace, isLoading: spaceLoading } = useSpace();
   const { toast } = useToast();
+  
+  // Get initial data from import
+  const { initialRecipe, mode } = location.state || {};
+  
+  // Loading State
+  const [isSaving, setIsSaving] = useState(false);
+  const [generatedRecipe, setGeneratedRecipe] = useState<AIRecipeResponse | null>(null);
+  
+  // Set initial recipe if coming from import
+  useEffect(() => {
+    if (mode === 'import' && initialRecipe && !generatedRecipe) {
+      console.log('Loading imported recipe:', initialRecipe);
+      setGeneratedRecipe(initialRecipe);
+      
+      // Set original and current servings from imported recipe
+      setOriginalServings(initialRecipe.servings);
+      setCurrentServings(initialRecipe.servings);
+      
+      // Create version for imported recipe
+      const importedVersion: RecipeVersion = {
+        id: "imported",
+        name: "Imported",
+        recipe: {
+          id: "imported",
+          user_id: user?.id || "unknown",
+          title: initialRecipe.title,
+          description: initialRecipe.description,
+          prep_time_minutes: initialRecipe.prepTimeMinutes,
+          cook_time_minutes: initialRecipe.cookTimeMinutes,
+          servings: initialRecipe.servings,
+          difficulty: initialRecipe.difficulty,
+          is_public: false,
+          privacy_level: "private" as const,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          tags: initialRecipe.tags,
+          ingredients: initialRecipe.ingredients.map((ing, index) => ({
+            id: `ing-${index}`,
+            food_id: null,
+            unit_id: null,
+            food_name: ing.name.toLowerCase(),
+            unit_name: ing.unit.toLowerCase(),
+            amount: parseFloat(ing.amount) || 1,
+          })),
+          steps: initialRecipe.steps.map((step, index) => ({
+            id: `step-${index}`,
+            recipe_id: "imported",
+            order_number: index + 1,
+            instruction: step,
+          })),
+          user: {
+            id: user?.id || "unknown",
+            email: user?.email || "",
+            name: user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User",
+            avatar_url: user?.user_metadata?.avatar_url,
+          },
+        },
+        isActive: true,
+        isTemporary: false,
+      };
+      
+      setRecipeVersions([importedVersion]);
+      setActiveVersionId("imported");
+      setIsModifyMode(true);
+    }
+  }, [mode, initialRecipe, generatedRecipe, user]);
   
   // Unified AI operations
   const {
@@ -134,10 +202,6 @@ const RecipeCreatePage: React.FC = () => {
   const [activeVersionId, setActiveVersionId] = useState<string | null>(null);
   const [isActiveVersionTemporary, setIsActiveVersionTemporary] = useState(false);
   const [generationError, setGenerationError] = useState<AIRecipeError | null>(null);
-
-  // Loading State
-  const [isSaving, setIsSaving] = useState(false);
-  const [generatedRecipe, setGeneratedRecipe] = useState<AIRecipeResponse | null>(null);
 
   // Dynamic sidebar sizing - transition to 5% when recipe is generated (95% right for display)
   useEffect(() => {

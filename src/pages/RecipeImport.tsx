@@ -1,11 +1,51 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Camera, FileText, Link as LinkIcon, Upload, ArrowLeft } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Link as LinkIcon, FileText, Loader2, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from "@/components/Navbar";
+import { aiRecipeGenerator } from '@/services/ai/recipeGenerator';
+import { useToast } from "@/components/ui/use-toast";
 
 const RecipeImport = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [urlInput, setUrlInput] = useState("");
+  const [textInput, setTextInput] = useState("");
+
+  const handleImport = async (type: 'text' | 'url') => {
+    const content = type === 'url' ? urlInput : textInput;
+    if (!content.trim()) {
+      toast({ title: "Empty Input", description: "Please enter text or a URL.", variant: "destructive" });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await aiRecipeGenerator.importRecipe(type, content);
+      
+      if ('type' in result && result.type === 'service_error') {
+        throw new Error(result.message);
+      }
+
+      // Success! Navigate to Create page with the data
+      navigate('/create', { state: { initialRecipe: result, mode: 'import' } });
+      
+    } catch (error) {
+      toast({ 
+        title: "Import Failed", 
+        description: error instanceof Error ? error.message : "Could not parse recipe.", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-cream-50/30">
       <Navbar />
@@ -24,51 +64,72 @@ const RecipeImport = () => {
           </p>
         </div>
         
-        <div className="grid gap-6">
-          {/* Primary Action: Camera/Scan */}
-          <Card className="border-dashed border-2 border-sage-200 bg-sage-50/30 hover:border-sage-400 transition-colors">
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="bg-white p-4 rounded-full mb-4 shadow-sm">
-                <Camera className="h-10 w-10 text-sage-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-gray-900">Scan Menu or Cookbook</h3>
-              <p className="text-slate-500 max-w-sm mb-6">
-                Take a photo of a restaurant menu, a page from a cookbook, or a handwritten recipe card.
-              </p>
-              <Button size="lg" className="gap-2 bg-sage-600 hover:bg-sage-700 text-white">
-                <Upload className="h-4 w-4" />
-                Upload Image
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Secondary Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="hover:border-blue-300 hover:bg-blue-50/30 transition-all cursor-pointer group">
-              <CardHeader className="text-center pb-4">
-                <div className="mx-auto bg-blue-100 p-3 rounded-full mb-2 group-hover:scale-110 transition-transform">
-                  <LinkIcon className="h-6 w-6 text-blue-600" />
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center">Import Options</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="url" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="url" className="flex items-center gap-2">
+                  <LinkIcon className="h-4 w-4" />
+                  URL
+                </TabsTrigger>
+                <TabsTrigger value="text" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Text
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="url" className="space-y-4 mt-6">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Recipe URL</label>
+                  <Input
+                    placeholder="https://www.foodblog.com/recipe-name"
+                    value={urlInput}
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    disabled={isLoading}
+                  />
+                  <p className="text-sm text-slate-500 mt-1">
+                    Import from any food blog, recipe website, or YouTube description.
+                  </p>
                 </div>
-                <CardTitle className="text-lg">Paste URL</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center text-sm text-slate-500">
-                Import directly from a food blog, YouTube video description, or recipe website.
-              </CardContent>
-            </Card>
-
-            <Card className="hover:border-orange-300 hover:bg-orange-50/30 transition-all cursor-pointer group">
-              <CardHeader className="text-center pb-4">
-                <div className="mx-auto bg-orange-100 p-3 rounded-full mb-2 group-hover:scale-110 transition-transform">
-                  <FileText className="h-6 w-6 text-orange-600" />
+                <Button 
+                  onClick={() => handleImport('url')} 
+                  disabled={isLoading || !urlInput.trim()}
+                  className="w-full"
+                >
+                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LinkIcon className="mr-2 h-4 w-4" />}
+                  Import from URL
+                </Button>
+              </TabsContent>
+              
+              <TabsContent value="text" className="space-y-4 mt-6">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Recipe Text</label>
+                  <Textarea
+                    placeholder="Paste the recipe ingredients and instructions here..."
+                    value={textInput}
+                    onChange={(e) => setTextInput(e.target.value)}
+                    disabled={isLoading}
+                    rows={8}
+                  />
+                  <p className="text-sm text-slate-500 mt-1">
+                    Copy and paste from an email, note, message, or document.
+                  </p>
                 </div>
-                <CardTitle className="text-lg">Paste Text</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center text-sm text-slate-500">
-                Copy and paste raw text from an email, note, or message.
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                <Button 
+                  onClick={() => handleImport('text')} 
+                  disabled={isLoading || !textInput.trim()}
+                  className="w-full"
+                >
+                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                  Import from Text
+                </Button>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

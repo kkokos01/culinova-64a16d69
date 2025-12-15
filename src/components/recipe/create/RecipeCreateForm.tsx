@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { recipeService } from "@/services/supabase/recipeService";
 import { useAuth } from "@/context/AuthContext";
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, X, ChefHat, Clock, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { AIRecipeResponse } from "@/services/ai/recipeGenerator";
 
 interface RecipeFormData {
   title: string;
@@ -24,8 +25,10 @@ interface RecipeFormData {
   privacy_level: 'private' | 'space' | 'public' | 'shared';
   tags: string[];
   ingredients: Array<{
-    food_id: string;
-    unit_id: string;
+    food_id?: string | null;
+    unit_id?: string | null;
+    food_name: string;
+    unit_name: string;
     amount: number;
   }>;
   steps: Array<{
@@ -35,7 +38,11 @@ interface RecipeFormData {
   }>;
 }
 
-const RecipeCreateForm: React.FC = () => {
+interface RecipeCreateFormProps {
+  initialData?: AIRecipeResponse;
+}
+
+const RecipeCreateForm: React.FC<RecipeCreateFormProps> = ({ initialData }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentTag, setCurrentTag] = useState("");
   const navigate = useNavigate();
@@ -56,6 +63,36 @@ const RecipeCreateForm: React.FC = () => {
     ingredients: [],
     steps: [],
   });
+
+  // Hydrate form with initial data from import
+  useEffect(() => {
+    if (initialData) {
+      console.log("Hydrating form with imported data:", initialData);
+      
+      setFormData(prev => ({
+        ...prev,
+        title: initialData.title || "",
+        description: initialData.description || "",
+        prep_time_minutes: initialData.prepTimeMinutes || 15,
+        cook_time_minutes: initialData.cookTimeMinutes || 30,
+        servings: initialData.servings || 4,
+        difficulty: initialData.difficulty || "medium",
+        tags: initialData.tags || [],
+        ingredients: (initialData.ingredients || []).map(ing => ({
+          food_name: ing.name || "",
+          unit_name: ing.unit || "",
+          amount: parseFloat(ing.amount) || 0,
+          food_id: null,
+          unit_id: null
+        })),
+        steps: (initialData.steps || []).map((step, index) => ({
+          order_number: index + 1,
+          instruction: step,
+          duration_minutes: undefined
+        }))
+      }));
+    }
+  }, [initialData]);
 
   const handleInputChange = (field: keyof RecipeFormData, value: any) => {
     setFormData(prev => ({
@@ -85,9 +122,11 @@ const RecipeCreateForm: React.FC = () => {
     setFormData(prev => ({
       ...prev,
       ingredients: [...prev.ingredients, {
-        food_id: "",
-        unit_id: "",
-        amount: 1
+        food_name: "",
+        unit_name: "",
+        amount: 1,
+        food_id: null,
+        unit_id: null
       }]
     }));
   };
@@ -165,8 +204,8 @@ const RecipeCreateForm: React.FC = () => {
 
       // Validate ingredients
       for (const ingredient of formData.ingredients) {
-        if (!ingredient.food_id || !ingredient.unit_id || ingredient.amount <= 0) {
-          throw new Error("All ingredients must have a food, unit, and amount");
+        if (!ingredient.food_name || ingredient.amount <= 0) {
+          throw new Error("All ingredients must have a name and amount");
         }
       }
 
@@ -359,28 +398,26 @@ const RecipeCreateForm: React.FC = () => {
               {formData.ingredients.map((ingredient, index) => (
                 <div key={index} className="flex gap-2 items-center">
                   <Input
-                    placeholder="Food ID"
-                    value={ingredient.food_id}
-                    onChange={(e) => updateIngredient(index, "food_id", e.target.value)}
+                    placeholder="Ingredient name"
+                    value={ingredient.food_name}
+                    onChange={(e) => updateIngredient(index, "food_name", e.target.value)}
                   />
                   <Input
-                    placeholder="Unit ID"
-                    value={ingredient.unit_id}
-                    onChange={(e) => updateIngredient(index, "unit_id", e.target.value)}
-                  />
-                  <Input
-                    type="number"
                     placeholder="Amount"
-                    min="0"
-                    step="0.1"
+                    type="number"
                     value={ingredient.amount}
                     onChange={(e) => updateIngredient(index, "amount", parseFloat(e.target.value) || 0)}
                   />
+                  <Input
+                    placeholder="Unit"
+                    value={ingredient.unit_name}
+                    onChange={(e) => updateIngredient(index, "unit_name", e.target.value)}
+                  />
                   <Button
                     type="button"
-                    onClick={() => removeIngredient(index)}
                     variant="outline"
-                    size="sm"
+                    size="icon"
+                    onClick={() => removeIngredient(index)}
                   >
                     <X className="h-4 w-4" />
                   </Button>

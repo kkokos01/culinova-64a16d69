@@ -14,13 +14,12 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { recipeRequest } = await req.json();
+    // 1. Parse Body (Handle both Request Types)
+    const body = await req.json();
+    const { recipeRequest, importRequest } = body;
 
-    if (!recipeRequest) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Recipe request is required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+    if (!recipeRequest && !importRequest) {
+      throw new Error('Missing recipeRequest or importRequest');
     }
 
     // Initialize Gemini
@@ -46,7 +45,55 @@ serve(async (req: Request) => {
 
     // Build prompt based on request type
     let prompt: string;
-    if (recipeRequest.modificationInstructions && recipeRequest.baseRecipe) {
+    
+    // --- MODE A: IMPORT (URL/TEXT) ---
+    if (importRequest) {
+      const { type, content } = importRequest;
+      let textToAnalyze = content;
+
+      // Server-Side URL Fetching (Bypasses CORS)
+      if (type === 'url') {
+        try {
+          console.log(`Fetching: ${content}`);
+          const urlRes = await fetch(content);
+          textToAnalyze = await urlRes.text();
+          // Truncate to prevent token overflow (keeps the "meat" of the page)
+          textToAnalyze = textToAnalyze.substring(0, 40000); 
+        } catch (e) {
+          console.error("Fetch failed, falling back to URL analysis", e);
+        }
+      }
+
+      prompt = `
+        You are a Culinary Data Extractor.
+        Analyze the following ${type === 'url' ? 'webpage source' : 'text'} and extract the structured recipe.
+        
+        INPUT DATA:
+        ${textToAnalyze}
+
+        INSTRUCTIONS:
+        - Extract the Title, Description, Prep/Cook Times (in minutes), Servings.
+        - Extract Ingredients: Parse into "amount", "unit", "name".
+        - Extract Steps: Clean list of instructions.
+        - Cleanup: Remove blog fluff, ads, and "Jump to Recipe" text.
+        
+        RETURN JSON (Strictly matching this schema):
+        {
+          "title": "string",
+          "description": "string",
+          "prepTimeMinutes": number,
+          "cookTimeMinutes": number,
+          "servings": number,
+          "difficulty": "easy" | "medium" | "hard",
+          "ingredients": [ { "name": "string", "amount": "string", "unit": "string", "notes": "string" } ],
+          "steps": ["string"],
+          "tags": ["string"],
+          "caloriesPerServing": number
+        }
+      `;
+    } 
+    // --- MODE B: GENERATE/MODIFY (Existing Logic) ---
+    else if (recipeRequest.modificationInstructions && recipeRequest.baseRecipe) {
       // Handle modification request
       prompt = constructModificationPrompt(recipeRequest);
     } else {

@@ -21,6 +21,11 @@ export interface AIRecipeModificationRequest {
   selectedIngredients?: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
 }
 
+export interface RecipeImportRequest {
+  type: 'url' | 'text';
+  content: string;
+}
+
 export interface AIRecipeResponse {
   title: string;
   description: string;
@@ -92,8 +97,38 @@ export class AIRecipeGenerator {
       console.error('Error modifying recipe:', error);
       return {
         type: 'service_error',
-        message: 'Failed to modify recipe.',
-        suggestions: ['Check your internet connection']
+        message: 'Failed to modify recipe. Please try again.',
+        suggestions: ['Check your internet connection', 'Try different modification instructions']
+      };
+    }
+  }
+
+  /**
+   * Import recipe from URL or text using AI service
+   */
+  async importRecipe(type: 'url' | 'text', content: string): Promise<AIRecipeResponse | AIRecipeError> {
+    try {
+      console.log(`Importing recipe via ${type}...`);
+      
+      if (!content || content.trim().length < 10) {
+        return {
+          type: 'vague_concept',
+          message: 'Please provide a valid URL or recipe text',
+          suggestions: ['Paste a recipe URL', 'Copy and paste recipe ingredients and instructions']
+        };
+      }
+      
+      const response = await this.callEdgeFunction({
+        importRequest: { type, content }
+      });
+      
+      return this.parseAIResponse(response);
+    } catch (error) {
+      console.error('Error importing recipe:', error);
+      return {
+        type: 'service_error',
+        message: 'Failed to import recipe. Please check the URL or text.',
+        suggestions: ['Try pasting the text directly', 'Check if the URL is accessible']
       };
     }
   }
