@@ -572,13 +572,13 @@ export const recipeService = {
    */
   async getPendingApprovalRecipes(): Promise<any[]> {
     try {
-      // Use proper Supabase joins with foreign key relationships
+      // Use explicit foreign key names to avoid ambiguity
       const { data: recipes, error } = await supabase
         .from('recipes')
         .select(`
           *,
-          space:spaces(id, name),
-          user:user_profiles(user_id, display_name, avatar_url)
+          space:spaces!fk_recipes_space(id, name),
+          user:user_profiles!fk_recipes_user(user_id, display_name, avatar_url)
         `)
         .in('qa_status', ['pending', 'flag'])
         .order('created_at', { ascending: false });
@@ -607,13 +607,13 @@ export const recipeService = {
    */
   async getPublicRecipes(limit?: number): Promise<any[]> {
     try {
-      // Use proper Supabase joins with foreign key relationships
+      // Use explicit foreign key names to avoid ambiguity
       let query = supabase
         .from('recipes')
         .select(`
           *,
-          space:spaces(id, name),
-          user:user_profiles(user_id, display_name, avatar_url)
+          space:spaces!fk_recipes_space(id, name),
+          user:user_profiles!fk_recipes_user(user_id, display_name, avatar_url)
         `)
         .eq('qa_status', 'approved_public')
         .eq('is_public', true)
