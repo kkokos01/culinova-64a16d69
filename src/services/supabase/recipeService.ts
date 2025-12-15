@@ -538,18 +538,11 @@ export const recipeService = {
    */
   async rejectRecipePublic(recipeId: string, approverId: string, feedback: string): Promise<boolean> {
     try {
-      // First get the current recipe to preserve description
-      const { data: currentRecipe } = await supabase
-        .from('recipes')
-        .select('description')
-        .eq('id', recipeId)
-        .single();
-
       const { error } = await supabase
         .from('recipes')
         .update({ 
           qa_status: 'rejected_public',
-          description: `REJECTED: ${feedback}\n\n${currentRecipe?.description || ""}`,
+          admin_notes: feedback.trim(),
           approved_by: approverId,
           approved_at: new Date().toISOString()
         })
@@ -572,13 +565,13 @@ export const recipeService = {
    */
   async getPendingApprovalRecipes(): Promise<any[]> {
     try {
-      // Use explicit foreign key names to avoid ambiguity
+      // Use explicit foreign key for spaces, implicit for user_profiles (no FK exists)
       const { data: recipes, error } = await supabase
         .from('recipes')
         .select(`
           *,
           space:spaces!fk_recipes_space(id, name),
-          user:user_profiles!fk_recipes_user(user_id, display_name, avatar_url)
+          user:user_profiles(user_id, display_name, avatar_url)
         `)
         .in('qa_status', ['pending', 'flag'])
         .order('created_at', { ascending: false });
@@ -607,13 +600,13 @@ export const recipeService = {
    */
   async getPublicRecipes(limit?: number): Promise<any[]> {
     try {
-      // Use explicit foreign key names to avoid ambiguity
+      // Use explicit foreign key for spaces, implicit for user_profiles (no FK exists)
       let query = supabase
         .from('recipes')
         .select(`
           *,
           space:spaces!fk_recipes_space(id, name),
-          user:user_profiles!fk_recipes_user(user_id, display_name, avatar_url)
+          user:user_profiles(user_id, display_name, avatar_url)
         `)
         .eq('qa_status', 'approved_public')
         .eq('is_public', true)
