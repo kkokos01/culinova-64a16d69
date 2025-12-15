@@ -156,7 +156,7 @@ export class AIRecipeGenerator {
         'Authorization': `Bearer ${supabaseAnonKey}`,
         'apikey': supabaseAnonKey
       },
-      body: JSON.stringify({ recipeRequest: serializedPayload })
+      body: JSON.stringify(serializedPayload)
     });
 
     if (!response.ok) {

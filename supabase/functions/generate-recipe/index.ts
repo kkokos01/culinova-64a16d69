@@ -41,7 +41,7 @@ serve(async (req: Request) => {
       }
     });
     
-    console.log('✅ Gemini model initialized successfully');
+    console.log('✅ Gemini model initialized successfully for import/generation');
 
     // Build prompt based on request type
     let prompt: string;
