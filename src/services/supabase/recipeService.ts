@@ -572,10 +572,14 @@ export const recipeService = {
    */
   async getPendingApprovalRecipes(): Promise<any[]> {
     try {
-      // Use proper typing to avoid both type instantiation and GenericStringError issues
+      // Use proper Supabase joins with foreign key relationships
       const { data: recipes, error } = await supabase
         .from('recipes')
-        .select<'*', any>('*')
+        .select(`
+          *,
+          space:spaces(id, name),
+          user:user_profiles(user_id, display_name, avatar_url)
+        `)
         .in('qa_status', ['pending', 'flag'])
         .order('created_at', { ascending: false });
 
@@ -583,30 +587,12 @@ export const recipeService = {
         throw new Error(`Failed to fetch pending recipes: ${error.message}`);
       }
 
-      if (!recipes || recipes.length === 0) {
-        return [];
-      }
-
-      // Fetch user profiles for all recipes
-      const userIds = [...new Set(recipes.map((r: any) => r.user_id))];
-      const { data: profiles } = await supabase
-        .from('user_profiles')
-        .select('user_id, display_name, avatar_url')
-        .in('user_id', userIds);
-
-      // Fetch spaces for all recipes
-      const spaceIds = [...new Set(recipes.map((r: any) => r.space_id).filter(Boolean))];
-      const { data: spaces } = await supabase
-        .from('spaces')
-        .select('id, name')
-        .in('id', spaceIds as string[]);
-
-      // Transform the data
-      return recipes.map((recipe: any) => ({
+      // Transform the data to match expected format
+      return (recipes || []).map((recipe: any) => ({
         ...recipe,
-        uploader_name: profiles?.find(p => p.user_id === recipe.user_id)?.display_name,
-        uploader_avatar: profiles?.find(p => p.user_id === recipe.user_id)?.avatar_url,
-        space_name: spaces?.find(s => s.id === recipe.space_id)?.name
+        uploader_name: recipe.user?.display_name,
+        uploader_avatar: recipe.user?.avatar_url,
+        space_name: recipe.space?.name
       }));
     } catch (error) {
       console.error('Error in recipeService.getPendingApprovalRecipes:', error);
@@ -621,11 +607,14 @@ export const recipeService = {
    */
   async getPublicRecipes(limit?: number): Promise<any[]> {
     try {
-      console.log('Fetching public recipes...');
-      // Use proper typing to avoid type inference issues
+      // Use proper Supabase joins with foreign key relationships
       let query = supabase
         .from('recipes')
-        .select<'*', any>('*')
+        .select(`
+          *,
+          space:spaces(id, name),
+          user:user_profiles(user_id, display_name, avatar_url)
+        `)
         .eq('qa_status', 'approved_public')
         .eq('is_public', true)
         .order('approved_at', { ascending: false });
@@ -640,39 +629,16 @@ export const recipeService = {
         throw new Error(`Failed to fetch public recipes: ${error.message}`);
       }
 
-      console.log('Found public recipes:', recipes?.length || 0);
-      if (recipes && recipes.length > 0) {
-        console.log('First recipe:', recipes[0]);
-      }
-
-      if (!recipes || recipes.length === 0) {
-        return [];
-      }
-
-      // Fetch user profiles for all recipes
-      const userIds = [...new Set(recipes.map((r: any) => r.user_id))];
-      const { data: profiles } = await supabase
-        .from('user_profiles')
-        .select('user_id, display_name, avatar_url')
-        .in('user_id', userIds);
-
-      // Fetch spaces for all recipes
-      const spaceIds = [...new Set(recipes.map((r: any) => r.space_id).filter(Boolean))];
-      const { data: spaces } = await supabase
-        .from('spaces')
-        .select('id, name')
-        .in('id', spaceIds as string[]);
-
       // Transform the data to match expected format
-      return recipes.map((recipe: any) => ({
+      return (recipes || []).map((recipe: any) => ({
         ...recipe,
-        author_name: profiles?.find(p => p.user_id === recipe.user_id)?.display_name,
-        author_avatar: profiles?.find(p => p.user_id === recipe.user_id)?.avatar_url,
-        space_name: spaces?.find(s => s.id === recipe.space_id)?.name
+        author_name: recipe.user?.display_name,
+        author_avatar: recipe.user?.avatar_url,
+        space_name: recipe.space?.name
       }));
     } catch (error) {
       console.error('Error in recipeService.getPublicRecipes:', error);
       throw error;
     }
-  }
+  },
 };

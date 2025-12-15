@@ -163,12 +163,11 @@ const RecipeReview: React.FC = () => {
     }
 
     try {
-      const currentRecipe = recipes.find(r => r.id === recipeId);
       const { error } = await supabase
         .from('recipes')
         .update({ 
           qa_status: 'rejected_public',
-          description: `REJECTED: ${feedbackText.trim()}\n\n${currentRecipe?.description || ""}`,
+          admin_notes: feedbackText.trim(),
           approved_by: user.id,
           approved_at: new Date().toISOString()
         })

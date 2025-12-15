@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "12.2.3 (519615d)"
   }
   public: {
     Tables: {
@@ -359,6 +359,20 @@ export type Database = {
             foreignKeyName: "ingredients_recipe_id_fkey"
             columns: ["recipe_id"]
             isOneToOne: false
+            referencedRelation: "pending_approval_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "public_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
             referencedRelation: "recipes"
             referencedColumns: ["id"]
           },
@@ -551,6 +565,20 @@ export type Database = {
             foreignKeyName: "recipe_versions_recipe_id_fkey"
             columns: ["recipe_id"]
             isOneToOne: false
+            referencedRelation: "pending_approval_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_versions_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "public_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_versions_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
             referencedRelation: "recipes"
             referencedColumns: ["id"]
           },
@@ -558,6 +586,9 @@ export type Database = {
       }
       recipes: {
         Row: {
+          admin_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
           calories_per_serving: number | null
           cook_time_minutes: number
           created_at: string
@@ -570,6 +601,7 @@ export type Database = {
           parent_recipe_id: string | null
           prep_time_minutes: number
           privacy_level: string
+          qa_status: string
           servings: number
           space_id: string | null
           title: string
@@ -577,6 +609,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           calories_per_serving?: number | null
           cook_time_minutes: number
           created_at?: string
@@ -589,6 +624,7 @@ export type Database = {
           parent_recipe_id?: string | null
           prep_time_minutes: number
           privacy_level?: string
+          qa_status?: string
           servings: number
           space_id?: string | null
           title: string
@@ -596,6 +632,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           calories_per_serving?: number | null
           cook_time_minutes?: number
           created_at?: string
@@ -608,6 +647,7 @@ export type Database = {
           parent_recipe_id?: string | null
           prep_time_minutes?: number
           privacy_level?: string
+          qa_status?: string
           servings?: number
           space_id?: string | null
           title?: string
@@ -615,6 +655,27 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_recipes_space"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_parent_recipe_id_fkey"
+            columns: ["parent_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "pending_approval_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_parent_recipe_id_fkey"
+            columns: ["parent_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "public_recipes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "recipes_parent_recipe_id_fkey"
             columns: ["parent_recipe_id"]
@@ -693,6 +754,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "shopping_list_items_from_recipe_id_fkey"
+            columns: ["from_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "pending_approval_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_items_from_recipe_id_fkey"
+            columns: ["from_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "public_recipes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "shopping_list_items_from_recipe_id_fkey"
             columns: ["from_recipe_id"]
@@ -888,6 +963,20 @@ export type Database = {
             foreignKeyName: "steps_recipe_id_fkey"
             columns: ["recipe_id"]
             isOneToOne: false
+            referencedRelation: "pending_approval_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "steps_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "public_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "steps_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
             referencedRelation: "recipes"
             referencedColumns: ["id"]
           },
@@ -1071,7 +1160,135 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      pending_approval_recipes: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          approver_name: string | null
+          calories_per_serving: number | null
+          cook_time_minutes: number | null
+          created_at: string | null
+          description: string | null
+          difficulty: string | null
+          forked_count: number | null
+          id: string | null
+          image_url: string | null
+          is_public: boolean | null
+          parent_recipe_id: string | null
+          prep_time_minutes: number | null
+          privacy_level: string | null
+          qa_status: string | null
+          servings: number | null
+          space_id: string | null
+          space_name: string | null
+          title: string | null
+          updated_at: string | null
+          uploader_avatar: string | null
+          uploader_name: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_recipes_space"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_parent_recipe_id_fkey"
+            columns: ["parent_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "pending_approval_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_parent_recipe_id_fkey"
+            columns: ["parent_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "public_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_parent_recipe_id_fkey"
+            columns: ["parent_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_recipes: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          author_avatar: string | null
+          author_name: string | null
+          calories_per_serving: number | null
+          cook_time_minutes: number | null
+          created_at: string | null
+          description: string | null
+          difficulty: string | null
+          forked_count: number | null
+          id: string | null
+          image_url: string | null
+          is_public: boolean | null
+          parent_recipe_id: string | null
+          prep_time_minutes: number | null
+          privacy_level: string | null
+          qa_status: string | null
+          servings: number | null
+          space_id: string | null
+          space_name: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_recipes_space"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_parent_recipe_id_fkey"
+            columns: ["parent_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "pending_approval_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_parent_recipe_id_fkey"
+            columns: ["parent_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "public_recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_parent_recipe_id_fkey"
+            columns: ["parent_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       accept_space_invitation: {
@@ -1079,6 +1296,10 @@ export type Database = {
         Returns: Json
       }
       add_tikka_masala_recipe: { Args: never; Returns: string }
+      approve_recipe_public: {
+        Args: { approver_id: string; recipe_id: string }
+        Returns: boolean
+      }
       check_username_availability: {
         Args: { username: string }
         Returns: {
@@ -1283,6 +1504,10 @@ export type Database = {
         Returns: boolean
       }
       migrate_recipes_to_default_spaces: { Args: never; Returns: number }
+      reject_recipe_public: {
+        Args: { approver_id: string; feedback: string; recipe_id: string }
+        Returns: boolean
+      }
       reject_space_invitation: {
         Args: { invitation_id_param: string }
         Returns: Json
