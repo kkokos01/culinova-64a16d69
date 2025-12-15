@@ -43,6 +43,7 @@ export interface AIRecipeResponse {
   tags: string[];
   imageUrl?: string;
   caloriesPerServing?: number;
+  sourceUrl?: string;
 }
 
 export interface AIRecipeError {

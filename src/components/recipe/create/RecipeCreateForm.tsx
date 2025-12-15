@@ -36,6 +36,7 @@ interface RecipeFormData {
     instruction: string;
     duration_minutes?: number;
   }>;
+  source_url: string;
 }
 
 interface RecipeCreateFormProps {
@@ -62,6 +63,7 @@ const RecipeCreateForm: React.FC<RecipeCreateFormProps> = ({ initialData }) => {
     tags: [],
     ingredients: [],
     steps: [],
+    source_url: "",
   });
 
   // Hydrate form with initial data from import
@@ -89,7 +91,8 @@ const RecipeCreateForm: React.FC<RecipeCreateFormProps> = ({ initialData }) => {
           order_number: index + 1,
           instruction: step,
           duration_minutes: undefined
-        }))
+        })),
+        source_url: initialData.sourceUrl || ""
       }));
     }
   }, [initialData]);
@@ -283,6 +286,17 @@ const RecipeCreateForm: React.FC<RecipeCreateFormProps> = ({ initialData }) => {
                   placeholder="Describe your recipe..."
                   rows={3}
                   required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="source_url">Source URL</Label>
+                <Input
+                  id="source_url"
+                  value={formData.source_url}
+                  onChange={(e) => handleInputChange("source_url", e.target.value)}
+                  placeholder="https://example.com/recipe"
+                  className="text-blue-600 underline-offset-4"
                 />
               </div>
 

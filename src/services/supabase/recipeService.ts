@@ -225,6 +225,7 @@ export const recipeService = {
           space_id: recipeData.space_id || null,
           user_id: recipeData.user_id,
           calories_per_serving: recipeData.calories_per_serving || null,
+          source_url: recipeData.source_url || null,
         })
         .select()
         .single();

@@ -7,6 +7,38 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper to find Recipe JSON-LD in HTML text
+function extractJsonLd(html: string): any | null {
+  try {
+    // Regex to capture all json-ld script blocks
+    const regex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>(.*?)<\/script>/gs;
+    let match;
+    
+    while ((match = regex.exec(html)) !== null) {
+      if (match[1]) {
+        try {
+          const json = JSON.parse(match[1]);
+          // Handle @graph structure (common in WordPress) or direct object
+          const data = json['@graph'] || (Array.isArray(json) ? json : [json]);
+          
+          // Find the object that is a Recipe
+          const recipe = data.find((item: any) => 
+            item['@type'] === 'Recipe' || 
+            (Array.isArray(item['@type']) && item['@type'].includes('Recipe'))
+          );
+          
+          if (recipe) return recipe;
+        } catch (e) {
+          continue; // Malformed JSON in one block, try next
+        }
+      }
+    }
+  } catch (e) {
+    console.error("JSON-LD extraction error:", e);
+  }
+  return null;
+}
+
 serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -50,34 +82,60 @@ serve(async (req: Request) => {
     if (importRequest) {
       const { type, content } = importRequest;
       let textToAnalyze = content;
+      let dataType = "raw text";
 
-      // Server-Side URL Fetching (Bypasses CORS)
+      // 1. Fetch URL Content
       if (type === 'url') {
         try {
-          console.log(`Fetching: ${content}`);
-          const urlRes = await fetch(content);
-          textToAnalyze = await urlRes.text();
-          // Truncate to prevent token overflow (keeps the "meat" of the page)
-          textToAnalyze = textToAnalyze.substring(0, 40000); 
+          console.log(`Fetching URL: ${content}`);
+          const urlRes = await fetch(content, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+          });
+          
+          if (!urlRes.ok) throw new Error(`Fetch error: ${urlRes.status}`);
+          const html = await urlRes.text();
+
+          // 2. Attempt JSON-LD Extraction (The "Golden Path")
+          const jsonRecipe = extractJsonLd(html);
+          
+          if (jsonRecipe) {
+            console.log("✅ JSON-LD Recipe found! Using structured data.");
+            textToAnalyze = JSON.stringify(jsonRecipe);
+            dataType = "structured JSON-LD";
+          } else {
+            console.log("⚠️ No JSON-LD found. Falling back to HTML parsing.");
+            // Increase limit to 100k to ensure we capture bottom-of-page recipes
+            textToAnalyze = html.substring(0, 100000); 
+            dataType = "webpage HTML";
+          }
+
         } catch (e) {
-          console.error("Fetch failed, falling back to URL analysis", e);
+          console.error("Fetch/Extract failed", e);
+          // Fallback is to just pass the URL string itself if fetch blocked
         }
       }
 
+      // 3. The Prompt (Works for both JSON-LD and HTML)
       prompt = `
         You are a Culinary Data Extractor.
-        Analyze the following ${type === 'url' ? 'webpage source' : 'text'} and extract the structured recipe.
+        Source Type: ${dataType}
+        
+        TASK: Extract recipe data into the exact JSON format below.
         
         INPUT DATA:
         ${textToAnalyze}
 
-        INSTRUCTIONS:
-        - Extract the Title, Description, Prep/Cook Times (in minutes), Servings.
-        - Extract Ingredients: Parse into "amount", "unit", "name".
-        - Extract Steps: Clean list of instructions.
-        - Cleanup: Remove blog fluff, ads, and "Jump to Recipe" text.
-        
-        RETURN JSON (Strictly matching this schema):
+        GUIDELINES:
+        - If the input is JSON-LD, simply map the fields.
+        - If the input is HTML, look for "Ingredients" and "Instructions" headers.
+        - Clean up strings (remove emoji, "Step 1", ads).
+        - Ingredients: Return them as simple strings in "name" if they are unstructured, OR parse if clear.
+          (e.g., "1 cup Rice" -> amount: "1", unit: "cup", name: "Rice").
+        - Times: Convert "PT1H30M" or "1 hr 30 mins" to total minutes (90).
+
+        RETURN JSON SCHEMA:
         {
           "title": "string",
           "description": "string",
@@ -85,10 +143,13 @@ serve(async (req: Request) => {
           "cookTimeMinutes": number,
           "servings": number,
           "difficulty": "easy" | "medium" | "hard",
-          "ingredients": [ { "name": "string", "amount": "string", "unit": "string", "notes": "string" } ],
+          "ingredients": [ 
+            { "name": "string", "amount": "string", "unit": "string", "notes": "string" } 
+          ],
           "steps": ["string"],
           "tags": ["string"],
-          "caloriesPerServing": number
+          "caloriesPerServing": number,
+          "sourceUrl": "${type === 'url' ? content : ''}"
         }
       `;
     } 

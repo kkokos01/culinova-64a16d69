@@ -713,6 +713,7 @@ const RecipeCreatePage: React.FC = () => {
         privacy_level: "private" as const,
         tags: generatedRecipe.tags,
         calories_per_serving: generatedRecipe.caloriesPerServing,
+        source_url: generatedRecipe.sourceUrl || null,
         ingredients,
         steps: generatedRecipe.steps.map((step, index) => ({
           order_number: index + 1,

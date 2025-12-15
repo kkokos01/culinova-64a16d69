@@ -188,6 +188,7 @@ export interface Recipe {
   calories_per_serving?: number;
   parent_recipe_id?: string;
   forked_count?: number;
+  source_url?: string;
 }
 
 export interface RecipeCreate {
@@ -207,6 +208,7 @@ export interface RecipeCreate {
   user_id: string;
   space_id?: string;
   user_name?: string; // Added for activity logging
+  source_url?: string;
 }
 
 export interface RecipeUpdate {
