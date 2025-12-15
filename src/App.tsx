@@ -32,6 +32,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import DatabaseTester from "./components/auth/DatabaseTester";
 import RecipeReview from "./pages/admin/RecipeReview";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import RecipeImport from "./pages/RecipeImport";
 
 // Configure React Query to prevent unnecessary refetches on window focus
 const queryClient = new QueryClient({
@@ -137,6 +138,13 @@ function App() {
                           } />
                           <Route path="/auth/v1/callback" element={<AuthCallback />} />
                           <Route path="/supabase-health" element={<SupabaseHealth />} />
+                          <Route path="/import" element={
+                            <ProtectedRoute>
+                              <UsernameRequired>
+                                <RecipeImport />
+                              </UsernameRequired>
+                            </ProtectedRoute>
+                          } />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </BrowserRouter>
