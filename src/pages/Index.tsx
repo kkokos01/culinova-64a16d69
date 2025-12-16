@@ -14,6 +14,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import ActivityRecipes from "@/components/ActivityRecipes";
+import LatestActivityRecipes from "@/components/LatestActivityRecipes";
+import RecentlyViewedRecipes from "@/components/RecentlyViewedRecipes";
 import FeaturedRecipesCarousel from "@/components/recipes/FeaturedRecipesCarousel";
 import QuickActionButtons from "@/components/home/QuickActionButtons";
 import FloatingActionButton from "@/components/ui/floating-action-button";
@@ -33,13 +35,9 @@ const Index = () => {
   useEffect(() => {
     const loadRecipes = async () => {
       try {
-        // Load featured recipes (most recent)
-        const featured = await recipeService.getRecipes();
-        setFeaturedRecipes(featured.slice(0, 7));
-        
-        // Load trending recipes (public recipes for variety)
-        const trending = await recipeService.getRecipes({ isPublic: true });
-        setTrendingRecipes(trending.slice(0, 6));
+        // Load latest community recipes
+        const community = await recipeService.getRecipes({ isPublic: true });
+        setFeaturedRecipes(community.slice(0, 7));
       } catch (error) {
         console.error('Failed to load recipes:', error);
       } finally {
@@ -115,53 +113,29 @@ const Index = () => {
           onActionChange={setActiveFilter} 
         />
 
-        {/* Featured Recipes Carousel */}
+        {/* Latest from the Community */}
         <div className="mt-10 mb-12">
           <FeaturedRecipesCarousel 
             recipes={featuredRecipes} 
-            title="Featured Recipes"
+            title="Latest from the Community"
           />
-        </div>
-
-        {/* Trending This Week */}
-        <div className="mb-12">
-          <div className="flex items-center gap-2 mb-6">
-            <TrendingUp className="h-6 w-6 text-orange-500" />
-            <h2 className="text-2xl font-display font-semibold text-gray-900">
-              Trending This Week
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {trendingRecipes.map((recipe) => (
-              <RecipeCard
-                key={recipe.id}
-                recipe={recipe}
-              />
-            ))}
-          </div>
         </div>
 
         {/* Latest Activity from Your Collections */}
         <div className="mb-12">
-          <div className="flex items-center gap-2 mb-6">
-            <Activity className="h-6 w-6 text-sage-500" />
-            <h2 className="text-2xl font-display font-semibold text-gray-900">
-              Latest Activity from Your Collections
-            </h2>
-          </div>
-          <ActivityRecipes />
+          <h2 className="text-2xl font-display font-semibold text-gray-900 mb-6">
+            Latest Activity from Your Collections
+          </h2>
+          <LatestActivityRecipes />
         </div>
 
         {/* Recently Viewed */}
         {user && (
-          <div className="mb-12">
-            <div className="flex items-center gap-2 mb-6">
-              <Clock className="h-6 w-6 text-blue-500" />
-              <h2 className="text-2xl font-display font-semibold text-gray-900">
-                Recently Viewed
-              </h2>
-            </div>
-            <ActivityRecipes />
+          <div className="space-y-6">
+            <h2 className="text-2xl font-display font-semibold text-gray-900 mb-6">
+              Recently Viewed
+            </h2>
+            <RecentlyViewedRecipes />
           </div>
         )}
       </div>
