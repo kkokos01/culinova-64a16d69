@@ -9,7 +9,7 @@ interface StepsSectionProps {
 const StepsSection: React.FC<StepsSectionProps> = ({ steps }) => {
   return (
     <div className="mb-6">
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
+      <h2 className="text-xl sm:text-2xl font-display font-bold text-gray-900 mb-3">
         Instructions
       </h2>
       {steps.length > 0 ? (

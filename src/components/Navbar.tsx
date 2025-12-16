@@ -107,7 +107,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 flex h-16 items-center justify-between">
         <Link 
           to="/" 
-          className="flex items-center space-x-2 font-display font-medium text-xl text-white transition-opacity hover:opacity-80"
+          className="flex items-center space-x-2 font-sans font-medium text-xl text-white transition-opacity hover:opacity-80"
         >
           <ChefHat className="h-6 w-6 text-sage-400" />
           <span>Culinova</span>
@@ -162,27 +162,6 @@ const Navbar = () => {
               </Link>
             )
           ))}
-          
-          {/* Admin link - only shown if user is admin */}
-          {isAdmin && (
-            <Link
-              to={adminLink.path}
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-sage-400 focus-ring rounded-md px-2 py-1 flex items-center gap-1",
-                isActive(adminLink.path) 
-                  ? "text-sage-400 font-semibold" 
-                  : "text-white"
-              )}
-            >
-              <adminLink.icon className="h-4 w-4" />
-              {adminLink.label}
-              {adminLink.badge > 0 && (
-                <Badge variant="destructive" className="h-5 px-1.5 text-xs">
-                  {adminLink.badge}
-                </Badge>
-              )}
-            </Link>
-          )}
         </nav>
         
         {/* Desktop Action Buttons */}
@@ -267,25 +246,6 @@ const Navbar = () => {
               {link.label}
             </Link>
           ))}
-          
-          {/* Admin link in mobile menu */}
-          {isAdmin && (
-            <Link
-              to={adminLink.path}
-              className={cn(
-                "text-lg font-medium transition-colors hover:text-sage-400 flex items-center gap-2",
-                isActive(adminLink.path) ? "text-sage-400 font-semibold" : "text-white"
-              )}
-            >
-              <adminLink.icon className="h-5 w-5" />
-              {adminLink.label}
-              {adminLink.badge > 0 && (
-                <Badge variant="destructive" className="h-6 px-2 text-sm">
-                  {adminLink.badge}
-                </Badge>
-              )}
-            </Link>
-          )}
           <div className="pt-4 border-t border-slate-700 flex flex-col space-y-4">
             {user ? (
               <>

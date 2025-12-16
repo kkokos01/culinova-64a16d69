@@ -210,7 +210,7 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
       <div className="overflow-y-auto h-full">
         <Card className="rounded-none border-x-0 border-t-0 border-b border-white/20 shadow-none bg-white/10 backdrop-blur-sm">
           <CardHeader className="p-4 flex flex-row items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-display font-semibold text-white">
               {isCreateMode ? 'Create a Recipe' : 'Modify a Recipe'}
             </h2>
             <Button 

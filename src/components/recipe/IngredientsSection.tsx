@@ -38,7 +38,7 @@ const IngredientsSection: React.FC<IngredientsSectionProps> = ({
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+        <h2 className="text-xl sm:text-2xl font-display font-bold text-gray-900">
           Ingredients
           {validIngredientCount > 0 && 
             <span className="text-sm font-normal ml-2 text-gray-500">

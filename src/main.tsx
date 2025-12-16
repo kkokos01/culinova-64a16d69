@@ -1,7 +1,7 @@
 
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
-import './index.css';
+import './index.css?v=20241216';
 import { GlobalErrorBoundary } from './components/GlobalErrorBoundary';
 
 // Initialize Sentry for production monitoring

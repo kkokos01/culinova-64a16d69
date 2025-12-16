@@ -66,7 +66,7 @@ const RecipeImport = () => {
         
         <Card>
           <CardHeader>
-            <CardTitle className="text-center">Import Options</CardTitle>
+            <CardTitle className="text-center font-display">Import Options</CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="url" className="w-full">

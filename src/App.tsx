@@ -8,6 +8,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { SpaceProvider } from "@/context/SpaceContext";
 import { RecipeProvider } from "@/context/recipe/RecipeContext";
 import { ToastProvider } from "@/components/ui/use-toast";
+import BottomTabNavigation from "@/components/navigation/BottomTabNavigation";
 import Index from "./pages/Index";
 import Collections from "./pages/Collections";
 import PublicCollections from "./pages/PublicCollections";
@@ -63,90 +64,93 @@ function App() {
                       <Toaster />
                       <Sonner />
                       <BrowserRouter>
-                        <Routes>
-                          <Route path="/" element={<Index />} />
-                          <Route path="/collections" element={
-                            <UsernameRequired>
-                              <Collections />
-                            </UsernameRequired>
-                          } />
-                          <Route path="/publiccollections" element={
-                            <UsernameRequired>
-                              <PublicCollections />
-                            </UsernameRequired>
-                          } />
-                          <Route path="/public-recipes" element={
-                            <UsernameRequired>
-                              <PublicRecipes />
-                            </UsernameRequired>
-                          } />
-                          <Route path="/admin/review" element={
-                            <UsernameRequired>
-                              <RecipeReview />
-                            </UsernameRequired>
-                          } />
-                          <Route path="/admin/dashboard" element={
-                            <UsernameRequired>
-                              <AdminDashboard />
-                            </UsernameRequired>
-                          } />
-                          <Route path="/explore" element={
-                            <UsernameRequired>
-                              <Explore />
-                            </UsernameRequired>
-                          } />
-                          <Route path="/supabase-recipes" element={<SupabaseRecipes />} />
-                          <Route path="/create" element={
-                            <UsernameRequired>
-                              <RecipeCreate />
-                            </UsernameRequired>
-                          } />
-                          <Route path="/recipes/create" element={
-                            <UsernameRequired>
-                              <RecipeCreate />
-                            </UsernameRequired>
-                          } />
-                          <Route path="/recipes/:id" element={
-                            <UsernameRequired>
-                              <RecipeDetail />
-                            </UsernameRequired>
-                          } />
-                          <Route path="/recipes/:id/cook" element={
-                            <UsernameRequired>
-                              <CookMode />
-                            </UsernameRequired>
-                          } />
-                          <Route path="/shopping-list" element={
-                            <UsernameRequired>
-                              <ShoppingList />
-                            </UsernameRequired>
-                          } />
-                          <Route path="/sign-in" element={<SignIn />} />
-                          <Route path="/sign-up" element={<SignUp />} />
-                          <Route path="/username-setup" element={<UsernameSetup />} />
-                          <Route path="/reset-password" element={<ResetPassword />} />
-                          <Route path="/update-password" element={<UpdatePassword />} />
-                          <Route path="/profile" element={
-                            <UsernameRequired>
-                              <Profile />
-                            </UsernameRequired>
-                          } />
-                          <Route path="/admin/diagnostics" element={
-                            <ProtectedRoute requireAdmin={true}>
-                              <DatabaseTester />
-                            </ProtectedRoute>
-                          } />
-                          <Route path="/auth/v1/callback" element={<AuthCallback />} />
-                          <Route path="/supabase-health" element={<SupabaseHealth />} />
-                          <Route path="/import" element={
-                            <ProtectedRoute>
+                        <div className="min-h-screen">
+                          <Routes>
+                            <Route path="/" element={<Index />} />
+                            <Route path="/collections" element={
                               <UsernameRequired>
-                                <RecipeImport />
+                                <Collections />
                               </UsernameRequired>
-                            </ProtectedRoute>
-                          } />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
+                            } />
+                            <Route path="/publiccollections" element={
+                              <UsernameRequired>
+                                <PublicCollections />
+                              </UsernameRequired>
+                            } />
+                            <Route path="/public-recipes" element={
+                              <UsernameRequired>
+                                <PublicRecipes />
+                              </UsernameRequired>
+                            } />
+                            <Route path="/admin/review" element={
+                              <UsernameRequired>
+                                <RecipeReview />
+                              </UsernameRequired>
+                            } />
+                            <Route path="/admin/dashboard" element={
+                              <UsernameRequired>
+                                <AdminDashboard />
+                              </UsernameRequired>
+                            } />
+                            <Route path="/explore" element={
+                              <UsernameRequired>
+                                <Explore />
+                              </UsernameRequired>
+                            } />
+                            <Route path="/supabase-recipes" element={<SupabaseRecipes />} />
+                            <Route path="/create" element={
+                              <UsernameRequired>
+                                <RecipeCreate />
+                              </UsernameRequired>
+                            } />
+                            <Route path="/recipes/create" element={
+                              <UsernameRequired>
+                                <RecipeCreate />
+                              </UsernameRequired>
+                            } />
+                            <Route path="/recipes/:id" element={
+                              <UsernameRequired>
+                                <RecipeDetail />
+                              </UsernameRequired>
+                            } />
+                            <Route path="/recipes/:id/cook" element={
+                              <UsernameRequired>
+                                <CookMode />
+                              </UsernameRequired>
+                            } />
+                            <Route path="/shopping-list" element={
+                              <UsernameRequired>
+                                <ShoppingList />
+                              </UsernameRequired>
+                            } />
+                            <Route path="/sign-in" element={<SignIn />} />
+                            <Route path="/sign-up" element={<SignUp />} />
+                            <Route path="/username-setup" element={<UsernameSetup />} />
+                            <Route path="/reset-password" element={<ResetPassword />} />
+                            <Route path="/update-password" element={<UpdatePassword />} />
+                            <Route path="/profile" element={
+                              <UsernameRequired>
+                                <Profile />
+                              </UsernameRequired>
+                            } />
+                            <Route path="/admin/diagnostics" element={
+                              <ProtectedRoute requireAdmin={true}>
+                                <DatabaseTester />
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/auth/v1/callback" element={<AuthCallback />} />
+                            <Route path="/supabase-health" element={<SupabaseHealth />} />
+                            <Route path="/import" element={
+                              <ProtectedRoute>
+                                <UsernameRequired>
+                                  <RecipeImport />
+                                </UsernameRequired>
+                              </ProtectedRoute>
+                            } />
+                            <Route path="*" element={<NotFound />} />
+                          </Routes>
+                          <BottomTabNavigation />
+                        </div>
                       </BrowserRouter>
                     </div>
                   </TooltipProvider>

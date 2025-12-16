@@ -58,8 +58,8 @@ const AuthCallback = () => {
               description: "You are now signed in",
             });
             
-            // Redirect to collections page
-            navigate("/collections", { replace: true });
+            // Redirect to home page
+            navigate("/", { replace: true });
             return;
           }
           
@@ -103,8 +103,8 @@ const AuthCallback = () => {
           description: "You are now signed in",
         });
         
-        // Redirect to collections page after successful auth
-        navigate("/collections", { replace: true });
+        // Redirect to home page after successful auth
+        navigate("/", { replace: true });
       } catch (err: any) {
         console.error("Auth callback error:", err);
         

@@ -1,20 +1,62 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
   PlusCircle, 
   BookOpen, 
   Download, 
   Compass,
-  ArrowRight
+  ArrowRight,
+  TrendingUp,
+  Clock,
+  Activity
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
-import ActivityRecipes from "@/components/ActivityRecipes"; // Keeping existing engagement loop
+import ActivityRecipes from "@/components/ActivityRecipes";
+import FeaturedRecipesCarousel from "@/components/recipes/FeaturedRecipesCarousel";
+import QuickActionButtons from "@/components/home/QuickActionButtons";
+import FloatingActionButton from "@/components/ui/floating-action-button";
+import RecipeCard from "@/components/RecipeCard";
 import { useAuth } from "@/context/AuthContext";
+import { Recipe } from "@/types";
+import { recipeService } from "@/services/supabase/recipeService";
 
 const Index = () => {
   const { user } = useAuth();
+  const [activeFilter, setActiveFilter] = useState('');
+  const [featuredRecipes, setFeaturedRecipes] = useState<Recipe[]>([]);
+  const [trendingRecipes, setTrendingRecipes] = useState<Recipe[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Mock data for now - replace with actual API calls
+  useEffect(() => {
+    const loadRecipes = async () => {
+      try {
+        // Load featured recipes (most recent)
+        const featured = await recipeService.getRecipes();
+        setFeaturedRecipes(featured.slice(0, 7));
+        
+        // Load trending recipes (public recipes for variety)
+        const trending = await recipeService.getRecipes({ isPublic: true });
+        setTrendingRecipes(trending.slice(0, 6));
+      } catch (error) {
+        console.error('Failed to load recipes:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadRecipes();
+  }, []);
+
+  // Get personalized greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
   const actions = [
     {
       title: "Create a New Recipe",
@@ -58,53 +100,78 @@ const Index = () => {
     <div className="min-h-screen bg-cream-50/30">
       <Navbar />
       
-      {/* Hero / Command Center Section */}
-      <div className="container mx-auto px-4 pt-16 pb-12 max-w-5xl">
-        <div className="text-center mb-12 space-y-4">
-          <h1 className="text-4xl md:text-5xl font-display font-bold tracking-tight text-gray-900">
-            Welcome to <span className="text-sage-700">Culinova</span>
+      {/* Hero Section - Simplified */}
+      <div className="container mx-auto px-4 pt-16 pb-8 max-w-7xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-display font-bold text-gray-900">
+            {getGreeting()}{user && `, ${user.user_metadata?.full_name || user.email?.split('@')[0]}`}. 
+            <span className="text-sage-700"> What's cooking?</span>
           </h1>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto font-sans">
-            Your intelligent culinary workspace. Manage your kitchen, plan your meals, and cook with confidence.
-          </p>
         </div>
 
-        {/* The 2x2 Action Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-          {actions.map((action, index) => (
-            <Link key={index} to={action.link} className="block group h-full">
-              <Card className={`h-full transition-all duration-300 border shadow-sm hover:shadow-md ${action.color}`}>
-                <CardHeader className="flex flex-row items-start space-x-4 pb-2">
-                  <div className={`p-3 rounded-xl ${action.iconBg} transition-transform group-hover:scale-105`}>
-                    {action.icon}
-                  </div>
-                  <div className="space-y-1 flex-1">
-                    <CardTitle className="text-xl font-bold text-gray-900 flex items-center justify-between">
-                      {action.title}
-                      <ArrowRight className="h-5 w-5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 text-gray-400" />
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-slate-600 leading-relaxed ml-[4rem]">
-                    {action.description}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+        {/* Quick Action Buttons */}
+        <QuickActionButtons 
+          activeAction={activeFilter} 
+          onActionChange={setActiveFilter} 
+        />
+
+        {/* Featured Recipes Carousel */}
+        <div className="mt-10 mb-12">
+          <FeaturedRecipesCarousel 
+            recipes={featuredRecipes} 
+            title="Featured Recipes"
+          />
         </div>
 
-        {/* Hybrid Section: Keep Recent Activity so the page isn't "dead" - Only show for authenticated users */}
-        {user && (
-          <div className="space-y-6">
+        {/* Trending This Week */}
+        <div className="mb-12">
+          <div className="flex items-center gap-2 mb-6">
+            <TrendingUp className="h-6 w-6 text-orange-500" />
             <h2 className="text-2xl font-display font-semibold text-gray-900">
-              Recent Activity
+              Trending This Week
             </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {trendingRecipes.map((recipe) => (
+              <RecipeCard
+                key={recipe.id}
+                recipe={recipe}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Latest Activity from Your Collections */}
+        <div className="mb-12">
+          <div className="flex items-center gap-2 mb-6">
+            <Activity className="h-6 w-6 text-sage-500" />
+            <h2 className="text-2xl font-display font-semibold text-gray-900">
+              Latest Activity from Your Collections
+            </h2>
+          </div>
+          <ActivityRecipes />
+        </div>
+
+        {/* Recently Viewed */}
+        {user && (
+          <div className="mb-12">
+            <div className="flex items-center gap-2 mb-6">
+              <Clock className="h-6 w-6 text-blue-500" />
+              <h2 className="text-2xl font-display font-semibold text-gray-900">
+                Recently Viewed
+              </h2>
+            </div>
             <ActivityRecipes />
           </div>
         )}
       </div>
+
+      {/* Floating Action Button */}
+      <FloatingActionButton 
+        to="/create"
+        label="Create Recipe"
+        className="md:bottom-6 md:right-6 bottom-20 right-6"
+      />
     </div>
   );
 };

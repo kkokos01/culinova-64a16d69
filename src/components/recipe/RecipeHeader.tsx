@@ -132,7 +132,7 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
         </div>
       ) : null}
       
-      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
+      <h1 className="text-3xl sm:text-4xl font-display font-bold text-gray-900 mb-3">
         {displayTitle}
       </h1>
       <p className="text-gray-600 mb-4">{displayDescription}</p>

@@ -23,25 +23,7 @@ const ActivityRecipeCard: React.FC<ActivityRecipeCardProps> = ({
   userName 
 }) => {
   return (
-    <div className="group relative">
-      <RecipeCard recipe={recipe} />
-      
-      {/* Collection and User Info */}
-      <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
-        {collectionName && (
-          <div className="flex items-center gap-1">
-            <Folder className="h-3 w-3" />
-            <span className="truncate max-w-[120px]">{collectionName}</span>
-          </div>
-        )}
-        {userName && (
-          <div className="flex items-center gap-1">
-            <Users className="h-3 w-3" />
-            <span className="truncate max-w-[120px]">{userName}</span>
-          </div>
-        )}
-      </div>
-    </div>
+    <RecipeCard recipe={recipe} />
   );
 };
 
@@ -145,17 +127,6 @@ const ActivityRecipes: React.FC = () => {
     console.log('🔍 ActivityRecipes: No activities, showing placeholder');
     return (
       <section className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <div>
-            <h2 className="text-3xl font-display font-semibold text-slate-800 mb-2">
-              Latest Activity from Your Shared Collections
-            </h2>
-            <p className="text-slate-600 max-w-2xl">
-              See what your friends, family and favorites are cooking. Recent recipe saves and updates from your shared collections.
-            </p>
-          </div>
-        </div>
-        
         <div className="text-center py-16 bg-sage-50 rounded-lg border border-sage-200">
           <div className="max-w-md mx-auto">
             <h3 className="text-lg font-medium text-slate-800 mb-3">
@@ -186,25 +157,7 @@ const ActivityRecipes: React.FC = () => {
   
   return (
     <section className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <div>
-          <h2 className="text-3xl font-display font-semibold text-slate-800 mb-2">
-            Latest Activity from Your Collections
-          </h2>
-          <p className="text-slate-600 max-w-2xl">
-            See what's happening across all your spaces. Recent recipe saves and updates from your collections.
-          </p>
-        </div>
-        
-        <Link to="/collections">
-          <Button variant="outline" className="mt-4 md:mt-0">
-            View All Collections
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </Link>
-      </div>
-      
-      {/* 2 rows of recipe cards (4 per row) */}
+      {/* Recipe grid - no header or button since parent handles it */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {recipes.map((recipe, index) => (
           <ActivityRecipeCard

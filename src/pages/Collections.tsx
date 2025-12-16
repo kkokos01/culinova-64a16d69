@@ -142,7 +142,7 @@ const Collections: React.FC = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">My Collections</h1>
+              <h1 className="text-3xl font-display font-bold text-gray-900 mb-2">My Collections</h1>
               <p className="text-gray-600">
                 Manage your private collections and browse public collections from the community
               </p>

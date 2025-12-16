@@ -1,4 +1,4 @@
-
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Clock, Users, Flame } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -11,6 +11,7 @@ interface RecipeCardProps {
 }
 
 const RecipeCard = ({ recipe, className }: RecipeCardProps) => {
+  const [imageError, setImageError] = useState(false);
   
   // Handle potential undefined/null values with fallbacks
   const prepTime = recipe.prep_time_minutes || 0;
@@ -66,31 +67,34 @@ const RecipeCard = ({ recipe, className }: RecipeCardProps) => {
 
   return (
     <Link to={`/recipes/${recipe.id}`}>
-      <Card className={cn("overflow-hidden h-full recipe-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] shadow-md", className)}>
-        {/* Image with gradient overlay */}
+      <Card className={cn("overflow-hidden h-full recipe-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1 shadow-sm bg-white", className)}>
+        {/* Full-width image with gradient overlay */}
         <div className="aspect-video relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
-          {recipe.image_url ? (
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
+          {recipe.image_url && !imageError ? (
             <img 
               src={recipe.image_url} 
               alt={recipe.title} 
-              className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+              className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
               loading="lazy"
+              onError={() => setImageError(true)}
             />
           ) : (
             <div className={cn("w-full h-full flex items-center justify-center text-white", getGradientFallback(recipe))}>
               <div className="text-center">
-                <div className="text-4xl mb-2">🍳</div>
-                <div className="text-sm font-medium opacity-90">{recipe.title}</div>
+                <div className="text-6xl mb-3">🍽️</div>
+                <div className="text-sm font-display font-medium opacity-90">No Image</div>
               </div>
             </div>
           )}
           
-          {/* Tags overlay */}
+          {/* Tags overlay - positioned on image */}
           <div className="absolute top-3 left-3 flex flex-wrap gap-2 z-20">
             <span className={cn(
-              "px-2 py-1 rounded-full text-xs font-medium",
-              getDifficultyColor(difficulty)
+              "px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm",
+              difficulty === 'easy' ? "bg-green-500/90 text-white" :
+              difficulty === 'medium' ? "bg-yellow-500/90 text-white" :
+              "bg-red-500/90 text-white"
             )}>
               {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
             </span>
@@ -98,7 +102,7 @@ const RecipeCard = ({ recipe, className }: RecipeCardProps) => {
             {recipe.tags && recipe.tags.slice(0, 2).map((tag, index) => (
               <span 
                 key={index} 
-                className="bg-white/80 backdrop-blur-sm text-slate-800 px-2 py-1 rounded-full text-xs font-medium"
+                className="bg-white/90 backdrop-blur-sm text-slate-800 px-3 py-1 rounded-full text-xs font-medium"
               >
                 {tag}
               </span>
@@ -106,23 +110,26 @@ const RecipeCard = ({ recipe, className }: RecipeCardProps) => {
           </div>
         </div>
         
-        <CardContent className="pt-4">
-          <h3 className="text-lg font-medium text-slate-800 line-clamp-2 mb-2">
+        {/* Content with no horizontal padding for full-width feel */}
+        <CardContent className="px-4 pt-4 pb-3">
+          <h3 className="text-xl font-display font-semibold text-slate-900 line-clamp-2 mb-2 leading-tight">
             {recipe.title}
           </h3>
-          <p className="text-sm text-slate-600 line-clamp-2 mb-3">
+          <p className="text-sm text-slate-600 line-clamp-2 mb-3 leading-relaxed">
             {recipe.description}
           </p>
         </CardContent>
         
-        <CardFooter className="flex justify-between items-center text-sm text-slate-500 pt-0">
-          <div className="flex items-center">
-            <Clock className="h-4 w-4 mr-1" />
-            <span>{formatTime(totalTime)}</span>
-          </div>
-          <div className="flex items-center">
-            <Users className="h-4 w-4 mr-1" />
-            <span>{servings} serving{servings !== 1 ? 's' : ''}</span>
+        <CardFooter className="flex justify-between items-center text-sm text-slate-500 pt-0 px-4 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center">
+              <Clock className="h-4 w-4 mr-1" />
+              <span>{formatTime(totalTime)}</span>
+            </div>
+            <div className="flex items-center">
+              <Users className="h-4 w-4 mr-1" />
+              <span>{servings} serving{servings !== 1 ? 's' : ''}</span>
+            </div>
           </div>
           {recipe.calories_per_serving && (
             <div className="flex items-center">
