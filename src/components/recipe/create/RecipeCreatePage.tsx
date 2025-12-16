@@ -356,21 +356,25 @@ const RecipeCreatePage: React.FC = () => {
 
   // Ingredient Selection Handlers
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
+    console.log('🔍 handleSelectIngredient called:', { ingredientId: ingredient.id, action, currentSize: selectedIngredients.size });
+    
     if (!action) {
       // Remove selection if no action specified
       setSelectedIngredients(prev => {
         const newMap = new Map(prev);
         newMap.delete(ingredient.id);
+        console.log('🔍 Removed ingredient selection, new size:', newMap.size);
         return newMap;
       });
-      return;
+    } else {
+      // Add or update selection
+      setSelectedIngredients(prev => {
+        const newMap = new Map(prev);
+        newMap.set(ingredient.id, { ingredient, action });
+        console.log('🔍 Added ingredient selection, new size:', newMap.size);
+        return newMap;
+      });
     }
-
-    setSelectedIngredients(prev => {
-      const newMap = new Map(prev);
-      newMap.set(ingredient.id, { ingredient, action });
-      return newMap;
-    });
   };
 
   const removeIngredientSelection = (id: string) => {
