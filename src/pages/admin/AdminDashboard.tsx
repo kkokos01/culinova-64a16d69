@@ -60,6 +60,7 @@ const AdminDashboard: React.FC = () => {
         counts[space.id] = { space_name: space.name || 'Unknown', pending: 0, flagged: 0 };
       });
       
+      // Count space-specific recipes
       pendingRecipes.forEach(recipe => {
         if (recipe.space_id && counts[recipe.space_id]) {
           if (recipe.qa_status === 'pending') {
@@ -70,12 +71,26 @@ const AdminDashboard: React.FC = () => {
         }
       });
       
+      // Count public collection submissions (recipes with no space_id)
+      const publicPending = pendingRecipes.filter(r => !r.space_id && r.qa_status === 'pending').length;
+      const publicFlagged = pendingRecipes.filter(r => !r.space_id && r.qa_status === 'flag').length;
+      
       const countsArray = Object.entries(counts).map(([space_id, data]) => ({
         space_id,
         space_name: data.space_name,
         pending_count: data.pending,
         flagged_count: data.flagged
       }));
+      
+      // Add public collection counts if there are any
+      if (publicPending > 0 || publicFlagged > 0) {
+        countsArray.push({
+          space_id: 'public',
+          space_name: 'Public Collection',
+          pending_count: publicPending,
+          flagged_count: publicFlagged
+        });
+      }
       
       setPendingCounts(countsArray);
     } catch (error: any) {
@@ -110,8 +125,12 @@ const AdminDashboard: React.FC = () => {
   }, [user, adminSpaces.length, navigate, spacesLoading]);
 
   const handleReviewRecipes = (spaceId?: string) => {
-    const url = spaceId ? `/admin/review?space=${spaceId}` : '/admin/review';
-    navigate(url);
+    if (spaceId === 'public') {
+      navigate('/admin/review?public=true');
+    } else {
+      const url = spaceId ? `/admin/review?space=${spaceId}` : '/admin/review';
+      navigate(url);
+    }
   };
 
   const handleManageSpace = (spaceId: string) => {

@@ -20,16 +20,31 @@ const RecipeImageGenerator: React.FC<RecipeImageGeneratorProps> = ({
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(currentImageUrl || null);
   const [lastPrompt, setLastPrompt] = useState<string>('');
   const [showPendingState, setShowPendingState] = useState(false);
+  const [lastRecipeId, setLastRecipeId] = useState<string>('');
   const { toast } = useToast();
 
-  // Auto-generate image when recipe becomes available
+  // Auto-generate image when recipe becomes available or changes
   useEffect(() => {
-    if (recipe && !generatedImageUrl && !isGenerating) {
-      // Show pending state and start generation immediately
+    if (!recipe) return;
+    
+    // Check if this is a new recipe or a modification
+    const isNewRecipe = !lastRecipeId;
+    const isModifiedRecipe = lastRecipeId && recipe.id !== lastRecipeId;
+    const shouldGenerate = isNewRecipe || (isModifiedRecipe && !isGenerating);
+    
+    if (shouldGenerate) {
+      // Clear previous image if recipe was modified
+      if (isModifiedRecipe) {
+        setGeneratedImageUrl(null);
+        setLastPrompt('');
+      }
+      
+      // Show pending state and start generation
       setShowPendingState(true);
       handleGenerateImage('photorealistic');
+      setLastRecipeId(recipe.id);
     }
-  }, [recipe?.id, recipe?.title, generatedImageUrl, isGenerating]);
+  }, [recipe?.id, recipe?.title, recipe?.updated_at, generatedImageUrl, isGenerating, lastRecipeId]);
 
   const handleGenerateImage = async (style: 'photorealistic' | 'artistic' | 'minimalist' = 'photorealistic') => {
     if (!recipe) return;
@@ -38,6 +53,18 @@ const RecipeImageGenerator: React.FC<RecipeImageGeneratorProps> = ({
     setShowPendingState(false); // Hide pending state when generation starts
     
     try {
+      // DEBUG: Log the recipe data being sent
+      console.log('DEBUG: RecipeImageGenerator - Sending recipe for image generation:', {
+        title: recipe.title,
+        description: recipe.description,
+        ingredientCount: recipe.ingredients?.length || 0,
+        allIngredients: recipe.ingredients?.map(ing => ({
+          name: ing.food_name,
+          amount: ing.amount,
+          unit: ing.unit_name || ing.unit
+        }))
+      });
+      
       const request: ImageGenerationRequest = {
         recipe,
         style,
@@ -99,7 +126,7 @@ const RecipeImageGenerator: React.FC<RecipeImageGeneratorProps> = ({
             className="text-sm"
           >
             <RefreshCw className={`h-3 w-3 mr-1 ${isGenerating ? 'animate-spin' : ''}`} />
-            Regenerate
+            Regenerate Image
           </Button>
         )}
       </div>
@@ -208,10 +235,9 @@ const RecipeImageGenerator: React.FC<RecipeImageGeneratorProps> = ({
           <Sparkles className="h-3 w-3" />
           Premium Feature
         </div>
-        <p className="text-xs text-gray-500">Powered by Google Imagen AI</p>
       </div>
 
-      {/* Debug Info (remove in production) */}
+      {/* Debug Info (development only) */}
       {process.env.NODE_ENV === 'development' && lastPrompt && (
         <details className="mt-3">
           <summary className="text-xs text-gray-500 cursor-pointer">Debug: Last Prompt</summary>

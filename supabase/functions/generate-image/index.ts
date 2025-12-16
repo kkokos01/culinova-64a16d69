@@ -20,6 +20,14 @@ serve(async (req: Request) => {
       throw new Error('Recipe data is required')
     }
 
+    // DEBUG: Log the received recipe data
+    console.log('DEBUG: Received recipe data:', JSON.stringify({
+      title: recipe.title,
+      description: recipe.description,
+      ingredientCount: recipe.ingredients?.length || 0,
+      ingredients: recipe.ingredients?.slice(0, 3)
+    }))
+
     // Create image prompt
     const keyIngredients = recipe.ingredients
       ?.slice(0, 5)
@@ -33,9 +41,14 @@ serve(async (req: Request) => {
       prompt += `, ${recipe.description}`
     }
     
+    // Add explicit ingredient instructions
     if (keyIngredients) {
-      prompt += ` featuring ${keyIngredients}`
+      prompt += `. The dish must clearly show these ingredients: ${keyIngredients}`
+      prompt += '. Do not include any vegetables or ingredients not listed above.'
     }
+
+    // DEBUG: Log the generated prompt
+    console.log('DEBUG: Generated prompt:', prompt)
 
     // Style-specific modifications
     switch (style) {

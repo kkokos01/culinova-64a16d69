@@ -18,7 +18,7 @@ import RecipeImageGenerator from "../RecipeImageGenerator";
 import Navbar from "@/components/Navbar";
 import { AddToCollectionButton } from "../AddToCollectionButton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles, Loader2, Save, ChefHat, Wand2, Plus, Minus, RotateCcw, ChevronRight, Flame } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, Save, ChefHat, Wand2, Plus, Minus, RotateCcw, ChevronRight, Flame, Globe } from "lucide-react";
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
 import AILoadingProgress from "@/components/ui/AILoadingProgress";
 import RecipeCreateForm from "./RecipeCreateForm";
@@ -708,47 +708,35 @@ const RecipeCreatePage: React.FC = () => {
       const recipeData = {
         title: generatedRecipe.title,
         description: generatedRecipe.description,
-        image_url: generatedImageUrl || null,
         prep_time_minutes: generatedRecipe.prepTimeMinutes,
         cook_time_minutes: generatedRecipe.cookTimeMinutes,
         servings: generatedRecipe.servings,
         difficulty: generatedRecipe.difficulty,
-        is_public: false,
-        privacy_level: "private" as const,
-        tags: generatedRecipe.tags,
-        calories_per_serving: generatedRecipe.caloriesPerServing,
-        source_url: generatedRecipe.sourceUrl || null,
+        image_url: generatedImageUrl || null,
+        calories_per_serving: generatedRecipe.caloriesPerServing || null,
         ingredients,
-        steps: generatedRecipe.steps.map((step, index) => ({
-          order_number: index + 1,
-          instruction: step,
-        })),
-        user_id: user.id,
-        user_name: user?.user_metadata?.name || user?.email || 'User', // Add user name for activity logging
+        steps: generatedRecipe.steps,
+        tags: generatedRecipe.tags || [],
         space_id: currentSpace.id,
+        user_id: user.id,
+        is_public: false,
+        privacy_level: 'private',
+        qa_status: 'pass' as const,
       };
 
-      // Debug: Log recipe data being saved
-      console.log('Recipe data being saved:', recipeData);
+      const { data: savedRecipe, error: createError } = await recipeService.createRecipe(recipeData);
 
-      const savedRecipe = await recipeService.createRecipe(recipeData);
+      if (createError) {
+        throw new Error(createError);
+      }
 
-      // Debug: Log saved recipe from database
-      console.log('Saved recipe from DB:', savedRecipe);
-
-      // Mark the current active version as saved
-      setRecipeVersions(prev => 
-        prev.map(version => 
-          version.id === activeVersionId 
-            ? { ...version, isSaved: true, savedRecipeId: savedRecipe.id }
-            : version
-        )
-      );
-
-      // Set saved recipe ID for Cook Mode button
       setSavedRecipeId(savedRecipe.id);
-
-      // Don't navigate away - preserve temporary versions
+      
+      toast({
+        title: "Recipe saved successfully!",
+        description: "Your recipe has been saved to your collection.",
+        variant: "default",
+      });
 
     } catch (error: any) {
       console.error('Error saving recipe:', error);
@@ -759,6 +747,46 @@ const RecipeCreatePage: React.FC = () => {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSaveToPublic = async () => {
+    if (!savedRecipeId) {
+      // First save the recipe privately
+      await handleSaveRecipe();
+      // After saving, submit for public approval
+      if (savedRecipeId) {
+        try {
+          await recipeService.submitForPublicApproval(savedRecipeId);
+          toast({
+            title: "Submitted for Public Collection!",
+            description: "Your recipe has been submitted and will appear in the Public Collection after approval.",
+            variant: "default",
+          });
+        } catch (error: any) {
+          toast({
+            title: "Submission failed",
+            description: error.message || "Failed to submit for public approval. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }
+    } else {
+      // Recipe already saved, just submit for approval
+      try {
+        await recipeService.submitForPublicApproval(savedRecipeId);
+        toast({
+          title: "Submitted for Public Collection!",
+          description: "Your recipe has been submitted and will appear in the Public Collection after approval.",
+          variant: "default",
+        });
+      } catch (error: any) {
+        toast({
+          title: "Submission failed",
+          description: error.message || "Failed to submit for public approval. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -998,23 +1026,43 @@ const RecipeCreatePage: React.FC = () => {
                             size="default"
                           />
                         ) : (
-                          <Button
-                            onClick={handleSaveRecipe}
-                            disabled={isSaving}
-                            className="bg-sage-600 hover:bg-sage-700 text-white h-10 px-4"
-                          >
-                            {isSaving ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Saving...
-                              </>
-                            ) : (
-                              <>
-                                <Save className="text-sage-400 mr-2 h-4 w-4" />
-                                Save Recipe
-                              </>
-                            )}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={handleSaveRecipe}
+                              disabled={isSaving}
+                              className="bg-sage-600 hover:bg-sage-700 text-white h-10 px-4"
+                            >
+                              {isSaving ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                <>
+                                  <Save className="text-sage-400 mr-2 h-4 w-4" />
+                                  Save Recipe
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              onClick={handleSaveToPublic}
+                              disabled={isSaving}
+                              variant="outline"
+                              className="border-purple-300 text-purple-700 hover:bg-purple-50 h-10 px-4"
+                            >
+                              {isSaving ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Submitting...
+                                </>
+                              ) : (
+                                <>
+                                  <Globe className="mr-2 h-4 w-4" />
+                                  Save to Public Collection
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         )}
                         
                         {/* Start Cooking Button - appears after recipe is generated or saved */}

@@ -36,6 +36,7 @@ const RecipeReview: React.FC = () => {
 
   // Get space ID from URL parameter
   const spaceId = searchParams.get('space');
+  const isPublicReview = searchParams.get('public') === 'true';
 
   // Check if user is admin of any space
   const isAdmin = memberships.some(m => m.role === 'admin' && m.is_active);
@@ -58,8 +59,10 @@ const RecipeReview: React.FC = () => {
         .select<'*', any>('*')
         .in('qa_status', ['pending', 'flag']);
       
-      // Filter by space if specified
-      if (spaceId) {
+      // Filter by space if specified, or public if no space
+      if (isPublicReview) {
+        query = query.is('space_id', null);
+      } else if (spaceId) {
         query = query.eq('space_id', spaceId);
       }
       
@@ -80,19 +83,23 @@ const RecipeReview: React.FC = () => {
         .select('user_id, display_name, avatar_url')
         .in('user_id', userIds);
 
-      // Fetch spaces for all recipes
-      const spaceIds = [...new Set(recipes.map(r => r.space_id).filter(Boolean))];
-      const { data: spaces } = await supabase
-        .from('spaces')
-        .select('id, name')
-        .in('id', spaceIds as string[]);
+      // Fetch spaces for all recipes (only if not public review)
+      let spaces = null;
+      if (!isPublicReview) {
+        const spaceIds = [...new Set(recipes.map(r => r.space_id).filter(Boolean))];
+        const { data: spacesData } = await supabase
+          .from('spaces')
+          .select('id, name')
+          .in('id', spaceIds as string[]);
+        spaces = spacesData;
+      }
       
       // Transform the data to match our interface
       const transformedData = recipes.map((recipe: any) => ({
         ...recipe,
         uploader_name: profiles?.find(p => p.user_id === recipe.user_id)?.display_name,
         uploader_avatar: profiles?.find(p => p.user_id === recipe.user_id)?.avatar_url,
-        space_name: spaces?.find(s => s.id === recipe.space_id)?.name
+        space_name: isPublicReview ? 'Public Collection' : spaces?.find(s => s.id === recipe.space_id)?.name
       }));
       
       setRecipes(transformedData);
@@ -258,10 +265,15 @@ const RecipeReview: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
           </Button>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Recipe Review</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {isPublicReview ? 'Public Collection Review' : 'Recipe Review'}
+          </h1>
           <p className="text-gray-600">
-            Review and approve recipes for public visibility
-            {spaceId && ` - Filtered by specific space`}
+            {isPublicReview 
+              ? 'Review and approve recipes submitted to the Public Collection'
+              : 'Review and approve recipes for public visibility'
+            }
+            {spaceId && !isPublicReview && ` - Filtered by specific space`}
           </p>
         </div>
         

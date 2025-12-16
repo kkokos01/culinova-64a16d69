@@ -36,13 +36,13 @@ const Navbar = () => {
       const fetchPendingCount = async () => {
         try {
           const pendingRecipes = await recipeService.getPendingApprovalRecipes();
-          // Filter to only spaces where user is admin
+          // Filter to only spaces where user is admin OR public collection submissions
           const adminSpaceIds = spaces
             .filter(space => memberships.some(m => m.space_id === space.id && m.role === 'admin' && m.is_active))
             .map(s => s.id);
           
           const count = pendingRecipes.filter(r => 
-            r.space_id && adminSpaceIds.includes(r.space_id)
+            (r.space_id && adminSpaceIds.includes(r.space_id)) || !r.space_id // Include public submissions
           ).length;
           
           setPendingCount(count);
@@ -83,13 +83,10 @@ const Navbar = () => {
     // Shopping Lists and Meal Plans removed as requested
   ];
   
-  // Admin link - only shown if user is admin of any space
-  const adminLink = {
-    path: '/admin/dashboard',
-    label: 'Admin',
-    icon: Settings,
-    badge: pendingCount
-  };
+  // Add admin link if user is admin
+  const allNavLinks = isAdmin 
+    ? [...navLinks, { path: '/admin/dashboard', label: 'Admin', icon: Settings, badge: pendingCount, isDropdown: false as const }]
+    : navLinks;
   
   const isActive = (path: string) => {
     if (path === '/' && location.pathname === '/') return true;
@@ -115,7 +112,7 @@ const Navbar = () => {
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
-          {navLinks.map((link) => (
+          {allNavLinks.map((link) => (
             link.isDropdown ? (
               <DropdownMenu key={link.path}>
                 <DropdownMenuTrigger asChild>
@@ -233,7 +230,7 @@ const Navbar = () => {
         )}
       >
         <nav className="flex flex-col px-6 py-8 space-y-6">
-          {navLinks.map((link) => (
+          {allNavLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}

@@ -561,33 +561,46 @@ export const recipeService = {
   },
 
   /**
+   * Submit recipe for public collection approval
+   * @param recipeId - The recipe ID to submit
+   * @returns Promise<void>
+   */
+  async submitForPublicApproval(recipeId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('recipes')
+        .update({ 
+          qa_status: 'pending',
+          submitted_to_public_at: new Date().toISOString()
+        })
+        .eq('id', recipeId);
+
+      if (error) {
+        throw new Error(`Failed to submit recipe for approval: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('Error submitting recipe for public approval:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Get recipes pending approval
    * @returns Array of recipes pending approval
    */
   async getPendingApprovalRecipes(): Promise<any[]> {
     try {
-      // Use simpler join syntax without explicit foreign key hints
+      // Use the pending_approval_recipes view which already includes joins
       const { data: recipes, error } = await supabase
-        .from('recipes')
-        .select(`
-          *,
-          space:spaces(id, name),
-          user:user_profiles(user_id, display_name, avatar_url)
-        `)
-        .in('qa_status', ['pending', 'flag'])
+        .from('pending_approval_recipes')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
         throw new Error(`Failed to fetch pending recipes: ${error.message}`);
       }
 
-      // Transform the data to match expected format
-      return (recipes || []).map((recipe: any) => ({
-        ...recipe,
-        uploader_name: recipe.user?.display_name,
-        uploader_avatar: recipe.user?.avatar_url,
-        space_name: recipe.space?.name
-      }));
+      return recipes || [];
     } catch (error) {
       console.error('Error in recipeService.getPendingApprovalRecipes:', error);
       throw error;
