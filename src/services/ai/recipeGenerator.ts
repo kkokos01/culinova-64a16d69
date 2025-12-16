@@ -73,7 +73,7 @@ export class AIRecipeGenerator {
         };
       }
       
-      const response = await this.callEdgeFunction(request);
+      const response = await this.callEdgeFunction({ recipeRequest: request });
       return this.parseAIResponse(response);
 
     } catch (error) {
@@ -92,7 +92,7 @@ export class AIRecipeGenerator {
   async modifyRecipe(request: AIRecipeModificationRequest): Promise<AIRecipeResponse | AIRecipeError> {
     try {
       console.log('Modifying recipe with Gemini...');
-      const response = await this.callEdgeFunction(request);
+      const response = await this.callEdgeFunction({ recipeRequest: request });
       return this.parseAIResponse(response);
     } catch (error) {
       console.error('Error modifying recipe:', error);
@@ -119,9 +119,7 @@ export class AIRecipeGenerator {
         };
       }
       
-      const response = await this.callEdgeFunction({
-        importRequest: { type, content }
-      });
+      const response = await this.callEdgeFunction({ importRequest: { type, content } });
       
       return this.parseAIResponse(response);
     } catch (error) {
