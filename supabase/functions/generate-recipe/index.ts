@@ -171,13 +171,14 @@ serve(async (req: Request) => {
       throw new Error('No response from Gemini');
     }
 
+    console.log('🤖 Edge function serving recipe generation and import requests - v2');
     return new Response(
       JSON.stringify({ success: true, response: text }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
   } catch (error) {
-    console.error('Error in edge function recipe generation:', error);
+    console.log('🤖 Edge function serving recipe generation and import requests - v2');
     return new Response(
       JSON.stringify({ 
         success: false, 
