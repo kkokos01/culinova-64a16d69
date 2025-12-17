@@ -6,6 +6,7 @@ import { ChevronLeft, Wand2, Loader2 } from "lucide-react";
 import ConceptInput from "./ConceptInput";
 import ConstraintSelector from "./ConstraintSelector";
 import AILoadingProgress from "@/components/ui/AILoadingProgress";
+import type { UserStyle } from "@/lib/llmTypes";
 
 interface CreateSidebarProps {
   concept: string;
@@ -16,6 +17,7 @@ interface CreateSidebarProps {
   excludedIngredients: string[];
   spicinessLevel: number;
   targetServings: number;
+  userStyle: UserStyle;
   isGenerating: boolean;
   isSaving: boolean;
   onConceptChange: (concept: string) => void;
@@ -26,6 +28,7 @@ interface CreateSidebarProps {
   onExclusionsChange: (ingredients: string[]) => void;
   onSpicinessChange: (level: number) => void;
   onServingsChange: (servings: number) => void;
+  onUserStyleChange: (userStyle: UserStyle) => void;
   onGenerateRecipe: () => void;
   onSaveRecipe: () => Promise<void>;
   onTogglePanel: () => void;
@@ -41,6 +44,7 @@ const CreateSidebar: React.FC<CreateSidebarProps> = ({
   excludedIngredients,
   spicinessLevel,
   targetServings,
+  userStyle,
   isGenerating,
   isSaving,
   onConceptChange,
@@ -51,6 +55,7 @@ const CreateSidebar: React.FC<CreateSidebarProps> = ({
   onExclusionsChange,
   onSpicinessChange,
   onServingsChange,
+  onUserStyleChange,
   onGenerateRecipe,
   onSaveRecipe,
   onTogglePanel,
@@ -111,12 +116,18 @@ const CreateSidebar: React.FC<CreateSidebarProps> = ({
           excludedIngredients={excludedIngredients}
           spicinessLevel={spicinessLevel}
           targetServings={targetServings}
+          userStyle={userStyle}
           onDietaryChange={onDietaryChange}
           onTimeChange={onTimeChange}
           onSkillChange={onSkillChange}
           onExclusionsChange={onExclusionsChange}
           onSpicinessChange={onSpicinessChange}
           onServingsChange={onServingsChange}
+          onUserStyleChange={onUserStyleChange}
+          usePantry={false}
+          pantryMode="ignore"
+          onUsePantryChange={() => {}}
+          onPantryModeChange={() => {}}
         />
 
         {/* Generate Button */}

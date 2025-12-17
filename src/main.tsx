@@ -5,22 +5,17 @@ import './index.css?v=20241216';
 import { GlobalErrorBoundary } from './components/GlobalErrorBoundary';
 
 // Initialize Sentry for production monitoring
-if (import.meta.env.PROD) {
-  import('@sentry/react').then(Sentry => {
-    if (import.meta.env.VITE_SENTRY_DSN) {
-      Sentry.init({
-        dsn: import.meta.env.VITE_SENTRY_DSN,
-        integrations: [
-          Sentry.browserTracingIntegration(),
-          Sentry.replayIntegration(),
-        ],
-        tracesSampleRate: 1.0,
-        replaysSessionSampleRate: 0.1,
-        replaysOnErrorSampleRate: 1.0,
-      });
-    }
-  });
-}
+// TODO: Fix Sentry import issue
+// if (import.meta.env.PROD) {
+//   import('@sentry/react').then((Sentry)=>{
+//     if (import.meta.env.VITE_SENTRY_DSN) {
+//       Sentry.init({
+//         dsn: import.meta.env.VITE_SENTRY_DSN,
+//         environment: import.meta.env.MODE,
+//       });
+//     }
+//   });
+// }
 
 const rootElement = document.getElementById("root");
 

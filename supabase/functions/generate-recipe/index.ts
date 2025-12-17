@@ -1,6 +1,11 @@
 // Deno-specific imports - may show IDE errors but work correctly at runtime
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { parseJsonStrict, validateRecipeSchema } from "../_shared/json.ts";
+import { getStructureTargets, validateAgainstTargets } from "../_shared/styleTargets.ts";
+import { validateRecipeResponse, shouldRegenerate } from "../_shared/validation.ts";
+import { logLLMRun, type LogEntry } from "../_shared/logging.ts";
+import type { UserStyle, EnhancedAIRecipeResponse, ValidationResult } from "../_shared/llmTypes.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -49,6 +54,11 @@ serve(async (req: Request) => {
     // 1. Parse Body (Handle both Request Types)
     const body = await req.json();
     const { recipeRequest, importRequest } = body;
+    
+    // DEBUG: Log the incoming request
+    console.log('🔍 DEBUG: Incoming request body:', JSON.stringify(body, null, 2));
+    console.log('🔍 DEBUG: Operation field:', body.operation);
+    console.log('🔍 DEBUG: recipeRequest:', recipeRequest ? JSON.stringify(recipeRequest, null, 2) : 'none');
 
     if (!recipeRequest && !importRequest) {
       throw new Error('Missing recipeRequest or importRequest');
@@ -65,15 +75,33 @@ serve(async (req: Request) => {
     
     // Configure Gemini 2.5 Flash for speed
     console.log('⚡ Using gemini-2.5-flash model for fast generation');
+    
+    // Get operation-based temperature
+    const op = (body.operation ?? "generate") as "generate" | "modify" | "import";
+    const temperature = getTemperature(op);
+    
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.5-flash",
       generationConfig: {
         responseMimeType: "application/json",
-        temperature: 0.7,
+        temperature: temperature,
       }
     });
     
     console.log('✅ Gemini model initialized successfully for import/generation');
+
+    // Helper function for temperature
+    function getTemperature(operation: "generate" | "modify" | "import"): number {
+      switch (operation) {
+        case "modify":
+          return 0.4;
+        case "import":
+          return 0.2;
+        case "generate":
+        default:
+          return 0.5;
+      }
+    }
 
     // Build prompt based on request type
     let prompt: string;
@@ -154,7 +182,7 @@ serve(async (req: Request) => {
       `;
     } 
     // --- MODE B: GENERATE/MODIFY (Existing Logic) ---
-    else if (recipeRequest.modificationInstructions && recipeRequest.baseRecipe) {
+    else if (op === "modify" || (recipeRequest.modificationInstructions && recipeRequest.baseRecipe)) {
       // Handle modification request
       prompt = constructModificationPrompt(recipeRequest);
     } else {
@@ -163,17 +191,140 @@ serve(async (req: Request) => {
     }
 
     // Generate content with Gemini
+    const startTime = Date.now();
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const text = response.text();
+    const rawText = response.text();
+    const responseTime = Date.now() - startTime;
 
-    if (!text) {
+    if (!rawText) {
       throw new Error('No response from Gemini');
     }
 
-    console.log('🤖 Edge function serving recipe generation and import requests - v2');
+    // Parse JSON with fallback
+    const parseResult = parseJsonStrict<EnhancedAIRecipeResponse>(rawText);
+    if (!parseResult.ok) {
+      console.error('JSON parse failed:', parseResult.error);
+      throw new Error(`Failed to parse AI response: ${parseResult.error}`);
+    }
+
+    // Validate schema
+    const schemaValidation = validateRecipeSchema(parseResult.value);
+    if (!schemaValidation.isValid) {
+      console.error('Schema validation failed:', schemaValidation.missingFields);
+      throw new Error(`Invalid response schema: missing ${schemaValidation.missingFields.join(', ')}`);
+    }
+
+    // Validate against targets for enhanced requests
+    let validation: ValidationResult = { hardErrors: [], warnings: [], normalized: parseResult.value };
+    let finalResponse = parseResult.value;
+    let retryAttempted = false;
+    
+    if (recipeRequest?.userStyle) {
+      const targets = getStructureTargets(recipeRequest.userStyle);
+      validation = validateRecipeResponse(parseResult.value, targets, {
+        userStyle: recipeRequest.userStyle,
+        allowedEquipment: recipeRequest.allowedEquipment
+      });
+
+      // Set fallback usage flag
+      if (parseResult.usedFallback) {
+        validation.normalized.qualityChecks = validation.normalized.qualityChecks || {};
+        validation.normalized.qualityChecks.usedJsonExtractionFallback = true;
+      }
+
+      // If hard errors, attempt one regeneration with repair prompt
+      if (validation.hardErrors.length > 0 && !retryAttempted) {
+        console.log('Hard validation errors, attempting repair...');
+        retryAttempted = true;
+        
+        const repairPrompt = `
+The following JSON response has validation errors:
+${JSON.stringify(parseResult.value, null, 2)}
+
+ERRORS TO FIX:
+${validation.hardErrors.map(e => `- ${e}`).join('\n')}
+
+Please return a corrected JSON response that fixes these errors.
+Keep the same recipe concept and ingredients unless required to fix the errors.
+Output ONLY valid JSON. No Markdown. No code fences. No commentary.
+
+CRITICAL RULES:
+- If novelty = "tried_true": twists MUST be [].
+- If novelty = "fresh_twist": twists MUST contain EXACTLY 1 item with isOptional=true.
+- If novelty = "adventurous": twists MUST contain 1-3 items and each must have isOptional=true.
+`;
+
+        try {
+          console.log('Attempting repair with temperature 0.2...');
+          const repairModel = genAI.getGenerativeModel({ 
+            model: "gemini-2.5-flash",
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.2, // Lowest temperature for repair
+            }
+          });
+          
+          const repairResult = await repairModel.generateContent(repairPrompt);
+          const repairRaw = repairResult.response.text();
+          
+          if (repairRaw) {
+            const repairParse = parseJsonStrict<EnhancedAIRecipeResponse>(repairRaw);
+            if (repairParse.ok) {
+              const repairValidation = validateRecipeResponse(repairParse.value, targets, {
+                userStyle: recipeRequest.userStyle,
+                allowedEquipment: recipeRequest.allowedEquipment
+              });
+              
+              if (repairValidation.hardErrors.length === 0) {
+                console.log('Repair successful!');
+                validation = repairValidation;
+                finalResponse = repairValidation.normalized;
+                finalResponse.qualityChecks = finalResponse.qualityChecks || {};
+                finalResponse.qualityChecks.usedRepairPrompt = true;
+              } else {
+                console.log('Repair failed, returning original with errors');
+              }
+            }
+          }
+        } catch (repairError) {
+          console.error('Repair attempt failed:', repairError);
+        }
+      }
+
+      // Log to llm_runs table
+      try {
+        const logEntry: LogEntry = {
+          user_id: body.user_id,
+          space_id: body.space_id,
+          operation: op,
+          model: 'gemini-2.5-flash',
+          temperature,
+          used_json_fallback: parseResult.usedFallback,
+          hard_error: validation.hardErrors.length > 0,
+          warnings: validation.warnings,
+          request_json: recipeRequest,
+          response_json: validation.normalized,
+          raw_output: parseResult.usedFallback ? rawText : undefined,
+          latency_ms: responseTime,
+          prompt_version: '2025-12-17-style-v1',
+          schema_version: 1
+        };
+        
+        await logLLMRun(logEntry);
+      } catch (logError) {
+        console.error('Failed to log to llm_runs:', logError);
+      }
+    }
+
+    console.log('✅ Recipe generated successfully');
     return new Response(
-      JSON.stringify({ success: true, response: text }),
+      JSON.stringify({ 
+        success: true, 
+        response: JSON.stringify(validation.normalized),
+        warnings: validation.warnings,
+        usedFallback: parseResult.usedFallback
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
@@ -206,6 +357,7 @@ const PROMPT_TEMPLATES = {
   OPTIONAL_ONLY_INSTRUCTIONS: `\nCreate a recipe that would be enhanced by these OPTIONAL ingredients. Use them if they naturally complement the dish you're creating. You may add basic staples and other common ingredients as needed to create a complete recipe.\n`,
 };
 
+// Enhanced prompt construction for recipe generation with dials and validation
 function constructPrompt(request: any): string {
   const { 
     concept, 
@@ -219,22 +371,25 @@ function constructPrompt(request: any): string {
     mealType,
     pantryMode,
     pantryItems,
-    selectedPantryItemIds
+    selectedPantryItemIds,
+    userStyle,
+    structureTargets
   } = request;
 
-  let prompt = `You are a professional chef. Create a detailed recipe for: "${concept}".
-
-`;
+  // Default userStyle if not provided
+  const style = userStyle || { complexity: "balanced", novelty: "tried_true" };
+  const targets = structureTargets || getStructureTargets(style);
 
   // Handle custom pantry selection
+  let requiredBlock = "";
+  let optionalBlock = "";
+  let inventoryBlock = "";
+  
   if (pantryMode === 'custom_selection' && selectedPantryItemIds && pantryItems) {
-    
-    // Convert the selectedPantryItemIds object (Map serialized as object) back to usable format
     const selectedMap = selectedPantryItemIds;
     const requiredItems: any[] = [];
     const optionalItems: any[] = [];
     
-    // Filter and categorize selected items
     pantryItems.forEach((item: any) => {
       const state = selectedMap[item.id];
       if (state === 'required') {
@@ -244,185 +399,295 @@ function constructPrompt(request: any): string {
       }
     });
     
-    if (requiredItems.length > 0 || optionalItems.length > 0) {
-      prompt += PROMPT_TEMPLATES.CUSTOM_PANTRY_HEADER;
-      
-      if (requiredItems.length > 0) {
-        prompt += PROMPT_TEMPLATES.REQUIRED_HEADER;
-        requiredItems.forEach(item => {
-          const quantity = item.quantity ? ` (${item.quantity})` : '';
-          prompt += `- ${item.name}${quantity}\n`;
-        });
-      }
-      
-      if (optionalItems.length > 0) {
-        prompt += PROMPT_TEMPLATES.OPTIONAL_HEADER;
-        optionalItems.forEach(item => {
-          const quantity = item.quantity ? ` (${item.quantity})` : '';
-          prompt += `- ${item.name}${quantity}\n`;
-        });
-      }
-      
-      // Add specific instructions based on what's selected
-      if (requiredItems.length > 0 && optionalItems.length > 0) {
-        prompt += PROMPT_TEMPLATES.BOTH_TYPES_INSTRUCTIONS;
-      } else if (requiredItems.length > 0) {
-        prompt += PROMPT_TEMPLATES.REQUIRED_ONLY_INSTRUCTIONS;
-      } else {
-        prompt += PROMPT_TEMPLATES.OPTIONAL_ONLY_INSTRUCTIONS;
-      }
-      
-      prompt += `\n`;
+    if (requiredItems.length > 0) {
+      requiredBlock = `\nREQUIRED INGREDIENTS (MUST include these as main components):\n${requiredItems
+        .map(i => `- ${i.name}${i.quantity ? ` (${i.quantity})` : ""}`)
+        .join("\n")}\n`;
+    }
+    
+    if (optionalItems.length > 0) {
+      optionalBlock = `\nOPTIONAL INGREDIENTS (use only if they genuinely improve the dish):\n${optionalItems
+        .map(i => `- ${i.name}${i.quantity ? ` (${i.quantity})` : ""}`)
+        .join("\n")}\n`;
     }
   }
 
-  // Add constraints in Gemini-preferred format (at the top)
-  if (dietaryConstraints && dietaryConstraints.length > 0) {
-    const dietaryMap: Record<string, string> = {
-      'vegan': 'vegan (no animal products)',
-      'vegetarian': 'vegetarian (no meat but may include dairy/eggs)',
-      'pescatarian': 'pescatarian (no meat but may include fish/seafood)',
-      'gluten-free': 'gluten-free (no wheat, barley, rye)',
-      'dairy-free': 'dairy-free (no milk, cheese, yogurt)',
-      'nut-free': 'nut-free (no nuts or nut products)',
-      'soy-free': 'soy-free (no soy products)',
-      'low-sodium': 'low sodium (minimal salt, no high-sodium ingredients)',
-      'low-carb': 'low carbohydrate',
-      'keto': 'keto-friendly (low carb, high fat)',
-      'high-protein': 'high protein (20g+ protein per serving)',
-      'no-mayo': 'no mayonnaise or mayonnaise-based ingredients',
-      'no-broccoli': 'no broccoli or broccoli-containing ingredients',
-      'no-olives': 'no olives or olive products'
-    };
-    
-    const dietaryDescriptions = dietaryConstraints
-      .map((id: string) => dietaryMap[id] || id)
-      .join(', ');
-  }
+  // Map constraints to prompt-friendly format
+  const dietary = dietaryConstraints?.length > 0 ? dietaryConstraints.join(", ") : "none";
+  const time = timeConstraints?.length > 0 ? timeConstraints.join(", ") : "not specified";
+  const skill = skillLevel || "not specified";
+  const cost = costPreference || "not specified";
+  const servings = request.servings || 4;
 
-  if (timeConstraints && timeConstraints.length > 0) {
-    const timeMap: Record<string, string> = {
-      'under-15': 'total time under 15 minutes',
-      'under-30': 'total time under 30 minutes',
-      '1-hour': 'total time under 1 hour',
-      '5-ingredients': 'maximum 5 main ingredients',
-      'one-pot': 'one-pot or one-pan meal (minimal cleanup)',
-      'no-cook': 'no cooking required'
-    };
-    
-    const timeDescriptions = timeConstraints
-      .map((id: string) => timeMap[id] || id)
-      .join(', ');
-  }
+  const constraintsBlock = `
+CONSTRAINTS (MUST FOLLOW):
+Dietary: ${dietary}
+Time: ${time}
+Skill level: ${skill}
+Cost: ${cost}
+SERVINGS: ${servings}
+ALLOWED EQUIPMENT: ${request.allowedEquipment?.join(", ") || "not specified"}
+`.trim();
 
-  if (skillLevel) {
-    const skillMap: Record<string, string> = {
-      'beginner': 'beginner-friendly (simple techniques, basic equipment)',
-      'intermediate': 'intermediate (some experience, standard equipment)',
-      'advanced': 'restaurant-quality (complex techniques, special equipment)'
-    };
-    prompt += `Skill level: ${skillMap[skillLevel] || skillLevel}.\n`;
-  }
+  const dialsBlock = `
+USER STYLE DIALS (MUST FOLLOW):
+- Complexity: ${style.complexity} (simple|balanced|project)
+- Novelty: ${style.novelty} (tried_true|fresh_twist|adventurous)
 
-  if (costPreference) {
-    const costMap: Record<string, string> = {
-      'cost-conscious': 'budget-friendly with affordable ingredients',
-      'standard': 'regular ingredient quality and cost',
-      'premium-ingredients': 'high-quality, premium ingredients regardless of cost'
-    };
-    prompt += `Cost preference: ${costMap[costPreference] || costPreference}.\n`;
-  }
+RECIPE STRUCTURE TARGETS (HARD):
+- Ingredients count (EXCLUDING staples like salt/oil/water): ${targets.ingredientsTargetMin}–${targets.ingredientsTargetMax}
+- Steps count: ${targets.stepsTargetMin}–${targets.stepsTargetMax}
+- Techniques: ${targets.techniques}
+- Novelty rules: ${targets.noveltyRules}
 
-  if (excludedIngredients && excludedIngredients.length > 0) {
-    prompt += `Exclude these ingredients: ${excludedIngredients.join(', ')}.\n`;
-  }
+NOVELTY RULES:
+- tried_true: classic, familiar preparation; do NOT introduce fusion; avoid unusual pairings; keep it reliable.
+- fresh_twist: include EXACTLY ONE optional twist (clearly labeled) that improves flavor but stays approachable.
+- adventurous: bolder flavors/techniques allowed; remain coherent and cookable; no "random weirdness".
+`.trim();
 
-  if (includedIngredients && includedIngredients.length > 0) {
-    prompt += `Include these ingredients: ${includedIngredients.join(', ')}.\n`;
-  }
+  const honestyBlock = `
+STRICT HONESTY & COMPLIANCE:
+- Only list a pantry item under alignmentNotes.pantryUsed if it appears in the provided pantry inputs (required/optional/inventory).
+- If you assume staples (salt, pepper, oil, water), list them under alignmentNotes.assumptions.
+- Do not claim you verified nutrition. caloriesPerServing may be an estimate; if so, add an assumption note.
+- If constraints conflict, choose the safest interpretation and list the tradeoff in alignmentNotes.tradeoffs.
+- Output must be REALISTIC for home cooking and match the allowed equipment.
 
-  if (cuisineType) {
-    prompt += `Cuisine type: ${cuisineType}.\n`;
-  }
+OUTPUT RULES:
+- Output ONLY valid JSON. No Markdown. No code fences. No commentary.
+- Use US-friendly measurements by default unless the concept explicitly suggests otherwise.
+- Keep ingredient names concise (e.g. "yellow onion", not a full sentence).
+- Steps must be short, action-oriented sentences. Each step should be one main action.
+- Include timerMinutes on steps where helpful (0 if not applicable).
+- Include whyItMatters for only the most important steps (keep it brief).
+`.trim();
 
-  if (mealType) {
-    prompt += `Meal type: ${mealType}.\n`;
-  }
-
-  prompt += `
-
-IMPORTANT constraints:
-- Ensure "prepTimeMinutes" and "cookTimeMinutes" are numbers.
-- If "pantryItems" are provided, strictly follow the "pantryMode" logic (e.g. if 'strict', do not add extra items).
-- Make the recipe practical and realistic.
-- Estimate calories per serving based on the ingredients and their quantities. Be realistic but conservative in your estimate.
-
-Respond with ONLY valid JSON matching this exact schema:
+  const schemaBlock = `
+OUTPUT JSON SCHEMA (MUST MATCH EXACTLY):
 {
   "title": "string",
   "description": "string",
   "prepTimeMinutes": number,
   "cookTimeMinutes": number,
+  "totalTimeMinutes": number,
   "servings": number,
   "difficulty": "easy" | "medium" | "hard",
+  "equipment": ["string"],
   "ingredients": [
-    { "name": "string", "amount": "string", "unit": "string", "notes": "string" }
+    {
+      "name": "string",
+      "quantity": "string",
+      "unit": "string",
+      "notes": "string",
+      "group": "string"
+    }
   ],
-  "steps": ["string (step 1)", "string (step 2)"],
+  "steps": [
+    {
+      "order": number,
+      "text": "string",
+      "timerMinutes": number,
+      "critical": boolean,
+      "whyItMatters": "string",
+      "checkpoint": "string"
+    }
+  ],
   "tags": ["string"],
-  "caloriesPerServing": number
+  "caloriesPerServing": number,
+
+  "twists": [
+    {
+      "title": "string",
+      "description": "string",
+      "isOptional": boolean
+    }
+  ],
+
+  "userStyle": {
+    "complexity": "simple|balanced|project",
+    "novelty": "tried_true|fresh_twist|adventurous"
+  },
+
+  "alignmentNotes": {
+    "readback": "string",
+    "constraintsApplied": ["string"],
+    "pantryUsed": ["string"],
+    "assumptions": ["string"],
+    "tradeoffs": ["string"],
+    "quickTweaks": ["string"]
+  },
+
+  "qualityChecks": {
+    "majorIngredientsReferencedInSteps": boolean,
+    "dietaryCompliance": boolean,
+    "timeConstraintCompliance": boolean,
+    "unitSanity": boolean,
+    "equipmentMatch": boolean,
+    "warnings": ["string"]
+  }
+}
+
+TWIST RULES (HARD):
+- If novelty = "tried_true": twists MUST be [].
+- If novelty = "fresh_twist": twists MUST contain EXACTLY 1 item with isOptional=true.
+- If novelty = "adventurous": twists may contain 1–3 optional items.
+`.trim();
+
+  return `
+You are a professional chef and recipe developer.
+
+TASK:
+Create an original, cookable recipe that satisfies the user's concept and constraints.
+
+CONCEPT:
+"${concept}"
+
+${requiredBlock}${optionalBlock}${constraintsBlock}
+
+${dialsBlock}
+
+${honestyBlock}
+
+${schemaBlock}
+`.trim();
+}
+
+// Enhanced prompt construction for recipe modification with dials and validation
+function constructModificationPrompt(request: any): string {
+  console.log('🔍 DEBUG: constructModificationPrompt called with request type:', typeof request);
+  console.log('🔍 DEBUG: request keys:', Object.keys(request || {}));
+  
+  const { 
+    baseRecipe, 
+    modificationInstructions,
+    userStyle,
+    structureTargets,
+    dietary,
+    timeConstraint,
+    allowedEquipment
+  } = request;
+  
+  console.log('🔍 DEBUG: baseRecipe exists:', !!baseRecipe);
+  console.log('🔍 DEBUG: modificationInstructions exists:', !!modificationInstructions);
+  console.log('🔍 DEBUG: baseRecipe type:', typeof baseRecipe);
+  if (baseRecipe) {
+    console.log('🔍 DEBUG: baseRecipe keys:', Object.keys(baseRecipe));
+  }
+
+  // Default userStyle if not provided
+  const style = userStyle || { complexity: "balanced", novelty: "tried_true" };
+  const targets = structureTargets || getStructureTargets(style);
+
+  const equipmentBlock = allowedEquipment?.length
+    ? `ALLOWED EQUIPMENT (you may ONLY use these): ${allowedEquipment.join(", ")}\n` 
+    : `ALLOWED EQUIPMENT: (not specified)\n`;
+
+  const schemaBlock = `
+OUTPUT JSON SCHEMA (MUST MATCH EXACTLY):
+{
+  "title": "string",
+  "description": "string",
+  "prepTimeMinutes": number,
+  "cookTimeMinutes": number,
+  "totalTimeMinutes": number,
+  "servings": number,
+  "difficulty": "easy" | "medium" | "hard",
+  "equipment": ["string"],
+  "ingredients": [
+    {
+      "name": "string",
+      "quantity": "string",
+      "unit": "string",
+      "notes": "string",
+      "group": "string"
+    }
+  ],
+  "steps": [
+    {
+      "order": number,
+      "text": "string",
+      "timerMinutes": number,
+      "critical": boolean,
+      "whyItMatters": "string",
+      "checkpoint": "string"
+    }
+  ],
+  "tags": ["string"],
+  "caloriesPerServing": number,
+
+  "twists": [
+    {
+      "title": "string",
+      "description": "string",
+      "isOptional": boolean
+    }
+  ],
+
+  "userStyle": {
+    "complexity": "simple|balanced|project",
+    "novelty": "tried_true|fresh_twist|adventurous"
+  },
+
+  "alignmentNotes": {
+    "readback": "string",
+    "constraintsApplied": ["string"],
+    "pantryUsed": ["string"],
+    "assumptions": ["string"],
+    "tradeoffs": ["string"],
+    "quickTweaks": ["string"]
+  },
+
+  "qualityChecks": {
+    "majorIngredientsReferencedInSteps": boolean,
+    "dietaryCompliance": boolean,
+    "timeConstraintCompliance": boolean,
+    "unitSanity": boolean,
+    "equipmentMatch": boolean,
+    "warnings": ["string"]
+  }
 }`;
 
-  return prompt;
-}
+  return `
+You are a professional chef and recipe editor.
 
-function constructModificationPrompt(request: any): string {
-  const { baseRecipe, modificationInstructions } = request;
+TASK:
+Modify the given recipe according to the user's instructions while keeping it coherent and cookable.
 
-  let prompt = `You are a professional chef. Modify this recipe based on the following instructions.
+CURRENT RECIPE (JSON):
+${JSON.stringify(baseRecipe, null, 2)}
 
-Current Recipe:
-Title: ${baseRecipe.title}
-Description: ${baseRecipe.description}
-Servings: ${baseRecipe.servings}
-Difficulty: ${baseRecipe.difficulty}
+USER MODIFICATION INSTRUCTIONS:
+"${modificationInstructions}"
 
-Ingredients:
-`;
+ADDITIONAL CONSTRAINTS (if any):
+Dietary: ${dietary || "none"}
+Time: ${timeConstraint || "not specified"}
+${equipmentBlock}
 
-  if (baseRecipe.ingredients && baseRecipe.ingredients.length > 0) {
-    baseRecipe.ingredients.forEach((ing: any) => {
-      prompt += `- ${ing.amount || ing.quantity || ''} ${ing.unit || ''} ${ing.food_name || ing.name || ''}\n`;
-    });
-  }
+USER STYLE DIALS (MUST FOLLOW):
+- Complexity: ${style.complexity} (simple|balanced|project)
+- Novelty: ${style.novelty} (tried_true|fresh_twist|adventurous)
 
-  prompt += `\nSteps:\n`;
-  if (baseRecipe.steps && baseRecipe.steps.length > 0) {
-    baseRecipe.steps.forEach((step: any, index: number) => {
-      prompt += `${index + 1}. ${step.instruction || step}\n`;
-    });
-  }
+RECIPE STRUCTURE TARGETS (HARD):
+- Ingredients count (excluding staples): ${targets.ingredientsTargetMin}–${targets.ingredientsTargetMax}
+- Steps count: ${targets.stepsTargetMin}–${targets.stepsTargetMax}
+- Novelty rules: ${targets.noveltyRules}
 
-  prompt += `\nModification Instructions: ${modificationInstructions}\n\n`;
-  prompt += `IMPORTANT: Do NOT include "Undefined" or any placeholder text in the title. Provide a complete, descriptive title for the modified recipe.\n`;
-  prompt += `Re-calculate calories per serving based on the modified ingredients and their quantities. Be realistic but conservative in your estimate.\n\n`;
-  prompt += `Respond with ONLY valid JSON matching this exact schema:
-{
-  "title": "string",
-  "description": "string",
-  "prepTimeMinutes": number,
-  "cookTimeMinutes": number,
-  "servings": number,
-  "difficulty": "easy" | "medium" | "hard",
-  "ingredients": [
-    { "name": "string", "amount": "string", "unit": "string", "notes": "string" }
-  ],
-  "steps": ["string (step 1)", "string (step 2)"],
-  "tags": ["string"],
-  "caloriesPerServing": number
-}
+MODIFICATION RULES (HARD):
+- Preserve the dish identity unless the instructions explicitly ask for a different dish.
+- Apply the user's requested changes FIRST.
+- Then adjust steps/ingredients to meet the complexity target WITHOUT bloating the recipe.
+- Respect novelty rules:
+  - tried_true: no fusion, no unusual pairings.
+  - fresh_twist: EXACTLY ONE optional twist (clearly labeled).
+  - adventurous: 1–3 optional twists allowed.
+- Output ONLY valid JSON. No Markdown. No commentary.
 
-Keep the ingredients and steps realistic and practical. Make sure the JSON is valid and properly formatted.`;
+STRICT HONESTY:
+- Do not claim you verified nutrition; calories may be an estimate (note it in assumptions).
+- If constraints conflict, choose safest interpretation and list tradeoff in alignmentNotes.tradeoffs.
 
-  return prompt;
+${schemaBlock}
+`.trim();
 }

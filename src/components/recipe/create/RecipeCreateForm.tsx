@@ -10,9 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, ChefHat, Clock, Users } from "lucide-react";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Plus, X, ChefHat, Clock, Users, Zap, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AIRecipeResponse } from "@/services/ai/recipeGenerator";
+import type { UserStyle } from "@/lib/llmTypes";
 
 interface RecipeFormData {
   title: string;
@@ -64,6 +66,11 @@ const RecipeCreateForm: React.FC<RecipeCreateFormProps> = ({ initialData }) => {
     ingredients: [],
     steps: [],
     source_url: "",
+  });
+
+  const [userStyle, setUserStyle] = useState<UserStyle>({
+    complexity: "balanced",
+    novelty: "tried_true"
   });
 
   // Hydrate form with initial data from import
@@ -226,6 +233,10 @@ const RecipeCreateForm: React.FC<RecipeCreateFormProps> = ({ initialData }) => {
         space_id: currentSpace?.id || null,
       };
 
+      console.log('Submitting recipe with data:', recipeData);
+      console.log('Current space:', currentSpace);
+      console.log('User spaces available:', user?.id ? 'Will check' : 'No user');
+
       const createdRecipe = await recipeService.createRecipe(recipeData);
 
       toast({
@@ -369,6 +380,57 @@ const RecipeCreateForm: React.FC<RecipeCreateFormProps> = ({ initialData }) => {
                       <SelectItem value="shared">Shared</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              {/* Recipe Style Dials */}
+              <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
+                <h3 className="text-lg font-semibold flex items-center">
+                  <Zap className="mr-2 h-5 w-5" />
+                  Recipe Style
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Adjust the complexity and novelty of the recipe to match your preferences
+                </p>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Complexity</Label>
+                    <SegmentedControl
+                      value={userStyle.complexity}
+                      onValueChange={(value) => setUserStyle(prev => ({ ...prev, complexity: value as UserStyle['complexity'] }))}
+                      options={[
+                        { value: 'simple', label: 'Simple & Quick' },
+                        { value: 'balanced', label: 'Balanced' },
+                        { value: 'project', label: 'Project Meal' }
+                      ]}
+                      size="md"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {userStyle.complexity === 'simple' && 'Few ingredients, quick prep time, basic techniques'}
+                      {userStyle.complexity === 'balanced' && 'Moderate complexity, standard home cooking'}
+                      {userStyle.complexity === 'project' && 'Complex recipe, advanced techniques, special occasion'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Novelty</Label>
+                    <SegmentedControl
+                      value={userStyle.novelty}
+                      onValueChange={(value) => setUserStyle(prev => ({ ...prev, novelty: value as UserStyle['novelty'] }))}
+                      options={[
+                        { value: 'tried_true', label: 'Tried & True' },
+                        { value: 'fresh_twist', label: 'Fresh Twist' },
+                        { value: 'adventurous', label: 'Adventurous' }
+                      ]}
+                      size="md"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {userStyle.novelty === 'tried_true' && 'Classic, familiar recipes you can count on'}
+                      {userStyle.novelty === 'fresh_twist' && 'Traditional recipes with one optional creative twist'}
+                      {userStyle.novelty === 'adventurous' && 'Bold flavors and innovative combinations'}
+                    </p>
+                  </div>
                 </div>
               </div>
 

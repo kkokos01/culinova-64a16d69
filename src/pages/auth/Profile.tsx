@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,8 @@ import { LogOut, Bell } from "lucide-react";
 const Profile = () => {
   const [searchParams] = useSearchParams();
   const { user, signOut } = useAuth();
-  const { currentSpace } = useSpace();
+  const { currentSpace, refreshSpaces } = useSpace();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("profile");
   const [pendingInvitationsCount, setPendingInvitationsCount] = useState(0);
   
@@ -167,9 +169,19 @@ const Profile = () => {
               
               <TabsContent value="notifications">
                 <NotificationsList 
-                  onInvitationAction={() => {
+                  onInvitationAction={async () => {
                     // Refresh pending count when invitations are acted upon
-                    InvitationService.getPendingInvitationsCount().then(setPendingInvitationsCount);
+                    const count = await InvitationService.getPendingInvitationsCount();
+                    setPendingInvitationsCount(count);
+                    
+                    // Refresh spaces to update memberships
+                    await refreshSpaces();
+                    
+                    // Invalidate all recipe queries to ensure fresh data
+                    queryClient.invalidateQueries({ queryKey: ['recipes'] });
+                    queryClient.invalidateQueries({ queryKey: ['userRecipes'] });
+                    queryClient.invalidateQueries({ queryKey: ['user-recipes'] });
+                    queryClient.invalidateQueries({ queryKey: ['space-recipes'] });
                   }}
                 />
               </TabsContent>

@@ -292,13 +292,64 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
       
       if (error) throw error;
       
-      const result = data as { success: boolean; error?: string; message?: string };
+      const result = data as { 
+        success: boolean; 
+        error?: string; 
+        message?: string; 
+        invitation_id?: string;
+        user_exists?: boolean;
+      };
       
       if (result.success) {
-        toast({
-          title: "Invitation sent",
-          description: result.message || "User successfully added to collection.",
-        });
+        const space = spaces.find(s => s.id === spaceId);
+        
+        if (result.user_exists === false) {
+          // NEW USER FLOW - Send email invitation
+          try {
+            // Get inviter details for the email
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('display_name')
+              .eq('user_id', user.id)
+              .single();
+            
+            // Call the Edge Function to send auth invitation email
+            const { error: emailError } = await supabase.functions.invoke('send-auth-invitation', {
+              body: {
+                email: email,
+                spaceName: space?.name || 'A Collection',
+                inviterName: profile?.display_name || 'Someone'
+              }
+            });
+            
+            if (emailError) {
+              console.error('Email sending failed:', emailError);
+              toast({
+                title: "Invitation created",
+                description: "User will be invited after they sign up. Email delivery may be delayed.",
+                variant: "default",
+              });
+            } else {
+              toast({
+                title: "Invitation email sent",
+                description: result.message || "User will receive an email invitation.",
+              });
+            }
+          } catch (emailError) {
+            console.error('Email error:', emailError);
+            toast({
+              title: "Invitation created",
+              description: "User will be invited after they sign up. Please check email delivery.",
+              variant: "default",
+            });
+          }
+        } else {
+          // EXISTING USER FLOW - In-app notification only
+          toast({
+            title: "Invitation sent",
+            description: result.message || "User will be notified in-app.",
+          });
+        }
         
         // Refresh spaces to update member count and memberships
         await fetchSpaces();
@@ -306,7 +357,7 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
       } else {
         toast({
           title: "Invitation failed",
-          description: result.error || "Failed to add user to collection.",
+          description: result.error || "Failed to send invitation.",
           variant: "destructive",
         });
         return false;

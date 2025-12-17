@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Leaf, Clock, ChefHat, X, Plus, Settings } from "lucide-react";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Leaf, Clock, ChefHat, X, Plus, Settings, Zap } from "lucide-react";
 import PantryModeSelector from "./PantryModeSelector";
 import { PantryMode, PantryItem } from "@/types";
+import type { UserStyle } from "@/lib/llmTypes";
 
 interface ConstraintSelectorProps {
   dietaryConstraints: string[];
@@ -17,12 +19,14 @@ interface ConstraintSelectorProps {
   excludedIngredients: string[];
   spicinessLevel: number;
   targetServings: number;
+  userStyle: UserStyle;
   onDietaryChange: (constraints: string[]) => void;
   onTimeChange: (constraints: string[]) => void;
   onSkillChange: (level: string) => void;
   onExclusionsChange: (exclusions: string[]) => void;
   onSpicinessChange: (level: number) => void;
   onServingsChange: (servings: number) => void;
+  onUserStyleChange: (userStyle: UserStyle) => void;
   // Pantry-related props
   usePantry: boolean;
   pantryMode: PantryMode;
@@ -71,12 +75,14 @@ const ConstraintSelector: React.FC<ConstraintSelectorProps> = ({
   excludedIngredients,
   spicinessLevel,
   targetServings,
+  userStyle,
   onDietaryChange,
   onTimeChange,
   onSkillChange,
   onExclusionsChange,
   onSpicinessChange,
   onServingsChange,
+  onUserStyleChange,
   // Pantry-related props
   usePantry,
   pantryMode,
@@ -132,13 +138,61 @@ const ConstraintSelector: React.FC<ConstraintSelectorProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="dietary" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+          <Tabs defaultValue="style" className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="style" className="text-xs">Style</TabsTrigger>
               <TabsTrigger value="dietary" className="text-xs">Dietary</TabsTrigger>
               <TabsTrigger value="time" className="text-xs">Time & Skill</TabsTrigger>
               <TabsTrigger value="ingredients" className="text-xs">Ingredients</TabsTrigger>
               <TabsTrigger value="pantry" className="text-xs">Pantry</TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="style" className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Recipe Style</Label>
+                <p className="text-xs text-gray-500 mb-3">Adjust the complexity and novelty to match your preferences</p>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Complexity</Label>
+                    <SegmentedControl
+                      value={userStyle.complexity}
+                      onValueChange={(value) => onUserStyleChange({ ...userStyle, complexity: value as UserStyle['complexity'] })}
+                      options={[
+                        { value: 'simple', label: 'Simple & Quick' },
+                        { value: 'balanced', label: 'Balanced' },
+                        { value: 'project', label: 'Project Meal' }
+                      ]}
+                      size="md"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {userStyle.complexity === 'simple' && 'Few ingredients, quick prep time, basic techniques'}
+                      {userStyle.complexity === 'balanced' && 'Moderate complexity, standard home cooking'}
+                      {userStyle.complexity === 'project' && 'Complex recipe, advanced techniques, special occasion'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Novelty</Label>
+                    <SegmentedControl
+                      value={userStyle.novelty}
+                      onValueChange={(value) => onUserStyleChange({ ...userStyle, novelty: value as UserStyle['novelty'] })}
+                      options={[
+                        { value: 'tried_true', label: 'Tried & True' },
+                        { value: 'fresh_twist', label: 'Fresh Twist' },
+                        { value: 'adventurous', label: 'Adventurous' }
+                      ]}
+                      size="md"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {userStyle.novelty === 'tried_true' && 'Classic, familiar recipes you can count on'}
+                      {userStyle.novelty === 'fresh_twist' && 'Traditional recipes with one optional creative twist'}
+                      {userStyle.novelty === 'adventurous' && 'Bold flavors and innovative combinations'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
             
             <TabsContent value="dietary" className="space-y-4">
               <div>

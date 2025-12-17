@@ -53,11 +53,17 @@ const Collections: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedSpaceId, setSelectedSpaceId] = useState<string>("all");
 
-  // Use React Query for caching and performance
+  // Fetch all recipes for the user (from all their spaces)
   const { data: savedRecipes = [], isLoading, error } = useQuery({
     queryKey: ['userRecipes', user?.id],
-    queryFn: () => user ? recipeService.getUserRecipes(user.id) : [],
-    enabled: !!user,
+    queryFn: () => {
+      if (!user?.id) return [];
+      return recipeService.getRecipes({ 
+        userId: user.id, 
+        allUserSpaces: true 
+      });
+    },
+    enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
   });

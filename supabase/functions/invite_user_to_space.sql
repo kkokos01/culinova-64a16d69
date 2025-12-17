@@ -74,10 +74,14 @@ BEGIN
     user_role,
     invitation_message,
     now()
-  );
+  ) RETURNING id INTO invitation_id;
   
-  -- Return success
-  RETURN json_build_object('success', true, 'message', 'Invitation sent successfully. User will need to accept the invitation to join the collection.');
+  -- Return success with invitation ID
+  RETURN json_build_object(
+    'success', true, 
+    'message', 'Invitation sent successfully. User will need to accept the invitation to join the collection.',
+    'invitation_id', invitation_id
+  );
   
 EXCEPTION
   WHEN OTHERS THEN

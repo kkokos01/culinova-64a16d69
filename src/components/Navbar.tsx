@@ -25,9 +25,11 @@ const Navbar = () => {
   const { user, signOut } = useAuth();
   const { memberships, spaces } = useSpace();
   
-  // Check if user is admin of any space
+  // Check if user is admin of any space OR the public collection
   const isAdmin = spaces.some(space => 
     memberships.some(m => m.space_id === space.id && m.role === 'admin' && m.is_active)
+  ) || memberships.some(m => 
+    m.space_id === '00000000-0000-0000-0000-000000000000' && m.role === 'admin' && m.is_active
   );
   
   // Fetch pending recipe count for admins

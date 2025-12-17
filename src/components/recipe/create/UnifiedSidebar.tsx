@@ -12,6 +12,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronLeft, ChevronDown, ChevronUp, Wand2, Lightbulb, Settings, Loader2, Check, Package } from "lucide-react";
 import AILoadingProgress from "@/components/ui/AILoadingProgress";
 import PantryModeSelector from "./PantryModeSelector";
+import ConstraintSelector from "./ConstraintSelector";
+import type { UserStyle } from "@/lib/llmTypes";
 
 interface UnifiedSidebarProps {
   mode: 'create' | 'modify';
@@ -38,12 +40,14 @@ interface UnifiedSidebarProps {
   excludedIngredients: string[];
   spicinessLevel: number;
   targetServings: number;
+  userStyle: UserStyle;
   onDietaryChange: (constraints: string[]) => void;
   onTimeChange: (constraints: string[]) => void;
   onSkillChange: (level: string) => void;
   onExclusionsChange: (ingredients: string[]) => void;
   onSpicinessChange: (level: number) => void;
   onServingsChange: (servings: number) => void;
+  onUserStyleChange: (userStyle: UserStyle) => void;
   
   // Cost preference
   costPreference: string;
@@ -86,12 +90,14 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
   excludedIngredients,
   spicinessLevel,
   targetServings,
+  userStyle,
   onDietaryChange,
   onTimeChange,
   onSkillChange,
   onExclusionsChange,
   onSpicinessChange,
   onServingsChange,
+  onUserStyleChange,
   
   // Cost preference
   costPreference,
@@ -307,10 +313,33 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-4 mt-3">
                 <p className="text-xs text-sage-100 italic">
-                  ⚙️ Optional: Add dietary filters and constraints for the AI to respect
+                  ⚙️ Optional: Add dietary filters, style preferences, and constraints for the AI to respect
                 </p>
                 
-                {/* Cuisine Type */}
+                {/* Use ConstraintSelector component */}
+                <ConstraintSelector
+                  dietaryConstraints={dietaryConstraints}
+                  timeConstraints={timeConstraints}
+                  skillLevel={skillLevel}
+                  excludedIngredients={excludedIngredients}
+                  spicinessLevel={spicinessLevel}
+                  targetServings={targetServings}
+                  userStyle={userStyle}
+                  onDietaryChange={onDietaryChange}
+                  onTimeChange={onTimeChange}
+                  onSkillChange={onSkillChange}
+                  onExclusionsChange={onExclusionsChange}
+                  onSpicinessChange={onSpicinessChange}
+                  onServingsChange={onServingsChange}
+                  onUserStyleChange={onUserStyleChange}
+                  usePantry={usePantry}
+                  pantryMode={pantryMode}
+                  pantryItems={pantryItems}
+                  onUsePantryChange={onUsePantryChange}
+                  onPantryModeChange={onPantryModeChange}
+                />
+                
+                {/* Cuisine Type - Keep separate as it's inspiration */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-900">Cuisine Type</Label>
                   <div className="flex flex-wrap gap-2">
@@ -331,66 +360,6 @@ const UnifiedSidebar = forwardRef<HTMLDivElement, UnifiedSidebarProps>(({
                         )}
                         {cuisine}
                       </button>
-                    ))}
-                  </div>
-                </div>
-                {/* Dietary Constraints */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-900">Dietary Constraints</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {dietaryOptions.map((option) => (
-                      <Badge
-                        key={option}
-                        variant={dietaryConstraints.includes(option) ? "default" : "secondary"}
-                        className="cursor-pointer text-xs"
-                        onClick={() => {
-                          const updated = dietaryConstraints.includes(option)
-                            ? dietaryConstraints.filter(d => d !== option)
-                            : [...dietaryConstraints, option];
-                          onDietaryChange(updated);
-                        }}
-                      >
-                        {option}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Time Constraints */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-900">Time Constraints</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {timeOptions.map((option) => (
-                      <Badge
-                        key={option}
-                        variant={timeConstraints.includes(option) ? "default" : "secondary"}
-                        className="cursor-pointer text-xs"
-                        onClick={() => {
-                          const updated = timeConstraints.includes(option)
-                            ? timeConstraints.filter(t => t !== option)
-                            : [...timeConstraints, option];
-                          onTimeChange(updated);
-                        }}
-                      >
-                        {option.replace('-', ' ')}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Skill Level */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-900">Skill Level {skillLevel ? `(${skillLevel})` : ""}</Label>
-                  <div className="flex gap-1">
-                    {skillLevels.map((level) => (
-                      <Badge
-                        key={level}
-                        variant={skillLevel === level ? "default" : "secondary"}
-                        className="cursor-pointer text-xs"
-                        onClick={() => onSkillChange(skillLevel === level ? "" : level)}
-                      >
-                        {level}
-                      </Badge>
                     ))}
                   </div>
                 </div>

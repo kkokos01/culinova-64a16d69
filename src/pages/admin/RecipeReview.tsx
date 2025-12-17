@@ -120,16 +120,10 @@ const RecipeReview: React.FC = () => {
     
     setReviewing(recipeId);
     try {
-      const { error } = await supabase
-        .from('recipes')
-        .update({ 
-          qa_status: 'approved_public',
-          is_public: true,
-          privacy_level: 'public',
-          approved_by: user.id,
-          approved_at: new Date().toISOString()
-        })
-        .eq('id', recipeId);
+      const { error } = await supabase.rpc('approve_recipe_public', {
+        recipe_id: recipeId,
+        approver_id: user.id
+      });
 
       if (error) throw error;
 

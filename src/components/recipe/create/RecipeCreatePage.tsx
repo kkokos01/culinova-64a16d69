@@ -22,6 +22,7 @@ import { ArrowLeft, Sparkles, Loader2, Save, ChefHat, Wand2, Plus, Minus, Rotate
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
 import AILoadingProgress from "@/components/ui/AILoadingProgress";
 import RecipeCreateForm from "./RecipeCreateForm";
+import type { UserStyle } from "@/lib/llmTypes";
 
 const RecipeCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -167,6 +168,10 @@ const RecipeCreatePage: React.FC = () => {
   const [excludedIngredients, setExcludedIngredients] = useState<string[]>([]);
   const [spicinessLevel, setSpicinessLevel] = useState(3); // Changed to number
   const [targetServings, setTargetServings] = useState(4);
+  const [userStyle, setUserStyle] = useState<UserStyle>({
+    complexity: 'balanced',
+    novelty: 'fresh_twist'
+  });
 
   // New Unified Sidebar State
   const [userInput, setUserInput] = useState("");
@@ -424,6 +429,7 @@ const RecipeCreatePage: React.FC = () => {
     try {
       logger.debug('About to send API request', { costPreference }, 'RecipeCreatePage');
       const request: AIRecipeRequest = {
+        operation: "generate",
         concept: combinedInputs,
         dietaryConstraints,
         timeConstraints,
@@ -433,10 +439,11 @@ const RecipeCreatePage: React.FC = () => {
         spicinessLevel,
         targetServings: targetServings || 4,
         cuisinePreference: effectiveInspiration || undefined,
+        userStyle, // Include userStyle in the request
         // Include pantry context only when enabled
         pantryItems: usePantry ? pantryItems : undefined,
         pantryMode: usePantry ? pantryMode : 'ignore',
-        selectedPantryItemIds: (usePantry && pantryMode === 'custom_selection') ? selectedPantryItemIds : undefined
+        selectedPantryItemIds: (usePantry && pantryMode === 'custom_selection') ? Object.fromEntries(selectedPantryItemIds) : undefined
       };
       logger.debug('Full API request payload', request, 'RecipeCreatePage');
 
@@ -482,11 +489,15 @@ const RecipeCreatePage: React.FC = () => {
             unit_name: ing.unit.toLowerCase(),
             amount: parseFloat(ing.amount) || 1,
           })),
-          steps: response.steps.map((step, index) => ({
+          steps: response.steps.map((step: any, index: number) => ({
             id: `step-${index}`,
             recipe_id: "generated",
-            order_number: index + 1,
-            instruction: step,
+            order_number: (step as any).order || index + 1,
+            instruction: (step as any).text || step,
+            duration_minutes: (step as any).timerMinutes || null,
+            critical: (step as any).critical || false,
+            why_it_matters: (step as any).whyItMatters || null,
+            checkpoint: (step as any).checkpoint || null,
           })),
           user: {
             id: user?.id || "unknown",
@@ -534,13 +545,64 @@ const RecipeCreatePage: React.FC = () => {
     await handleGenerateRecipe(description, "", "");
   };
 
+  // Recipe transformation for display
+  const recipe = generatedRecipe ? {
+    id: "generated",
+    user_id: user.id,
+    title: generatedRecipe.title,
+    description: generatedRecipe.description,
+    prep_time_minutes: generatedRecipe.prepTimeMinutes,
+    cook_time_minutes: generatedRecipe.cookTimeMinutes,
+    servings: generatedRecipe.servings,
+    difficulty: generatedRecipe.difficulty,
+    is_public: false,
+    privacy_level: "private" as const,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    tags: generatedRecipe.tags,
+    calories_per_serving: generatedRecipe.caloriesPerServing,
+    ingredients: generatedRecipe.ingredients.map((ing, index) => ({
+      id: `ing-${index}`,
+      food_id: null,
+      unit_id: null,
+      food_name: ing.name.toLowerCase(),
+      unit_name: ing.unit.toLowerCase(),
+      amount: parseFloat(ing.amount) || 1,
+    })),
+    steps: generatedRecipe.steps.map((step: any, index: number) => ({
+      id: `step-${index}`,
+      recipe_id: "generated",
+      order_number: (step as any).order || index + 1,
+      instruction: (step as any).text || step,
+      duration_minutes: (step as any).timerMinutes || null,
+      critical: (step as any).critical || false,
+      why_it_matters: (step as any).whyItMatters || null,
+      checkpoint: (step as any).checkpoint || null,
+    })),
+    user: {
+      id: user.id,
+      email: user.email || "",
+      name: user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
+      avatar_url: user.user_metadata?.avatar_url,
+    }
+  } : null;
+
+  // Debug: Log recipe object for UI display
+  console.log('Recipe object for UI:', recipe);
+  console.log('Recipe calories_per_serving value:', recipe?.calories_per_serving);
+
   const handleModifyRecipe = async (modificationInstructions: string) => {
     if (!recipe) return;
 
     try {
       const modificationRequest: AIRecipeModificationRequest = {
+        operation: "modify",
         baseRecipe: recipe,
         modificationInstructions,
+        userStyle: userStyle || { // Include current userStyle or defaults
+          complexity: 'balanced',
+          novelty: 'fresh_twist'
+        },
       };
 
       const response = await modifyRecipe(modificationRequest);
@@ -567,11 +629,15 @@ const RecipeCreatePage: React.FC = () => {
             unit_name: ing.unit.toLowerCase(),
             amount: parseFloat(ing.amount) || 1,
           })),
-          steps: response.steps.map((step, index) => ({
+          steps: response.steps.map((step: any, index: number) => ({
             id: `step-${index}`,
             recipe_id: "generated",
-            order_number: index + 1,
-            instruction: step,
+            order_number: (step as any).order || index + 1,
+            instruction: (step as any).text || step,
+            duration_minutes: (step as any).timerMinutes || null,
+            critical: (step as any).critical || false,
+            why_it_matters: (step as any).whyItMatters || null,
+            checkpoint: (step as any).checkpoint || null,
           })),
         },
         isActive: true,
@@ -715,21 +781,23 @@ const RecipeCreatePage: React.FC = () => {
         image_url: generatedImageUrl || null,
         calories_per_serving: generatedRecipe.caloriesPerServing || null,
         ingredients,
-        steps: generatedRecipe.steps,
+        steps: generatedRecipe.steps.map((step: any, index: number) => ({
+        order_number: (step as any).order || index + 1,
+        instruction: (step as any).text || step,
+        duration_minutes: (step as any).timerMinutes || null,
+        critical: (step as any).critical || false,
+        why_it_matters: (step as any).whyItMatters || null,
+        checkpoint: (step as any).checkpoint || null,
+      })),
         tags: generatedRecipe.tags || [],
         space_id: currentSpace.id,
         user_id: user.id,
         is_public: false,
-        privacy_level: 'private',
+        privacy_level: 'private' as const,
         qa_status: 'pass' as const,
       };
 
-      const { data: savedRecipe, error: createError } = await recipeService.createRecipe(recipeData);
-
-      if (createError) {
-        throw new Error(createError);
-      }
-
+      const savedRecipe = await recipeService.createRecipe(recipeData);
       setSavedRecipeId(savedRecipe.id);
       
       toast({
@@ -789,48 +857,6 @@ const RecipeCreatePage: React.FC = () => {
       }
     }
   };
-
-  // Recipe transformation for display
-  const recipe = generatedRecipe ? {
-    id: "generated",
-    user_id: user.id,
-    title: generatedRecipe.title,
-    description: generatedRecipe.description,
-    prep_time_minutes: generatedRecipe.prepTimeMinutes,
-    cook_time_minutes: generatedRecipe.cookTimeMinutes,
-    servings: generatedRecipe.servings,
-    difficulty: generatedRecipe.difficulty,
-    is_public: false,
-    privacy_level: "private" as const,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    tags: generatedRecipe.tags,
-    calories_per_serving: generatedRecipe.caloriesPerServing,
-    ingredients: generatedRecipe.ingredients.map((ing, index) => ({
-      id: `ing-${index}`,
-      food_id: null,
-      unit_id: null,
-      food_name: ing.name.toLowerCase(),
-      unit_name: ing.unit.toLowerCase(),
-      amount: parseFloat(ing.amount) || 1,
-    })),
-    steps: generatedRecipe.steps.map((step, index) => ({
-      id: `step-${index}`,
-      recipe_id: "generated",
-      order_number: index + 1,
-      instruction: step,
-    })),
-    user: {
-      id: user.id,
-      email: user.email || "",
-      name: user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
-      avatar_url: user.user_metadata?.avatar_url,
-    }
-  } : null;
-
-  // Debug: Log recipe object for UI display
-  console.log('Recipe object for UI:', recipe);
-  console.log('Recipe calories_per_serving value:', recipe?.calories_per_serving);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -895,6 +921,7 @@ const RecipeCreatePage: React.FC = () => {
                 excludedIngredients={excludedIngredients}
                 spicinessLevel={spicinessLevel}
                 targetServings={targetServings}
+                userStyle={userStyle}
                 onServingsChange={setTargetServings}
                 
                 // Callback functions for advanced options
@@ -904,6 +931,7 @@ const RecipeCreatePage: React.FC = () => {
                 onCostChange={setCostPreference}
                 onExclusionsChange={setExcludedIngredients}
                 onSpicinessChange={setSpicinessLevel}
+                onUserStyleChange={setUserStyle}
                 
                 // Pantry settings
                 usePantry={usePantry}

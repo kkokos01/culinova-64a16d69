@@ -1,6 +1,8 @@
 import { Recipe, Ingredient, PantryItem, PantryMode } from "@/types";
+import type { UserStyle } from "@/lib/llmTypes";
 
 export interface AIRecipeRequest {
+  operation: "generate" | "modify" | "import";
   concept: string;
   dietaryConstraints: string[];
   timeConstraints: string[];
@@ -12,12 +14,15 @@ export interface AIRecipeRequest {
   cuisinePreference?: string;
   pantryItems?: PantryItem[];
   pantryMode?: PantryMode;
-  selectedPantryItemIds?: Map<string, 'required' | 'optional'>;
+  selectedPantryItemIds?: Record<string, "required" | "optional">;
+  userStyle?: UserStyle;
 }
 
 export interface AIRecipeModificationRequest {
+  operation: "modify";
   baseRecipe: Recipe | AIRecipeResponse; 
   modificationInstructions: string;
+  userStyle?: UserStyle;
   selectedIngredients?: Map<string, { ingredient: Ingredient, action: "increase" | "decrease" | "remove" }>;
 }
 
@@ -59,7 +64,7 @@ export class AIRecipeGenerator {
   }
 
   /**
-   * Generate recipe using AI service (Edge Function)
+   * Generate new recipe using AI service
    */
   async generateRecipe(request: AIRecipeRequest): Promise<AIRecipeResponse | AIRecipeError> {
     try {
@@ -73,7 +78,10 @@ export class AIRecipeGenerator {
         };
       }
       
-      const response = await this.callEdgeFunction({ recipeRequest: request });
+      const response = await this.callEdgeFunction({ 
+        operation: 'generate',
+        recipeRequest: request 
+      });
       return this.parseAIResponse(response);
 
     } catch (error) {
@@ -92,7 +100,10 @@ export class AIRecipeGenerator {
   async modifyRecipe(request: AIRecipeModificationRequest): Promise<AIRecipeResponse | AIRecipeError> {
     try {
       console.log('Modifying recipe with Gemini...');
-      const response = await this.callEdgeFunction({ recipeRequest: request });
+      const response = await this.callEdgeFunction({ 
+        operation: 'modify',
+        recipeRequest: request 
+      });
       return this.parseAIResponse(response);
     } catch (error) {
       console.error('Error modifying recipe:', error);
@@ -119,7 +130,10 @@ export class AIRecipeGenerator {
         };
       }
       
-      const response = await this.callEdgeFunction({ importRequest: { type, content } });
+      const response = await this.callEdgeFunction({ 
+        operation: 'import',
+        importRequest: { type, content } 
+      });
       
       return this.parseAIResponse(response);
     } catch (error) {

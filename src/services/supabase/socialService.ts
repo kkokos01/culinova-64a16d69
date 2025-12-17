@@ -120,7 +120,8 @@ export const socialService = {
       let query = supabase
         .from('recipes')
         .select('*')
-        .eq('privacy_level', 'public');
+        .eq('qa_status', 'approved_public') // Use qa_status instead of privacy_level
+        .eq('is_public', true);
       
       if (options.search) {
         query = query.ilike('title', `%${options.search}%`);

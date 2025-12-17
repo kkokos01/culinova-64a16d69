@@ -125,7 +125,10 @@ export const recipeService = {
   async getRecipes(options: {
     userId?: string;
     spaceId?: string;
+    spaceIds?: string[];
+    allUserSpaces?: boolean;
     isPublic?: boolean;
+    limit?: number;
   } = {}): Promise<Recipe[]> {
     try {
       console.log("Fetching recipes with options:", options);
@@ -133,15 +136,42 @@ export const recipeService = {
       // Start building the query with optimized field selection
       let query = supabase
         .from('recipes')
-        .select('id, title, image_url, description, prep_time_minutes, cook_time_minutes, servings, difficulty, created_at, calories_per_serving, user_id, space_id');
+        .select('id, title, image_url, description, prep_time_minutes, cook_time_minutes, servings, difficulty, created_at, updated_at, calories_per_serving, user_id, space_id, is_public, privacy_level');
       
       // Apply filtering based on options
-      if (options.spaceId) {
+      if (options.spaceIds && options.spaceIds.length > 0) {
+        // Fetch from multiple specific spaces
+        query = query.in('space_id', options.spaceIds);
+      } else if (options.allUserSpaces && options.userId) {
+        // Fetch from all user's spaces - get space IDs first
+        const { data: userSpaces, error: spacesError } = await supabase
+          .from('user_spaces')
+          .select('space_id')
+          .eq('user_id', options.userId)
+          .eq('is_active', true);
+        
+        if (spacesError) {
+          throw new Error(`Failed to fetch user spaces: ${spacesError.message}`);
+        }
+        
+        const spaceIds = userSpaces?.map(us => us.space_id) || [];
+        if (spaceIds.length > 0) {
+          query = query.in('space_id', spaceIds);
+        } else {
+          // User has no spaces, return empty array
+          return [];
+        }
+      } else if (options.spaceId) {
         query = query.eq('space_id', options.spaceId);
       } else if (options.userId) {
         query = query.eq('user_id', options.userId);
       } else if (options.isPublic) {
         query = query.eq('is_public', true);
+      }
+      
+      // Apply limit if specified
+      if (options.limit) {
+        query = query.limit(options.limit);
       }
       
       // Execute the query
@@ -153,25 +183,36 @@ export const recipeService = {
       }
       
       // Basic validation and filtering
-      const validRecipes = data ? data.filter(recipe => 
-        recipe && recipe.id && recipe.title
-      ) : [];
+      const recipes = (data || []).filter(recipe => 
+        recipe && 
+        recipe.id && 
+        recipe.title && 
+        recipe.description
+      );
       
-      // Initialize empty arrays for recipes without them
-      const processedRecipes = validRecipes.map((recipe: any): Recipe => ({
-        ...recipe,
-        difficulty: recipe.difficulty as 'easy' | 'medium' | 'hard',
-        privacy_level: recipe.privacy_level as 'public' | 'private' | 'space' | 'shared',
-        calories_per_serving: recipe.calories_per_serving || undefined,
-        ingredients: recipe.ingredients || [],
-        steps: recipe.steps || [],
-        parent_recipe_id: recipe.parent_recipe_id || undefined,
-        forked_count: recipe.forked_count || 0
+      // Map to Recipe type with all required fields
+      return recipes.map((recipe: any): Recipe => ({
+        id: recipe.id,
+        title: recipe.title,
+        image_url: recipe.image_url,
+        description: recipe.description,
+        prep_time_minutes: recipe.prep_time_minutes,
+        cook_time_minutes: recipe.cook_time_minutes,
+        servings: recipe.servings,
+        difficulty: recipe.difficulty,
+        created_at: recipe.created_at,
+        updated_at: recipe.updated_at || recipe.created_at,
+        calories_per_serving: recipe.calories_per_serving,
+        user_id: recipe.user_id,
+        space_id: recipe.space_id,
+        is_public: recipe.is_public || false,
+        privacy_level: recipe.privacy_level || 'private',
+        ingredients: [], // Not fetched for performance
+        steps: [], // Not fetched for performance
       }));
       
-      return processedRecipes as Recipe[];
     } catch (error) {
-      console.error("Error in recipeService.getRecipes:", error);
+      console.error('Error in recipeService.getRecipes:', error);
       throw error;
     }
   },
@@ -226,6 +267,8 @@ export const recipeService = {
           user_id: recipeData.user_id,
           calories_per_serving: recipeData.calories_per_serving || null,
           source_url: recipeData.source_url || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -261,12 +304,24 @@ export const recipeService = {
       
       // Create steps if provided
       if (recipeData.steps && recipeData.steps.length > 0) {
-        const stepsWithRecipeId = recipeData.steps.map(step => ({
-          recipe_id: recipe.id,
-          order_number: step.order_number,
-          instruction: step.instruction,
-          duration_minutes: step.duration_minutes || null,
-        }));
+        const stepsWithRecipeId = recipeData.steps.map((step, index) => {
+          // Handle both string steps and object steps
+          if (typeof step === 'string') {
+            return {
+              recipe_id: recipe.id,
+              order_number: index + 1,
+              instruction: step,
+              duration_minutes: null,
+            };
+          } else {
+            return {
+              recipe_id: recipe.id,
+              order_number: step.order_number || index + 1,
+              instruction: step.instruction,
+              duration_minutes: step.duration_minutes || null,
+            };
+          }
+        });
         
         const { error: stepsError } = await supabase
           .from('steps')
@@ -487,9 +542,21 @@ export const recipeService = {
       // Return basic recipe data for collections page (no ingredients/steps needed)
       // This eliminates the N+1 query problem that was causing 12-second load times
       return recipesData?.map((recipe: any): Recipe => ({
-        ...recipe,
-        difficulty: recipe.difficulty as 'easy' | 'medium' | 'hard',
-        privacy_level: recipe.privacy_level as 'public' | 'private' | 'space' | 'shared',
+        id: recipe.id,
+        title: recipe.title,
+        image_url: recipe.image_url,
+        description: recipe.description,
+        prep_time_minutes: recipe.prep_time_minutes,
+        cook_time_minutes: recipe.cook_time_minutes,
+        servings: recipe.servings,
+        difficulty: recipe.difficulty,
+        created_at: recipe.created_at,
+        updated_at: recipe.updated_at || recipe.created_at,
+        calories_per_serving: recipe.calories_per_serving,
+        user_id: recipe.user_id,
+        space_id: recipe.space_id,
+        is_public: recipe.is_public || false,
+        privacy_level: recipe.privacy_level || 'private',
         ingredients: [], // Collections page doesn't need ingredients
         steps: [], // Collections page doesn't need steps
       })) || [];
