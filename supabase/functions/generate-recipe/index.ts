@@ -150,35 +150,83 @@ serve(async (req: Request) => {
         You are a Culinary Data Extractor.
         Source Type: ${dataType}
         
-        TASK: Extract recipe data into the exact JSON format below.
+        TASK: Extract recipe data into the exact JSON format below. DO NOT improve or rewrite - only extract and format.
         
         INPUT DATA:
         ${textToAnalyze}
 
-        GUIDELINES:
-        - If the input is JSON-LD, simply map the fields.
-        - If the input is HTML, look for "Ingredients" and "Instructions" headers.
-        - Clean up strings (remove emoji, "Step 1", ads).
-        - Ingredients: Return them as simple strings in "name" if they are unstructured, OR parse if clear.
-          (e.g., "1 cup Rice" -> amount: "1", unit: "cup", name: "Rice").
-        - Times: Convert "PT1H30M" or "1 hr 30 mins" to total minutes (90).
+        RULES:
+        - Extract only what exists in the source
+        - If data is missing, set conservative defaults and note in alignmentNotes.assumptions
+          * servings: 4 (assumption)
+          * difficulty: "medium" (assumption)
+          * prepTimeMinutes: 0 (assumption - not found)
+          * cookTimeMinutes: 0 (assumption - not found)
+          * caloriesPerServing: 0 (assumption - not calculated)
+        - Convert time formats to minutes
+        - Clean up HTML artifacts
+        - Return ONLY valid JSON
 
-        RETURN JSON SCHEMA:
-        {
-          "title": "string",
-          "description": "string",
-          "prepTimeMinutes": number,
-          "cookTimeMinutes": number,
-          "servings": number,
-          "difficulty": "easy" | "medium" | "hard",
-          "ingredients": [ 
-            { "name": "string", "amount": "string", "unit": "string", "notes": "string" } 
-          ],
-          "steps": ["string"],
-          "tags": ["string"],
-          "caloriesPerServing": number,
-          "sourceUrl": "${type === 'url' ? content : ''}"
-        }
+OUTPUT JSON SCHEMA (MUST MATCH EXACTLY):
+{
+  "title": "string",
+  "description": "string",
+  "prepTimeMinutes": number,
+  "cookTimeMinutes": number,
+  "totalTimeMinutes": number,
+  "servings": number,
+  "difficulty": "easy" | "medium" | "hard",
+  "equipment": ["string"],
+  "ingredients": [
+    {
+      "name": "string",
+      "quantity": "string",
+      "unit": "string",
+      "notes": "string",
+      "group": "string"
+    }
+  ],
+  "steps": [
+    {
+      "order": number,
+      "text": "string",
+      "timerMinutes": number,
+      "critical": boolean,
+      "whyItMatters": "string",
+      "checkpoint": "string"
+    }
+  ],
+  "tags": ["string"],
+  "caloriesPerServing": number,
+  "twists": [
+    {
+      "title": "string",
+      "description": "string",
+      "isOptional": boolean
+    }
+  ],
+  "userStyle": {
+    "complexity": "simple|balanced|project",
+    "novelty": "tried_true|fresh_twist|adventurous"
+  },
+  "alignmentNotes": {
+    "readback": "string",
+    "constraintsApplied": ["string"],
+    "pantryUsed": ["string"],
+    "assumptions": ["string"],
+    "tradeoffs": ["string"],
+    "quickTweaks": ["string"]
+  },
+  "qualityChecks": {
+    "majorIngredientsReferencedInSteps": boolean,
+    "dietaryCompliance": boolean,
+    "timeConstraintCompliance": boolean,
+    "unitSanity": boolean,
+    "equipmentMatch": boolean,
+    "warnings": ["string"]
+  },
+  "sourceUrl": "${type === 'url' ? content : ''}"
+}
       `;
     } 
     // --- MODE B: GENERATE/MODIFY (Existing Logic) ---

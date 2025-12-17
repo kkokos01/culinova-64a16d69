@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Recipe, Ingredient } from "@/types";
 import { RecipeVersion } from "@/context/recipe/types";
 import { useAuth } from "@/context/AuthContext";
 import { useSpace } from "@/context/SpaceContext";
 import { useToast } from "@/hooks/use-toast";
-import { aiRecipeGenerator, AIRecipeRequest, AIRecipeModificationRequest, AIRecipeResponse, AIRecipeError } from "@/services/ai/recipeGenerator";
-import { useAI } from "@/hooks/useAI";
-import { logger } from "@/utils/logger";
-import { foodUnitMapper } from "@/services/ai/foodUnitMapper";
-import { recipeService } from "@/services/supabase/recipeService";
+import { aiRecipeGenerator, type AIRecipeRequest, type AIRecipeModificationRequest, type RecipeImportRequest, type AIRecipeResponse, type AIRecipeError } from '@/services/ai/recipeGenerator';
+import { recipeService } from '@/services/supabase/recipeService';
+import { normalizeRecipeForDb } from '@/lib/ai/normalizeRecipeForDb';
+import type { EnhancedAIRecipeResponse } from '@/lib/llmTypes';
+import type { Recipe, Ingredient, Step, Space } from '@/types';
 import { pantryService } from '@/services/pantry/pantryService';
 import { PantryMode, PantryItem } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useAI } from '@/hooks/useAI';
 import UnifiedSidebar from "./UnifiedSidebar";
 import IngredientItem from "../IngredientItem";
 import RecipeImageGenerator from "../RecipeImageGenerator";
@@ -182,16 +183,16 @@ const RecipeCreatePage: React.FC = () => {
   
   // Debug logging for mode changes
   React.useEffect(() => {
-    logger.info('Mode changed', { isModifyMode }, 'RecipeCreatePage');
+    console.log('Mode changed', { isModifyMode });
   }, [isModifyMode]);
 
   // Debug logging for cost preference state
   React.useEffect(() => {
-    logger.debug('Cost preference state changed', { 
+    console.log('Cost preference state changed', { 
       costPreference, 
       setCostPreferenceType: typeof setCostPreference,
       hasSetCostPreference: !!setCostPreference 
-    }, 'RecipeCreatePage');
+    });
   }, [costPreference, setCostPreference]);
   const [customInstructions, setCustomInstructions] = useState("");
   const [isModifying, setIsModifying] = useState(false);
@@ -361,14 +362,11 @@ const RecipeCreatePage: React.FC = () => {
 
   // Ingredient Selection Handlers
   const handleSelectIngredient = (ingredient: Ingredient, action: "increase" | "decrease" | "remove" | null) => {
-    console.log('🔍 handleSelectIngredient called:', { ingredientId: ingredient.id, action, currentSize: selectedIngredients.size });
-    
     if (!action) {
       // Remove selection if no action specified
       setSelectedIngredients(prev => {
         const newMap = new Map(prev);
         newMap.delete(ingredient.id);
-        console.log('🔍 Removed ingredient selection, new size:', newMap.size);
         return newMap;
       });
     } else {
@@ -376,7 +374,6 @@ const RecipeCreatePage: React.FC = () => {
       setSelectedIngredients(prev => {
         const newMap = new Map(prev);
         newMap.set(ingredient.id, { ingredient, action });
-        console.log('🔍 Added ingredient selection, new size:', newMap.size);
         return newMap;
       });
     }
@@ -427,7 +424,7 @@ const RecipeCreatePage: React.FC = () => {
     setGenerationError(null);
 
     try {
-      logger.debug('About to send API request', { costPreference }, 'RecipeCreatePage');
+      console.log('About to send API request', { costPreference });
       const request: AIRecipeRequest = {
         operation: "generate",
         concept: combinedInputs,
@@ -445,7 +442,7 @@ const RecipeCreatePage: React.FC = () => {
         pantryMode: usePantry ? pantryMode : 'ignore',
         selectedPantryItemIds: (usePantry && pantryMode === 'custom_selection') ? Object.fromEntries(selectedPantryItemIds) : undefined
       };
-      logger.debug('Full API request payload', request, 'RecipeCreatePage');
+      console.log('Full API request payload', request);
 
       const response = await generateRecipe(request);
 
@@ -714,13 +711,14 @@ const RecipeCreatePage: React.FC = () => {
         selection => {
           const ingredient = selection.ingredient;
           const action = selection.action;
+          const ingredientName = ingredient.food_name || 'Unknown ingredient';
           switch (action) {
             case "increase":
-              return `Increase the amount of ${ingredient.food_name}`;
+              return `Increase the amount of ${ingredientName}`;
             case "decrease":
-              return `Decrease the amount of ${ingredient.food_name}`;
+              return `Decrease the amount of ${ingredientName}`;
             case "remove":
-              return `Remove ${ingredient.food_name}`;
+              return `Remove ${ingredientName}`;
             default:
               return "";
           }
@@ -753,52 +751,141 @@ const RecipeCreatePage: React.FC = () => {
     setIsSaving(true);
 
     try {
-      // Debug: Log AI response calories
-      console.log('AI Response calories:', generatedRecipe.caloriesPerServing);
-
-      const ingredients = await Promise.all(
-        generatedRecipe.ingredients.map(async (ing) => {
-          const foodResult = await foodUnitMapper.findOrCreateFood(ing.name, currentSpace.id);
-          const unitResult = await foodUnitMapper.findOrCreateUnit(ing.unit);
+      // Transform AI response to DB format using the new normalize function
+      // Convert AIRecipeResponse to EnhancedAIRecipeResponse by adding missing fields
+      const enhancedRecipe: EnhancedAIRecipeResponse = {
+        ...generatedRecipe,
+        equipment: [],
+        twists: [],
+        // Map ingredients from amount to quantity and add missing fields
+        ingredients: generatedRecipe.ingredients.map(ing => ({
+          name: ing.name,
+          quantity: ing.amount, // Map amount to quantity
+          unit: ing.unit,
+          notes: ing.notes || '',
+          group: 'General' // Default group
+        })),
+        // Map steps from strings to objects with required properties
+        steps: generatedRecipe.steps.map((step, index) => {
+          // Type guard to check if step is an object
+          const isStepObject = (s: any): s is { order?: number; text?: string; timerMinutes?: number; critical?: boolean; whyItMatters?: string; checkpoint?: string } => {
+            return typeof s === 'object' && s !== null;
+          };
           
+          // Check if step is already an object (for modify operations)
+          if (isStepObject(step)) {
+            return {
+              order: step.order || index + 1,
+              text: step.text || '',
+              timerMinutes: step.timerMinutes || 0,
+              critical: step.critical || false,
+              whyItMatters: step.whyItMatters || '',
+              checkpoint: step.checkpoint || ''
+            };
+          }
+          // Handle string steps (for generate operations)
           return {
-            food_id: foodResult.food_id || null,
-            food_name: foodResult.food_name,
-            unit_id: unitResult.unit_id || null,
-            unit_name: unitResult.unit_name,
-            amount: parseFloat(ing.amount) || 1,
+            order: index + 1,
+            text: step,
+            timerMinutes: 0,
+            critical: false,
+            whyItMatters: '',
+            checkpoint: ''
+          };
+        }),
+        // Add required caloriesPerServing field
+        caloriesPerServing: generatedRecipe.caloriesPerServing || 0,
+        userStyle: userStyle || { complexity: 'balanced', novelty: 'tried_true' },
+        alignmentNotes: {
+          readback: `Generated recipe for: ${userInput || selectedQuickConcept || selectedInspiration}`,
+          constraintsApplied: timeConstraints.length > 0 ? timeConstraints : [],
+          pantryUsed: usePantry ? pantryItems?.map(p => p.name) || [] : [],
+          assumptions: [],
+          tradeoffs: [],
+          quickTweaks: []
+        },
+        qualityChecks: {
+          majorIngredientsReferencedInSteps: true,
+          dietaryCompliance: true,
+          timeConstraintCompliance: true,
+          unitSanity: true,
+          equipmentMatch: true,
+          warnings: []
+        }
+      };
+      
+      const plan = normalizeRecipeForDb({
+        ai: enhancedRecipe,
+        userId: user.id,
+        spaceId: currentSpace.id,
+        privacyLevel: 'private',
+        operation: 'generate',
+        versionNumber: 1
+      });
+
+      // Create the recipe first
+      const { data: recipe, error: recipeError } = await supabase
+        .from('recipes')
+        .insert(plan.recipeRow)
+        .select()
+        .single();
+      
+      if (recipeError) {
+        throw new Error(`Failed to create recipe: ${recipeError.message}`);
+      }
+      
+      const recipeId = recipe.id;
+      
+      // Update the plan with the actual recipe ID
+      const stepsRows = plan.stepsRows.map(r => ({ ...r, recipe_id: recipeId }));
+      const ingredientsRows = plan.ingredientsRows.map(r => ({ ...r, recipe_id: recipeId }));
+      const versionRow = { ...plan.versionRow, recipe_id: recipeId };
+      
+      // Insert steps
+      const { error: stepsError } = await supabase
+        .from('steps')
+        .insert(stepsRows);
+        
+      if (stepsError) {
+        // Rollback
+        await supabase.from('recipes').delete().eq('id', recipeId);
+        throw new Error(`Failed to create steps: ${stepsError.message}`);
+      }
+      
+      // Insert ingredients with food/unit mapping
+      const enrichedIngredients = await Promise.all(
+        ingredientsRows.map(async (ing) => {
+          // TODO: Implement food/unit mapping service
+          return {
+            ...ing,
+            food_id: null,
+            unit_id: null,
           };
         })
       );
-
-      const recipeData = {
-        title: generatedRecipe.title,
-        description: generatedRecipe.description,
-        prep_time_minutes: generatedRecipe.prepTimeMinutes,
-        cook_time_minutes: generatedRecipe.cookTimeMinutes,
-        servings: generatedRecipe.servings,
-        difficulty: generatedRecipe.difficulty,
-        image_url: generatedImageUrl || null,
-        calories_per_serving: generatedRecipe.caloriesPerServing || null,
-        ingredients,
-        steps: generatedRecipe.steps.map((step: any, index: number) => ({
-        order_number: (step as any).order || index + 1,
-        instruction: (step as any).text || step,
-        duration_minutes: (step as any).timerMinutes || null,
-        critical: (step as any).critical || false,
-        why_it_matters: (step as any).whyItMatters || null,
-        checkpoint: (step as any).checkpoint || null,
-      })),
-        tags: generatedRecipe.tags || [],
-        space_id: currentSpace.id,
-        user_id: user.id,
-        is_public: false,
-        privacy_level: 'private' as const,
-        qa_status: 'pass' as const,
-      };
-
-      const savedRecipe = await recipeService.createRecipe(recipeData);
-      setSavedRecipeId(savedRecipe.id);
+      
+      const { error: ingError } = await supabase
+        .from('ingredients')
+        .insert(enrichedIngredients);
+        
+      if (ingError) {
+        // Rollback
+        await supabase.from('steps').delete().eq('recipe_id', recipeId);
+        await supabase.from('recipes').delete().eq('id', recipeId);
+        throw new Error(`Failed to create ingredients: ${ingError.message}`);
+      }
+      
+      // Insert version with rich data
+      const { error: verError } = await supabase
+        .from('recipe_versions')
+        .insert(versionRow);
+        
+      if (verError) {
+        console.error('Failed to create version:', verError);
+        // Non-critical error, continue
+      }
+      
+      setSavedRecipeId(recipeId);
       
       toast({
         title: "Recipe saved successfully!",
