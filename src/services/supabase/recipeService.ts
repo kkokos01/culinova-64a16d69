@@ -3,6 +3,7 @@ import { Recipe, RecipeCreate, RecipeUpdate, Ingredient, IngredientCreate, Step,
 import { useToast } from "@/hooks/use-toast";
 import { socialService } from './socialService';
 import { useAuth } from '@/context/AuthContext';
+import { FEATURES } from '@/config/features';
 
 /**
  * Helper function to normalize food and unit data from Supabase
@@ -120,8 +121,216 @@ export const recipeService = {
   },
   
   /**
-   * Fetch multiple recipes with filtering options
+   * Fetch recipes by space using join table or legacy method
    */
+  async getRecipesBySpace(spaceId: string): Promise<Recipe[]> {
+    if (FEATURES.SPACE_RECIPES) {
+      // Use join table with explicit alias
+      const { data, error } = await supabase
+        .from('space_recipes')
+        .select('recipe:recipes(*)')
+        .eq('space_id', spaceId);
+      
+      if (!error && data) {
+        return data
+          .map((r: any) => r.recipe)
+          .filter(Boolean)
+          .map((recipe: any) => ({
+            ...recipe,
+            difficulty: recipe.difficulty as 'easy' | 'medium' | 'hard',
+            privacy_level: recipe.privacy_level as 'public' | 'private' | 'space' | 'shared'
+          }));
+      }
+      
+      // Fallback to legacy if join fails
+      console.warn('Fallback to legacy recipe query');
+    }
+    
+    // Legacy query
+    const { data, error } = await supabase
+      .from('recipes')
+      .select('*')
+      .eq('space_id', spaceId);
+    
+    // Cast difficulty and privacy_level to proper types
+    return (data || []).map(recipe => ({
+      ...recipe,
+      difficulty: recipe.difficulty as 'easy' | 'medium' | 'hard',
+      privacy_level: recipe.privacy_level as 'public' | 'private' | 'space' | 'shared'
+    }));
+  },
+
+  /**
+   * Add a recipe to a space
+   */
+  async addRecipeToSpace(recipeId: string, spaceId: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+    
+    const { error } = await supabase
+      .from('space_recipes')
+      .insert({
+        space_id: spaceId,
+        recipe_id: recipeId,
+        added_by: user.id
+      });
+    
+    if (error) {
+      throw new Error(`Failed to add recipe to space: ${error.message}`);
+    }
+  },
+
+  /**
+   * Remove a recipe from a space
+   */
+  async removeRecipeFromSpace(recipeId: string, spaceId: string): Promise<void> {
+    const { error } = await supabase
+      .from('space_recipes')
+      .delete()
+      .eq('recipe_id', recipeId)
+      .eq('space_id', spaceId);
+    
+    if (error) {
+      throw new Error(`Failed to remove recipe from space: ${error.message}`);
+    }
+  },
+
+  /**
+   * Fork a recipe (create a copy for non-owners)
+   */
+  async forkRecipe(recipeId: string, userId: string, spaceId: string): Promise<Recipe> {
+    // Safe fields that can be copied
+    const SAFE_FORK_FIELDS = [
+      'title',
+      'description', 
+      'prep_time_minutes',
+      'cook_time_minutes',
+      'servings',
+      'difficulty',
+      'calories_per_serving',
+      'image_url',
+      'source_url'
+    ] as const;
+
+    let newRecipe: Recipe | null = null;
+    
+    try {
+      // 1. Get original recipe
+      const original = await this.getRecipe(recipeId);
+      if (!original) throw new Error('Recipe not found');
+      
+      // 2. Create new recipe with only safe fields
+      const safeFields: Partial<Recipe> = {};
+      SAFE_FORK_FIELDS.forEach(field => {
+        if (original[field as keyof Recipe] !== undefined) {
+          safeFields[field as keyof Recipe] = original[field as keyof Recipe];
+        }
+      });
+      
+      const { data, error } = await supabase
+        .from('recipes')
+        .insert({
+          ...safeFields,
+          user_id: userId,
+          parent_recipe_id: recipeId,
+          space_id: spaceId,
+          is_public: false,
+          forked_count: 0,
+          privacy_level: 'private',
+          // Ensure required fields are present
+          cook_time_minutes: safeFields.cook_time_minutes || 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          difficulty: (safeFields.difficulty as 'easy' | 'medium' | 'hard') || 'medium',
+        } as any) // Type assertion to bypass strict typing for now
+        .select()
+        .single();
+      
+      if (error || !data) throw new Error('Failed to create recipe: ' + error?.message);
+      newRecipe = data as Recipe;
+      
+      // 3. Copy ingredients (keep IDs if present)
+      const { data: ingredients, error: ingError } = await supabase
+        .from('ingredients')
+        .select('amount, unit_id, unit_name, food_id, food_name, order_index')
+        .eq('recipe_id', recipeId);
+      
+      if (ingError) throw ingError;
+      
+      if (ingredients) {
+        const { error: copyError } = await supabase
+          .from('ingredients')
+          .insert(ingredients.map(ing => ({
+            ...ing,
+            recipe_id: newRecipe!.id
+          })));
+        
+        if (copyError) throw copyError;
+      }
+      
+      // 4. Copy steps
+      const { data: steps, error: stepError } = await supabase
+        .from('steps')
+        .select('instruction, order_number, duration_minutes')
+        .eq('recipe_id', recipeId);
+      
+      if (stepError) throw stepError;
+      
+      if (steps) {
+        const { error: copyError } = await supabase
+          .from('steps')
+          .insert(steps.map(step => ({
+            ...step,
+            recipe_id: newRecipe!.id
+          })));
+        
+        if (copyError) throw copyError;
+      }
+      
+      // 5. Add to space_recipes
+      if (FEATURES.SPACE_RECIPES) {
+        const { error: spaceError } = await supabase
+          .from('space_recipes')
+          .insert({
+            space_id: spaceId,
+            recipe_id: newRecipe.id,
+            added_by: userId
+          });
+        
+        if (spaceError) throw spaceError;
+      }
+      
+      return newRecipe;
+      
+    } catch (error) {
+      // Cleanup on failure
+      if (newRecipe) {
+        console.warn('Cleaning up failed fork recipe:', newRecipe.id);
+        const { error: cleanupErr } = await supabase
+          .from('recipes')
+          .delete()
+          .eq('id', newRecipe.id);
+        if (cleanupErr) console.warn("Fork cleanup failed", cleanupErr);
+      }
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a recipe globally (owner only - should be called from Edge Function)
+   */
+  async deleteRecipeGlobally(recipeId: string): Promise<void> {
+    // This should only be called from the Edge Function with proper auth
+    // The Edge Function will verify ownership before calling this
+    const { error } = await supabase
+      .from('recipes')
+      .delete()
+      .eq('id', recipeId);
+    
+    if (error) {
+      throw new Error(`Failed to delete recipe: ${error.message}`);
+    }
+  },
   async getRecipes(options: {
     userId?: string;
     spaceId?: string;
@@ -275,6 +484,23 @@ export const recipeService = {
         
       if (recipeError) {
         throw new Error(`Failed to create recipe: ${recipeError.message}`);
+      }
+      
+      // Add to space_recipes if feature is enabled
+      if (FEATURES.SPACE_RECIPES && recipeData.space_id) {
+        const { error: spaceError } = await supabase
+          .from('space_recipes')
+          .insert({
+            space_id: recipeData.space_id,
+            recipe_id: recipe.id,
+            added_by: recipeData.user_id
+          });
+        
+        if (spaceError) {
+          // Rollback recipe creation if space_recipes insert fails
+          await supabase.from('recipes').delete().eq('id', recipe.id);
+          throw new Error(`Failed to add recipe to space: ${spaceError.message}`);
+        }
       }
       
       // Create ingredients if provided

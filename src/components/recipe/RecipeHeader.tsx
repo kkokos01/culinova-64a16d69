@@ -1,15 +1,19 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRecipe } from "@/context/recipe";
 import { useAuth } from "@/context/AuthContext";
 import { useSpace } from "@/context/SpaceContext";
 import { Recipe } from "@/types";
 import { Button } from "@/components/ui/button";
 import { AddToCollectionButton } from "./AddToCollectionButton";
+import { RecipeActions } from "./RecipeActions";
 import { ShoppingCart, Flame, ChefHat, Copy } from "lucide-react";
+import { recipeService } from "@/services/supabase/recipeService";
 import { socialService } from "@/services/supabase/socialService";
 import { useToast } from "@/hooks/use-toast";
+import { FEATURES } from '@/config/features';
 
 interface RecipeHeaderProps {
   title?: string;
@@ -42,6 +46,7 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   onOpenShoppingList,
 }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { recipe: contextRecipe } = useRecipe();
   const { user } = useAuth();
   const { currentSpace } = useSpace();
@@ -72,23 +77,31 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
   const totalTime = (displayPrepTime || 0) + (displayCookTime || 0);
   
   // Check if user can fork this recipe
-  const canFork = recipeToUse?.privacy_level === 'public' && 
+  const canFork = recipeToUse?.user_id !== user?.id && 
                   user?.id && 
-                  currentSpace?.id && 
-                  recipeToUse?.user_id !== user.id;
+                  currentSpace?.id;
+  
+  // Check if user can edit this recipe
+  const canEdit = recipeToUse?.user_id === user?.id;
   
   // Handle forking a recipe
   const handleForkRecipe = async () => {
-    if (!canFork || !recipeToUse?.id) return;
+    if (!canFork || !recipeToUse?.id || !currentSpace?.id) {
+      toast({
+        title: "Error",
+        description: "Please select a collection first",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
       setIsForking(true);
       
-      const forkedRecipe = await socialService.forkRecipe(
+      const forkedRecipe = await recipeService.forkRecipe(
         recipeToUse.id,
-        currentSpace.id,
         user.id,
-        user?.user_metadata?.name || user?.email || 'User'
+        currentSpace.id
       );
 
       toast({
@@ -207,7 +220,7 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
           </Button>
         )}
         
-        {/* Fork Button - only for public recipes the user doesn't own */}
+        {/* Fork Button - for non-owners */}
         {canFork && (
           <Button
             onClick={handleForkRecipe}
@@ -219,15 +232,50 @@ const RecipeHeader: React.FC<RecipeHeaderProps> = ({
             {isForking ? (
               <>
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                Saving...
+                Forking...
               </>
             ) : (
               <>
                 <Copy className="h-4 w-4" />
-                Save Copy
+                Fork Recipe
               </>
             )}
           </Button>
+        )}
+        
+        {/* Recipe Actions - Remove/Delete */}
+        {recipeToUse?.id && recipeToUse.id !== "generated" && (
+          <RecipeActions
+            recipeId={recipeToUse.id}
+            recipeOwnerId={recipeToUse.user_id}
+            currentSpaceId={currentSpace?.id}
+            isEditorOrAdmin={true} // TODO: Check actual user role in space
+            onRecipeRemoved={() => {
+              // Handle recipe removed from space
+              toast({
+                title: "Recipe removed",
+                description: "Recipe has been removed from this collection"
+              });
+              // Invalidate relevant queries to refresh UI
+              queryClient.invalidateQueries({ queryKey: ['recipes'] });
+              queryClient.invalidateQueries({ queryKey: ['space-recipes'] });
+              queryClient.invalidateQueries({ queryKey: ['userRecipes'] });
+            }}
+            onRecipeDeleted={() => {
+              // Handle recipe deleted
+              toast({
+                title: "Recipe deleted",
+                description: "Recipe has been permanently deleted"
+              });
+              // Invalidate all recipe-related queries
+              queryClient.invalidateQueries({ queryKey: ['recipes'] });
+              queryClient.invalidateQueries({ queryKey: ['space-recipes'] });
+              queryClient.invalidateQueries({ queryKey: ['userRecipes'] });
+              queryClient.invalidateQueries({ queryKey: ['user-recipes'] });
+              // Navigate away since recipe no longer exists
+              navigate('/');
+            }}
+          />
         )}
       </div>
 

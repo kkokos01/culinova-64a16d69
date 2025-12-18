@@ -820,7 +820,8 @@ const RecipeCreatePage: React.FC = () => {
         spaceId: currentSpace.id,
         privacyLevel: 'private',
         operation: 'generate',
-        versionNumber: 1
+        versionNumber: 1,
+        imageUrl: generatedImageUrl
       });
 
       // Create the recipe first
@@ -1134,12 +1135,31 @@ const RecipeCreatePage: React.FC = () => {
                       <h1 className="text-2xl font-bold text-gray-900">{recipe.title}</h1>
                       <div className="flex gap-2 flex-wrap">
                         {savedRecipeId ? (
-                          <AddToCollectionButton
-                            recipeId={savedRecipeId}
-                            currentSpaceId={currentSpace?.id}
-                            variant="default"
-                            size="default"
-                          />
+                          <>
+                            <Button
+                              onClick={handleSaveRecipe}
+                              disabled={isSaving}
+                              className="bg-sage-600 hover:bg-sage-700 text-white h-10 px-4"
+                            >
+                              {isSaving ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                <>
+                                  <Save className="text-sage-400 mr-2 h-4 w-4" />
+                                  Save as New Version
+                                </>
+                              )}
+                            </Button>
+                            <AddToCollectionButton
+                              recipeId={savedRecipeId}
+                              currentSpaceId={currentSpace?.id}
+                              variant="outline"
+                              size="default"
+                            />
+                          </>
                         ) : (
                           <div className="flex gap-2">
                             <Button

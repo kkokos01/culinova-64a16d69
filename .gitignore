@@ -45,3 +45,4 @@ test_*.html
 complete_test.html
 quick_ltree_test.html
 test_fixes.html
+.env.example

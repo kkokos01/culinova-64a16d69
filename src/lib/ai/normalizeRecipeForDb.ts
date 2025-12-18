@@ -54,6 +54,7 @@ export function normalizeRecipeForDb(args: {
   parentRecipeId?: string | null;
   parentVersionId?: string | null;
   versionNumber: number;
+  imageUrl?: string | null;
 }): DbInsertPlan {
   const { ai, userId, spaceId, privacyLevel = "private" } = args;
 
@@ -69,6 +70,7 @@ export function normalizeRecipeForDb(args: {
     servings: safeInt(ai.servings, 2),
     difficulty: (ai.difficulty ?? "medium") as "easy" | "medium" | "hard",
     calories_per_serving: Number.isFinite(ai.caloriesPerServing) ? Math.round(ai.caloriesPerServing) : null,
+    image_url: args.imageUrl ?? null,
     user_id: userId,
     space_id: spaceId ?? null,
     privacy_level: privacyLevel,

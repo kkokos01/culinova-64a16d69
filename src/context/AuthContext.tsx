@@ -89,15 +89,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
         console.log("Auth state changed:", _event);
-        setSession(session);
-        setUser(session?.user ?? null);
         
-        // Only check username on SIGNED_IN events, not INITIAL_SESSION
-        // This prevents race condition after email verification callback
-        if (_event === 'SIGNED_IN' && session?.user) {
-          await checkUserHasUsername(session.user.id);
-        } else {
-          setNeedsUsername(false);
+        // Only update state for actual auth changes, ignore token refreshes
+        if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT' || _event === 'INITIAL_SESSION') {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          // Only check username on SIGNED_IN events, not INITIAL_SESSION
+          // This prevents race condition after email verification callback
+          if (_event === 'SIGNED_IN' && session?.user) {
+            await checkUserHasUsername(session.user.id);
+          } else {
+            setNeedsUsername(false);
+          }
         }
         
         setIsLoading(false);
